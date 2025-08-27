@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/webjars/bootstrap/5.3.7/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<link th:href="@{/css/app.css}" rel="stylesheet" />
+
+<title>add sleeptime</title>
+
+</head>
+<body>
+<div th:insert="~{header :: header}">...</div>
+
+	<h1>add sleeptime</h1>
+	<form action="#" th:action="@{/add-sleeptime}" th:object="${sleeptime}"
+		method="post">
+		<p>
+			gotobed: <input type="datetime-local" th:field="*{gotobed}" />
+		</p>
+		<p>
+			getup: <input type="datetime-local" th:field="*{getup}" />
+		</p>
+		<p>
+			<input type="submit" value="Submit" /> <input type="reset"
+				value="Reset" />
+		</p>
+	</form>
+</body>
+</html>
