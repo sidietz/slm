@@ -22,8 +22,8 @@ public class SecurityConfig {
 		http.cors(Customizer.withDefaults()).csrf(Customizer.withDefaults())
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index/*", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
-						.requestMatchers("/sleeptimes", "/sleeptimes-bb").permitAll()
-						.requestMatchers("/add-sport").permitAll()
+						.requestMatchers("/sleeptime", "/sleeptime-bb").permitAll()
+						.requestMatchers("/add-sport", "/sport").permitAll()
 						.requestMatchers("/add-sleeptime", "/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());
 		return http.build();

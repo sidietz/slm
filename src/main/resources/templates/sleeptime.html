@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<link href="../static/css/tabel.css" th:href="@{/css/table.css}"
+<link href="../static/css/table.css" th:href="@{/css/table.css}"
 	rel="stylesheet" />
 
 <link th:href="@{/webjars/bootstrap/5.3.7/css/bootstrap.min.css}"
@@ -21,20 +21,30 @@
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
-		<h2>sleeptimes</h2>
+	<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
+		<ul class="navbar-nav">
+			<li class="nav-item"><a class="nav-link"
+				th:href="@{/sleeptime}">sleeptime</a></li>
+			<li class="nav-item"><a class="nav-link"
+				th:href="@{/add-sleeptime}">add sleeptime</a></li>
+			<li class="nav-item"><a class="nav-link"
+				th:href="@{/sleeptime-bb}">sleeptimes chart</a></li>
+		</ul>
+	</nav>
+	<h2>sleeptimes</h2>
 
-		<form method="get" action="/sleeptimes" id="filterForm" class="mb-3">
-			<div class="col-auto flex-grow-1">
-				<div id="date-slider"></div>
-			</div>
-			<input type="hidden" name="fromDate" id="fromDate"
-				th:value="${fromDate}"> <input type="hidden" name="toDate"
-				id="toDate" th:value="${toDate}">
-			<div class="col-auto">
-				<button type="submit" class="btn btn-primary">Apply</button>
-				<a href="/sleeptimes" class="btn btn-secondary">Reset</a>
-			</div>
-		</form>
+	<form method="get" action="/sleeptime" id="filterForm" class="mb-3">
+		<div class="col-auto flex-grow-1">
+			<div id="date-slider"></div>
+		</div>
+		<input type="hidden" name="fromDate" id="fromDate"
+			th:value="${fromDate}"> <input type="hidden" name="toDate"
+			id="toDate" th:value="${toDate}">
+		<div class="col-auto">
+			<button type="submit" class="btn btn-primary">Apply</button>
+			<a href="/sleeptimes" class="btn btn-secondary">Reset</a>
+		</div>
+	</form>
 
 
 	<div class="list" th:unless="${#lists.isEmpty(sleeptimes)}">

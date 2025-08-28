@@ -21,13 +21,13 @@ public class SleepTimeController {
 	@Autowired
 	private SleepTimeRepository repo;
 
-	@GetMapping("/sleeptimes-bb")
+	@GetMapping("/sleeptime-bb")
 	public String sleepTimeC3(Model model) {
 		model.addAttribute("sleeptimes", repo.findAll());
-		return "sleeptimes-bb";
+		return "sleeptime-bb";
 	}
 
-	@GetMapping("/sleeptimes")
+	@GetMapping("/sleeptime")
 	public String getSleepTimes(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
@@ -44,7 +44,7 @@ public class SleepTimeController {
 		model.addAttribute("toDate", toDate);
 		model.addAttribute("minDate", minDate.minusHours(22)); //fixes off by one bug
 	    model.addAttribute("maxDate", maxDate);
-		return "sleeptimes";
+		return "sleeptime";
 	}
 
 	@GetMapping("/add-sleeptime")
