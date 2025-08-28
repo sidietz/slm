@@ -31,6 +31,11 @@ public class SportType {
 	public long getId() {
 		return id;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("SportType [name=%s]", name);
+	}
 	
 	
 

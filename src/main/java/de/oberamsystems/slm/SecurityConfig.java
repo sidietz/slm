@@ -21,7 +21,7 @@ public class SecurityConfig {
 
 		http.cors(Customizer.withDefaults()).csrf(Customizer.withDefaults())
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
-						.requestMatchers("/", "/index", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
+						.requestMatchers("/", "/index", "/index.html", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
 						.requestMatchers("/sleeptime", "/sleeptime-bb").permitAll()
 						.requestMatchers("/sport").permitAll()
 						.requestMatchers("/add-sport", "/add-sleeptime", "/api/**").authenticated().anyRequest().denyAll())

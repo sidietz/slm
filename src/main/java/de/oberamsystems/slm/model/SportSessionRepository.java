@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface SportSessionRepository extends JpaRepository<SportSession, Long> {
 
+	public SportSession findFirstByOrderByStartDesc();
+	
 	public List<SportSession> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate);
 	public List<SportSession> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate, Sort sort);
 	
