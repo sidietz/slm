@@ -23,6 +23,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index/*", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
 						.requestMatchers("/sleeptimes", "/sleeptimes-bb").permitAll()
+						.requestMatchers("/add-sport").permitAll()
 						.requestMatchers("/add-sleeptime", "/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());
 		return http.build();
