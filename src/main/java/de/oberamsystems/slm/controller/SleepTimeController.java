@@ -21,13 +21,13 @@ public class SleepTimeController {
 	@Autowired
 	private SleepTimeRepository repo;
 
-	@GetMapping(value = "/sleeptimes-bb")
+	@GetMapping("/sleeptimes-bb")
 	public String sleepTimeC3(Model model) {
 		model.addAttribute("sleeptimes", repo.findAll());
 		return "sleeptimes-bb";
 	}
 
-	@GetMapping(value = "/sleeptimes")
+	@GetMapping("/sleeptimes")
 	public String getSleepTimes(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
