@@ -13,7 +13,7 @@ import jakarta.persistence.*;
 public class MeditationSession {
 	
 	@Id
-	@GeneratedValue(strategy = GenerationType.AUTO)
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	public long id;
 	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime start;
