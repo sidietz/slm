@@ -5,5 +5,9 @@ import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface HumanRepository extends JpaRepository<Human, Long> {
-	List<Human> findAllByOrderByDaysUntilBirthdayAsc();
+
+	public Human findFirstByOrderByDaysUntilBirthdayAsc();
+
+	public List<Human> findAllByOrderByDaysUntilBirthdayAsc();
+
 }
