@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html xmlns:th="https://www.thymeleaf.org">
 <head>
 <meta charset="UTF-8">
 <link href="../static/css/table.css" th:href="@{/css/table.css}"
@@ -110,7 +110,10 @@
 				result
 			]
 		});
-		
+
+		chart.axis.max(14);
+		chart.axis.min(6);
+
 		return result;
 	}
 	
