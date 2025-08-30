@@ -48,14 +48,12 @@ public class SportController {
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("sport", new SportSession());
 		model.addAttribute("sports", typeRepo.findAll());
-		log.warn(String.format("%d", id));
 		return "add-sport";
 	}
 	
 	@PostMapping("/add-sport")
 	public String submitSport(@ModelAttribute SportSession sport, Model model) {
 		model.addAttribute("sports", typeRepo.findAll());
-		log.warn(sport.toString());
 		repo.save(sport);
 		model.addAttribute("sport", sport);
 		return "add-sport";
