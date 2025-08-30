@@ -22,9 +22,11 @@ public class SecurityConfig {
 		http.cors(Customizer.withDefaults()).csrf(Customizer.withDefaults())
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index", "/index.html", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
-						.requestMatchers("/sleeptime", "/sleeptime-bb").permitAll()
-						.requestMatchers("/sport").permitAll()
-						.requestMatchers("/add-sport", "/add-sleeptime", "/api/**").authenticated().anyRequest().denyAll())
+						.requestMatchers("/sleeptime", "/sleeptime-bb", "/add-sleeptime").permitAll()
+						.requestMatchers("/sport", "/add-sport").permitAll()
+						.requestMatchers("/human", "/human.html", "/add-human", "/add-human.html").permitAll()
+						.requestMatchers("/meditation", "/add-meditation").permitAll()
+						.requestMatchers("/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());
 		return http.build();
 	}
