@@ -23,6 +23,7 @@ public class SecurityConfig {
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index", "/index.html", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
 						.requestMatchers("/sleeptime", "/sleeptime-bb", "/add-sleeptime").permitAll()
+						.requestMatchers("/event", "/event.html", "/add-event", "/add-event.html").permitAll()
 						.requestMatchers("/sport", "/add-sport").permitAll()
 						.requestMatchers("/human", "/human.html", "/add-human", "/add-human.html").permitAll()
 						.requestMatchers("/meditation", "/add-meditation").permitAll()
