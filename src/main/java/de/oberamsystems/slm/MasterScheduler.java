@@ -27,13 +27,13 @@ public class MasterScheduler {
 	@Autowired
 	private EmailService mailer;
 
-	@Scheduled(fixedRate = 15 * 1000)
+	@Scheduled(cron = "0 0 6 * * *")
 	public int scheduleTest() {
 
 		List<CalendarEvent> events = repo.findByStartBetween(LocalDateTime.now(), LocalDateTime.now().plusDays(1));
 
 		log.debug(String.format("%d events sent via email", events.size()));
-		//sendNrMail(events);
+		sendNrMail(events);
 
 		return 0;
 	}
