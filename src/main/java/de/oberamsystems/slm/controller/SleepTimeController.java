@@ -38,8 +38,9 @@ public class SleepTimeController {
 
 		LocalDateTime minDate = repo.findMinDate();
 	    LocalDateTime maxDate = repo.findMaxDate();
-	    
+
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusHours(22); //fixes off by one bug
+	    maxDate = maxDate == null ? LocalDateTime.now().plusDays(7) : maxDate;
 
 		model.addAttribute("sleeptimes", repo.findByGotobedBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);

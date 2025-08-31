@@ -40,17 +40,25 @@ public class IndexController {
 		SportSession s = sportRepo.findFirstByOrderByStartDesc();
 		Human h = humanRepo.findFirstByOrderByDaysUntilBirthdayAsc();
 		MeditationSession m = meditationRepo.findFirstByOrderByStartDesc();
-		log.warn(s.toString());
-		String kind = s.getType().getName();
-		LocalDateTime ldt = s.getStart();
-		Duration diff = Duration.between(ldt, LocalDateTime.now());
-		Duration diff2 = Duration.between(m.getStart(), LocalDateTime.now());
 
 		List<String> msgs = new ArrayList<String>();
 
-		msgs.add(String.format("Next birthday is %s's on %s in %s days.", h.getFirstname() + " " + h.getLastname(), Utils.LocalDateTimeToString(h.getBirthday()), String.format("%d", h.getDaysUntilBirthday())));
-		msgs.add(String.format("Last sport activity was: %s at %s and was %s ago.", kind, Utils.LocalDateTimeToString(ldt), Utils.DurationToString(diff)));
-		msgs.add(String.format("Last meditation was at %s and was %s ago.", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
+		if (h != null) {
+			msgs.add(String.format("Next birthday is %s's on %s in %s days.", h.getFirstname() + " " + h.getLastname(), Utils.LocalDateTimeToString(h.getBirthday()), String.format("%d", h.getDaysUntilBirthday())));
+		}
+
+		if (s != null) {
+			log.warn(s.toString());
+			String kind = s.getType().getName();
+			LocalDateTime ldt = s.getStart();
+			Duration diff = Duration.between(ldt, LocalDateTime.now());
+			msgs.add(String.format("Last sport activity was: %s at %s and was %s ago.", kind, Utils.LocalDateTimeToString(ldt), Utils.DurationToString(diff)));
+		}
+
+		if (m != null) {
+			Duration diff2 = Duration.between(m.getStart(), LocalDateTime.now());
+			msgs.add(String.format("Last meditation was at %s and was %s ago.", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
+		}
 
 		model.addAttribute("msgs", msgs);
 		return "index";
