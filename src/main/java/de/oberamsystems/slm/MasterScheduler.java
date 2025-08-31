@@ -2,6 +2,7 @@ package de.oberamsystems.slm;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -44,7 +45,7 @@ public class MasterScheduler {
 			return;
 		}
 
-		String subject = "[SLM] upcoming events";
+		String subject = "[SLM] 📅 upcoming events on " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("E, dd.MM.yyy"));
 
 		mailer.sendHtmlEmail(subject, nrs);
 	}
