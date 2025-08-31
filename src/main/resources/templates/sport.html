@@ -61,7 +61,7 @@
 					<td th:text="${e.type.name}"></td>
 					<td th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
 					<td th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${e.duration}"></td>
+					<td th:text="${{e.duration}}"></td>
 			</tbody>
 		</table>
 	</div>

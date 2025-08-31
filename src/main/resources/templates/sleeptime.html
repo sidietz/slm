@@ -62,7 +62,7 @@
 					<td th:text="${e.id}"></td>
 					<td th:text="${#temporals.format(e.gotobed, 'dd.MM.yyyy HH:mm')}"></td>
 					<td th:text="${#temporals.format(e.getup, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${e.sleeptime}"></td>
+					<td th:text="${{e.sleeptime}}"></td>
 			</tbody>
 		</table>
 	</div>
