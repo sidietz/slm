@@ -27,7 +27,7 @@ public class SecurityConfig {
 						.requestMatchers("/sport", "/add-sport").permitAll()
 						.requestMatchers("/human", "/human.html", "/add-human", "/add-human.html").permitAll()
 						.requestMatchers("/meditation", "/add-meditation").permitAll()
-						.requestMatchers("/traintrip", "/traintrip.html", "/add-traintrip", "/add-traintrip.html").permitAll()
+						.requestMatchers("/traintrip", "/traintrip.html", "/trainstation", "/trainstation.html", "/add-traintrip", "/add-traintrip.html", "/add-trainstation", "/add-trainstation.html").permitAll()
 						.requestMatchers("/api/sleeptimes").permitAll()
 						.requestMatchers("/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());

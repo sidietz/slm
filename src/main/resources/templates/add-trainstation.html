@@ -6,7 +6,7 @@
 	rel="stylesheet" />
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
 	defer></script>
-<title>add traintrip</title>
+<title>add trainstation</title>
 
 </head>
 <body>
@@ -19,30 +19,14 @@
 			<li class="nav-item"><a class="nav-link" th:href="@{/add-trainstation}">add trainstation</a></li>
 		</ul>
 	</nav>
-	<h2>add traintrip</h2>
-	<form action="#" th:action="@{/add-traintrip}" th:object="${traintrip}"
+	<h2>add trainstation</h2>
+	<form action="#" th:action="@{/add-trainstation}" th:object="${trainstation}"
 		method="post">
 		<p>
-			line: <input type="text" th:field="*{line}" />
+			ds100: <input type="text" th:field="*{ds100}" />
 		</p>
 		<p>
-			<select class="form-select" name="selectOrigin"
-				onchange="updateId(event)" th:field="*{origin}">
-				<option th:each="s : ${traintrips}" th:value="${s.id}"
-					th:text="${s.ds100 + ' - ' + s.name}"></option>
-			</select>
-		<p>
-				<p>
-			<select class="form-select" name="selectDestination"
-				onchange="updateId(event)" th:field="*{destination}">
-				<option th:each="s : ${traintrips}" th:value="${s.id}"
-					th:text="${s.ds100 + ' - ' + s.name}"></option>
-			</select>
-		<p>
-			start: <input type="datetime-local" th:field="*{start}" />
-		</p>
-		<p>
-			end: <input type="datetime-local" th:field="*{end}" />
+			name: <input type="text" th:field="*{name}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

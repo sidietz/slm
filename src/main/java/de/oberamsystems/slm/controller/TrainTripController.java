@@ -1,15 +1,20 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import de.oberamsystems.slm.model.Human;
+import de.oberamsystems.slm.model.TrainStation;
+import de.oberamsystems.slm.model.TrainStationRepository;
 import de.oberamsystems.slm.model.TrainTrip;
 import de.oberamsystems.slm.model.TrainTripRepository;
 
@@ -47,6 +52,16 @@ public class TrainTripController {
 		return "traintrip";
 	}
 	
+	@GetMapping({"/trainstation.html", "/trainstations.html", "/trainstation", "/trainstations"})
+	public String index(Model model) {
+		List<TrainStation> tss = stationRepo.findAll(Sort.by("ds100"));
+		//log.warn(s.toString());
+		//String msg = String.format("Last sport activity was: %s at %s and was %s ago.", kind, Utils.LocalDateTimeToString(ldt), Utils.DurationToString(diff));
+		
+		model.addAttribute("trainstations", tss);
+		return "trainstation";
+	}
+	
 	@GetMapping("/add-traintrip")
 	public String addTrainTrip(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("traintrip", new TrainTrip());
@@ -55,11 +70,25 @@ public class TrainTripController {
 	}
 	
 	@PostMapping("/add-traintrip")
-	public String submitSport(@ModelAttribute TrainTrip tt, Model model) {
+	public String submitTrainTrip(@ModelAttribute TrainTrip tt, Model model) {
 		model.addAttribute("stations", stationRepo.findAll());
 		repo.save(tt);
 		model.addAttribute("traintrip", tt);
 		return "add-traintrip";
+	}
+	
+	@GetMapping("/add-trainstation")
+	public String addTrainStation(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("trainstation", new TrainStation());
+		return "add-trainstation";
+	}
+	
+	@PostMapping("/add-trainstation")
+	public String submitTrainStation(@ModelAttribute TrainStation ts, Model model) {
+		model.addAttribute("stations", stationRepo.findAll());
+		stationRepo.save(ts);
+		model.addAttribute("trainstation", ts);
+		return "add-trainstation";
 	}
 	
 	
