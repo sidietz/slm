@@ -37,7 +37,7 @@ public class SportController {
 	    LocalDateTime maxDate = repo.findMaxDate();
 
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusDays(1); //fixes off by one bug
-	    maxDate = maxDate == null ? LocalDateTime.now().plusDays(7) : maxDate;
+	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
 
 		model.addAttribute("sports", repo.findByStartBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
