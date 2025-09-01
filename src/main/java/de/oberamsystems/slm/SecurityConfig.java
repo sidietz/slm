@@ -22,6 +22,7 @@ public class SecurityConfig {
 		http.cors(Customizer.withDefaults()).csrf(Customizer.withDefaults())
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index", "/index.html", "/login/*", "/error", "/webjars/**", "/css/**").permitAll()
+						.requestMatchers("/imprint", "/imprint.html").permitAll()
 						.requestMatchers("/activity", "/add-activity").permitAll()
 						.requestMatchers("/sleeptime", "/sleeptime-bb", "/add-sleeptime").permitAll()
 						.requestMatchers("/event", "/event.html", "/add-event", "/add-event.html").permitAll()
