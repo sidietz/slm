@@ -1,6 +1,5 @@
 package de.oberamsystems.slm;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -49,9 +48,4 @@ public class MasterScheduler {
 
 		mailer.sendHtmlEmail(subject, nrs);
 	}
-
-	private static String humanReadableFormat(Duration duration) {
-		return duration.toString().substring(2).replaceAll("(\\d[HMS])(?!$)", "$1 ").toLowerCase();
-	}
-
 }

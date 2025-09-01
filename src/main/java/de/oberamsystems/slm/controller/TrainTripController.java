@@ -12,7 +12,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import de.oberamsystems.slm.model.Human;
 import de.oberamsystems.slm.model.TrainStation;
 import de.oberamsystems.slm.model.TrainStationRepository;
 import de.oberamsystems.slm.model.TrainTrip;
