@@ -30,6 +30,7 @@ public class SecurityConfig {
 						.requestMatchers("/human", "/human.html", "/add-human", "/add-human.html").permitAll()
 						.requestMatchers("/meditation", "/add-meditation").permitAll()
 						.requestMatchers("/traintrip", "/traintrip.html", "/trainstation", "/trainstation.html", "/add-traintrip", "/add-traintrip.html", "/add-trainstation", "/add-trainstation.html").permitAll()
+						.requestMatchers("/purchase", "/purchase.html", "/vendor", "/vendor.html", "/add-purchase", "/add-purchase.html", "/add-vendor", "/add-vendor.html").permitAll()
 						.requestMatchers("/api/sleeptimes").permitAll()
 						.requestMatchers("/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());
