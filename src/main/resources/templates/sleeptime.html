@@ -45,7 +45,6 @@
 					<td>gotobed</td>
 					<td>getup</td>
 					<td>sleeptime</td>
-
 				</tr>
 			</thead>
 			<tbody>
@@ -54,6 +53,7 @@
 					<td th:text="${#temporals.format(e.gotobed, 'dd.MM.yyyy HH:mm')}"></td>
 					<td th:text="${#temporals.format(e.getup, 'dd.MM.yyyy HH:mm')}"></td>
 					<td th:text="${{e.sleeptime}}"></td>
+				</tr>
 			</tbody>
 		</table>
 	</div>
