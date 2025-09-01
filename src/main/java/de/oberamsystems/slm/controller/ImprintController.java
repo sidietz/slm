@@ -25,8 +25,9 @@ public class ImprintController {
 		List<String> msgs = new ArrayList<String>();
 		msgs.add("SLM - simon's life manager");
 		msgs.add(String.format("version: %s", version));
+		msgs.add("This software is licensed under AGPL-3.");
 
 		model.addAttribute("msgs", msgs);
-		return "index";
+		return "imprint";
 	}
 }
