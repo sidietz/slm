@@ -27,6 +27,7 @@ public class CalendarEventController {
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
 			Model model) {
 		fromDate = fromDate == null ? LocalDateTime.now().minusDays(28) : fromDate;
+		toDate = toDate == null ? repo.findMaxDate() : toDate;
 		toDate = toDate == null ? LocalDateTime.now() : toDate;
 
 		LocalDateTime minDate = repo.findMinDate();
