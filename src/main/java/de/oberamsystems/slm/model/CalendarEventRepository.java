@@ -15,6 +15,7 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
 	List<CalendarEvent> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate, Sort sort);
 
 	List<CalendarEvent> findByStartAfter(LocalDateTime ldt);
+	List<CalendarEvent> findByStartAfter(LocalDateTime ldt, Sort sort);
 	
 	@Query("SELECT MIN(s.start) FROM CalendarEvent s")
     LocalDateTime findMinDate();

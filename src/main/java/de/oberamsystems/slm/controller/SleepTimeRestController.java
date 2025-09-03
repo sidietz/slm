@@ -3,6 +3,7 @@ package de.oberamsystems.slm.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +18,6 @@ public class SleepTimeRestController {
 	
 	@GetMapping("/api/sleeptimes")
 	public List<SleepTime> getSleepTimes() {
-		return repo.findAll();
+		return repo.findAll(Sort.by(Sort.Direction.ASC, "gotobed"));
 	}
 }
