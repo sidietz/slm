@@ -58,21 +58,20 @@
 	<script>
 	
 	async function getData() {
-		  var url = "http://localhost:8080/api/sleeptimes";
+		  let url = "http://localhost:8080/api/sleeptimes";
 		  try {
-		    var response = await fetch(url);
+		    let response = await fetch(url);
 		    if (!response.ok) {
 		      throw new Error(`Response status: ${response.status}`);
 		    }
-		    var result = await response.json();
-		    console.log(result);
+		    let result = await response.json();
 		  } catch (error) {
 		    console.error(error.message);
 		  }
 		}
 	
 	function getData2() {
-		var url = "http://localhost:8080/api/sleeptimes";
+		let url = "http://localhost:8080/api/sleeptimes";
 		fetch(url).then((response) => {
 			return response.json();
 		}).then((data) => {
@@ -82,18 +81,27 @@
 	}
 	
 	function parseDuration(rawDuration) {
-		var hours = Number(rawDuration.slice(2,4));
-		var minutes = Number(rawDuration.slice(5,7));
+		let hourmins = rawDuration.slice(2, rawDuration.length - 1);
+		if (rawDuration.includes("M")) {
+			hourmins = rawDuration.slice(2, rawDuration.length - 1);
+		} else {
+			hourmins = rawDuration.slice(2, rawDuration.length);
+		}
+		let tmp = hourmins.split("H");
+		let hours = Number(tmp[0]);
+		let minutes = Number(tmp[1]);
 		return hours + (minutes / 60);
 	}
 	
 	function convertToBb(rawData) {
-		var x = ["x"];
-		var result = ["data1"];
+		let x = ["x"];
+		let result = ["data1"];
 		
-		for (var e of rawData) {
-			x.push(e.gotobed.split("T")[0]);
-			result.push(parseDuration(e.sleeptime));
+		for (let e of rawData) {
+			let ldt = e.gotobed.split("T")[0];
+			let st = parseDuration(e.sleeptime);
+			x.push(ldt);
+			result.push(st);
 		}
 
 		chart.load({
