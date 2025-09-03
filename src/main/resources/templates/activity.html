@@ -19,12 +19,7 @@
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
-	<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
-		<ul class="navbar-nav">
-			<li class="nav-item"><a class="nav-link" th:href="@{/activity}">activity</a></li>
-			<li class="nav-item"><a class="nav-link" th:href="@{/add-activity}">add activity</a></li>
-		</ul>
-	</nav>
+	<div th:insert="~{header :: activityheader}">...</div>
 	<h2>activity</h2>
 
 	<form method="get" action="/activity" id="filterForm" class="mb-3">

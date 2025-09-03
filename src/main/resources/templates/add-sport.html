@@ -11,13 +11,7 @@
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
-	<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
-		<ul class="navbar-nav">
-			<li class="nav-item"><a class="nav-link" th:href="@{/sport}">sport</a></li>
-			<li class="nav-item"><a class="nav-link" th:href="@{/add-sport}">add
-					sport</a></li>
-		</ul>
-	</nav>
+	<div th:insert="~{header :: sportheader}">...</div>
 	<h2>add sport</h2>
 	<form action="#" th:action="@{/add-sport}" th:object="${sport}"
 		method="post">

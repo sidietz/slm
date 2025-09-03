@@ -11,13 +11,7 @@
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
-	<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
-		<ul class="navbar-nav">
-			<li class="nav-item"><a class="nav-link" th:href="@{/human}">human</a></li>
-			<li class="nav-item"><a class="nav-link" th:href="@{/add-human}">add
-					human</a></li>
-		</ul>
-	</nav>
+	<div th:insert="~{header :: humanheader}">...</div>
 	<h2>add human</h2>
 	<form action="#" th:action="@{/add-human}" th:object="${human}"
 		method="post">
