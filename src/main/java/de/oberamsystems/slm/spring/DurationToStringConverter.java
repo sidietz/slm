@@ -11,6 +11,5 @@ public class DurationToStringConverter implements Converter<Duration, String> {
 	@Override
 	public String convert(Duration source) {
 		return String.format("%d", source.toHours());
-
 	}
 }

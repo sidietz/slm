@@ -33,7 +33,7 @@ public class EmailService {
 		message.setSubject(subject);
 		message.setText(body);
 
-		// mailSender.send(message);
+		mailSender.send(message);
 	}
 
 	public void sendHtmlEmail(String subject, List<CalendarEvent> events) {

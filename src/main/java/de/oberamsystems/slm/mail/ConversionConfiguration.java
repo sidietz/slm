@@ -13,20 +13,4 @@ public class ConversionConfiguration {
 	public Converter<LocalDateTime, String> localDatetimeConverter() {
 		return new LocalDateTimeConverter();
 	}
-
-	
-	/*
-	@Autowired
-	private ConverterRegistry converterRegistry;
-
-	public ConversionConfiguration(ConverterRegistry converterRegistry) {
-		this.converterRegistry = converterRegistry;
-	}
-
-	@PostConstruct
-	public void registerConverters() {
-		converterRegistry.addConverter(new LocalDateTimeConverter());
-	}
-	*/
-
 }

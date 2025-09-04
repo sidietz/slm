@@ -27,12 +27,7 @@ public class ConversionServiceProvider {
 
 	private Set<Converter<?, ?>> getConverters() {
 		Set<Converter<?, ?>> converters = new HashSet<Converter<?, ?>>();
-
 		converters.add(converter);
-		// add here more custom converters, either as spring bean references or directly
-		// instantiated
-
 		return converters;
 	}
-
 }
