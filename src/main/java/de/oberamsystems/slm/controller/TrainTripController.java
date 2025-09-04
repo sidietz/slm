@@ -34,7 +34,7 @@ public class TrainTripController {
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
 			Model model) {
-		fromDate = fromDate == null ? LocalDateTime.now().minusDays(28) : fromDate;
+		fromDate = fromDate == null ? LocalDateTime.now().minusMonths(1) : fromDate; // TODO: fix by setting time to start of day
 		toDate = toDate == null ? LocalDateTime.now() : toDate;
 
 		LocalDateTime minDate = repo.findMinDate();
@@ -43,6 +43,7 @@ public class TrainTripController {
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusDays(1); //fixes off by one bug
 	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
 
+	    log.warn(fromDate.toString());
 		model.addAttribute("traintrips", repo.findByStartBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
@@ -54,9 +55,6 @@ public class TrainTripController {
 	@GetMapping({"/trainstation.html", "/trainstations.html", "/trainstation", "/trainstations"})
 	public String index(Model model) {
 		List<TrainStation> tss = stationRepo.findAll(Sort.by("ds100"));
-		//log.warn(s.toString());
-		//String msg = String.format("Last sport activity was: %s at %s and was %s ago.", kind, Utils.LocalDateTimeToString(ldt), Utils.DurationToString(diff));
-		
 		model.addAttribute("trainstations", tss);
 		return "trainstation";
 	}
@@ -89,8 +87,4 @@ public class TrainTripController {
 		model.addAttribute("trainstation", ts);
 		return "add-trainstation";
 	}
-	
-	
-	
-	
 }
