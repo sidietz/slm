@@ -1,0 +1,36 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<title>add gratitude</title>
+
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: gratitudeheader}">...</div>
+	<h2>add gratitude</h2>
+	<form action="#" th:action="@{/add-gratitude}" th:object="${gratitude}"
+		method="post">
+		<p>
+			start: <input type="date" th:field="*{date}" />
+		</p>
+		<p>
+			<textarea class="form-control" id="description" rows="5"
+                              name="description"
+                              placeholder="Description" th:field="*{description}"
+                              required="required"></textarea>
+
+			
+			<!-- text: <input style="resize:both;" type="textarea" th:field="*{description}"> -->
+		</p>
+		<p>
+			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="reset" class="btn btn-secondary">Reset</button>
+		</p>
+	</form>
+</body>
+</html>

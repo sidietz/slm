@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<link href="../static/css/table.css" th:href="@{/css/table.css}"
+	rel="stylesheet" />
+
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css">
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<script
+	src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+<script
+	src="https://cdn.jsdelivr.net/npm/luxon@3.7.1/build/global/luxon.min.js"></script>
+<title>SLM</title>
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: gratitudeheader}">...</div>
+	<h2>gratitude</h2>
+	<form method="get" action="/gratitude" id="filterForm" class="mb-3">
+		<div class="col-auto flex-grow-1">
+			<div id="date-slider"></div>
+		</div>
+		<input type="hidden" name="fromDate" id="fromDate"
+			th:value="${fromDate}"> <input type="hidden" name="toDate"
+			id="toDate" th:value="${toDate}">
+		<div class="col-auto">
+			<button type="submit" class="btn btn-primary">Apply</button>
+			<a href="/gratitude" class="btn btn-secondary">Reset</a>
+		</div>
+	</form>
+	<div class="list" th:unless="${#lists.isEmpty(gratitudes)}">
+		<table class="table table-striped table-bordered">
+			<thead>
+				<tr>
+					<td>ID</td>
+					<td>date</td>
+					<td>description</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="e : ${gratitudes}">
+					<td th:text="${e.id}"></td>
+					<td th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}"></td>
+					<td th:text="${e.description}"></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+
+	<script>
+	const DateTime = luxon.DateTime;
+    const slider = document.getElementById('date-slider');
+    
+    function timestamp(str){
+    	const tmp = new Date(str).getTime();
+    	return tmp;
+    }
+    
+    const defaultMinDate = timestamp("[[${minDate}]]");
+    const defaultMaxDate = timestamp("[[${maxDate}]]");
+    //(DateTime.fromISO("/*[[${maxDate}]]*/")).toMillis(); //DateTime.now().toISO()).toMillis();
+    minDate = document.getElementById('fromDate').value;
+    maxDate = document.getElementById('toDate').value;
+    
+    console.log(minDate);
+		
+    noUiSlider.create(slider, {
+        start: [minDate, maxDate],
+        connect: true,
+        range: {
+            min: timestamp(defaultMinDate),
+            max: timestamp(defaultMaxDate)
+        },
+        step: 24 * 60 * 60 * 1000, // 1 day in ms
+        tooltips: [true, true],
+        format: {
+            to: value => DateTime.fromMillis(value).toFormat("yyyy-MM-dd"),
+            from: value => DateTime.fromISO(value).toMillis()
+        }
+    });
+
+    slider.noUiSlider.on('update', function(values, handle) {
+        const fromISO = DateTime.fromFormat(values[0], "yyyy-MM-dd").toISO();
+        const toISO = DateTime.fromFormat(values[1], "yyyy-MM-dd").toISO();
+        
+        document.getElementById('fromDate').value = fromISO;
+        document.getElementById('toDate').value = toISO;
+    });
+	
+	
+	</script>
+
+</body>
+</html>
