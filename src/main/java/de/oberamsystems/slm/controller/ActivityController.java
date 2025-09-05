@@ -1,6 +1,5 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.slf4j.Logger;
