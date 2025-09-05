@@ -48,7 +48,6 @@ public class GratitudeController {
 	@GetMapping("/add-gratitude")
 	public String addEvent(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("gratitude", new Gratitude());
-		log.warn(String.format("%d", id));
 		return "add-gratitude";
 	}
 	
