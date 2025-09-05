@@ -23,6 +23,14 @@ CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFEREN
 
 CREATE TABLE gratitude(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
 
+CREATE TABLE trainline(id BIGSERIAL PRIMARY KEY, name TEXT, description TEXT);
+CREATE TABLE trainstation2(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
+CREATE TABLE line_station(line_id BIGINT NOT NULL REFERENCES trainline(id), station_id BIGINT NOT NULL REFERENCES trainstation2(id));
+
+CREATE TABLE train_trip2(id BIGSERIAL PRIMARY KEY, line_id BIGSERIAL NOT NULL REFERENCES trainline(id),
+origin_id BIGSERIAL NOT NULL REFERENCES trainstation2(id), destination_id BIGSERIAL NOT NULL REFERENCES trainstation2(id),
+starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+
 
 CREATE OR REPLACE FUNCTION this_years_birthday(_dut date)
   RETURNS date

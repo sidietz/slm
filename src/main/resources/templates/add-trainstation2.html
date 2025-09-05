@@ -1,0 +1,47 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<title>add trainstation2</title>
+
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: trainheader}"></div>
+	<h2>add trainstation2</h2>
+	<form action="#" th:action="@{/add-trainstation2}" th:object="${trainstation}"
+		method="post">
+		<input type="hidden" id="lineId" value=0 th:field="*{lineId}"/>
+		<p>
+			<select class="form-select" name="selectLine"
+				onchange="updateId(this)">
+				<option th:each="l : ${lines}" th:value="${l.id}"
+					th:text="${l.name + ' - ' + l.description}"></option>
+			</select>
+		<p>
+		<p>
+			ds100: <input type="text" th:field="*{ds100}" />
+		</p>
+		<p>
+			name: <input type="text" th:field="*{name}" />
+		</p>
+		<p>
+			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="reset" class="btn btn-secondary">Reset</button>
+		</p>
+	</form>
+<script>
+function updateId (objDropDown) {
+    var objHidden = document.getElementById("lineId");
+    console.log(objHidden.value);
+    console.log(objDropDown.value);
+    objHidden.value = objDropDown.value; 
+}
+</script>
+</body>
+
+</html>

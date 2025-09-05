@@ -30,6 +30,7 @@ public class SecurityConfig {
 						.requestMatchers("/human", "/human.html", "/add-human", "/add-human.html").permitAll()
 						.requestMatchers("/meditation", "/add-meditation").permitAll()
 						.requestMatchers("/traintrip", "/traintrip.html", "/trainstation", "/trainstation.html", "/add-traintrip", "/add-traintrip.html", "/add-trainstation", "/add-trainstation.html").permitAll()
+						.requestMatchers("/traintrip2", "/traintrip2.html", "/trainstation2", "/trainstation2.html", "/add-traintrip2", "/add-traintrip2.html", "/add-trainstation2", "/add-trainstation2.html", "/add-trainline", "/add-trainline.html").permitAll()
 						.requestMatchers("/purchase", "/purchase.html", "/vendor", "/vendor.html", "/add-purchase", "/add-purchase.html", "/add-vendor", "/add-vendor.html").permitAll()
 						.requestMatchers("/habit", "/habit.html", "/habitentry", "/habitentry.html", "/add-habit", "/add-habit.html", "/add-habitentry", "/add-habitentry.html").permitAll()
 						.requestMatchers("/gratitude", "/gratitude.html", "/add-gratitude", "/add-gratitude.html").permitAll()
