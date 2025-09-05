@@ -43,7 +43,6 @@ public class TrainTripController {
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusDays(1); //fixes off by one bug
 	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
 
-	    log.warn(fromDate.toString());
 		model.addAttribute("traintrips", repo.findByStartBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
