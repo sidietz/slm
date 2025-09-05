@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.model;
 
-import java.util.Date;
+import java.time.LocalDate;
 
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -19,13 +19,13 @@ public class Purchase {
 	private float price;
 	@Column(name = "purchase_date", columnDefinition = "DATE")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
-	private Date purchaseDate;
+	private LocalDate purchaseDate;
 
 	
 	public Purchase() {
 	}
 	
-	public Purchase(long id, String title, Vendor vendor, float price, Date purchaseDate) {
+	public Purchase(long id, String title, Vendor vendor, float price, LocalDate purchaseDate) {
 		super();
 		this.id = id;
 		this.title = title;
@@ -62,11 +62,11 @@ public class Purchase {
 		this.price = price;
 	}
 
-	public Date getPurchaseDate() {
+	public LocalDate getPurchaseDate() {
 		return purchaseDate;
 	}
 
-	public void setPurchaseDate(Date purchaseDate) {
+	public void setPurchaseDate(LocalDate purchaseDate) {
 		this.purchaseDate = purchaseDate;
 	}
 	

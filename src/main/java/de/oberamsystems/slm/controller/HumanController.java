@@ -27,23 +27,18 @@ public class HumanController {
 	@GetMapping({"/human.html", "/humans.html", "/human", "/humans"})
 	public String index(Model model) {
 		List<Human> humans = repo.findAllByOrderByDaysUntilBirthdayAsc();
-		//log.warn(s.toString());
-		//String msg = String.format("Last sport activity was: %s at %s and was %s ago.", kind, Utils.LocalDateTimeToString(ldt), Utils.DurationToString(diff));
-		
 		model.addAttribute("humans", humans);
 		return "human";
 	}
 	
 	@GetMapping({"/add-human", "/add-human.html"})
-	public String addSport(@RequestParam(required = false) Long id, Model model) {
+	public String addHuman(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("human", new Human());
-		log.warn(String.format("%d", id));
 		return "add-human";
 	}
 	
 	@PostMapping({"/add-human", "/add-human.html"})
-	public String submitSport(@ModelAttribute Human human, Model model) {
-		log.warn(human.toString());
+	public String submitHuman(@ModelAttribute Human human, Model model) {
 		repo.save(human);
 		model.addAttribute("human", human);
 		return "add-human";

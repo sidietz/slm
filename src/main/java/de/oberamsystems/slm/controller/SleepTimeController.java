@@ -52,7 +52,10 @@ public class SleepTimeController {
 
 	@GetMapping("/add-sleeptime")
 	public String addSleepTime(Model model) {
-		model.addAttribute("sleeptime", new SleepTime());
+		SleepTime st = new SleepTime();
+		st.setGotobed(LocalDateTime.now().minusHours(9));
+		st.setGetup(LocalDateTime.now());
+		model.addAttribute("sleeptime", st);
 		return "add-sleeptime";
 	}
 

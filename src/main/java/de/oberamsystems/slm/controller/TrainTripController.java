@@ -61,7 +61,10 @@ public class TrainTripController {
 	
 	@GetMapping("/add-traintrip")
 	public String addTrainTrip(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("traintrip", new TrainTrip());
+		TrainTrip tt = new TrainTrip();
+		tt.setStart(LocalDateTime.now());
+		tt.setEnd(LocalDateTime.now());
+		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findAll());
 		return "add-traintrip";
 	}

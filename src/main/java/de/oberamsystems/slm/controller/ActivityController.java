@@ -1,5 +1,6 @@
 package de.oberamsystems.slm.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.slf4j.Logger;
@@ -49,7 +50,10 @@ public class ActivityController {
 	
 	@GetMapping("/add-activity")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("activity", new Activity());
+		Activity a = new Activity();
+		a.setStart(LocalDateTime.now());
+		a.setEnd(LocalDateTime.now());
+		model.addAttribute("activity", a);
 		model.addAttribute("activities", typeRepo.findAll());
 		return "add-activity";
 	}

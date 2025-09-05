@@ -1,5 +1,7 @@
 package de.oberamsystems.slm.controller;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -50,6 +52,8 @@ public class PurchaseController {
 	
 	@GetMapping("/add-purchase")
 	public String addPurchase(@RequestParam(required = false) Long id, Model model) {
+		Purchase p = new Purchase();
+		p.setPurchaseDate(LocalDate.now());
 		model.addAttribute("purchase", new Purchase());
 		model.addAttribute("vendors", vendorRepo.findAll());
 		return "add-purchase";

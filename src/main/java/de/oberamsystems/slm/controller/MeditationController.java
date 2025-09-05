@@ -45,7 +45,10 @@ public class MeditationController {
 	
 	@GetMapping("/add-meditation")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("meditation", new MeditationSession());
+		MeditationSession ms = new MeditationSession();
+		ms.setStart(LocalDateTime.now());
+		ms.setEnd(LocalDateTime.now());
+		model.addAttribute("meditation", ms);
 		log.warn(String.format("%d", id));
 		return "add-meditation";
 	}

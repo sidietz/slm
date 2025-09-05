@@ -2,6 +2,8 @@ package de.oberamsystems.slm.model;
 
 import java.time.LocalDate;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import jakarta.persistence.*;
 
 @Entity
@@ -10,7 +12,8 @@ public class Gratitude {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "DATE")
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate date;
 	private String description;
 	

@@ -72,7 +72,9 @@ public class HabitController {
 	
 	@GetMapping("/add-habitentry")
 	public String addHabitEntry(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("habitentry", new HabitEntry());
+		HabitEntry e = new HabitEntry();
+		e.setLastDone(LocalDateTime.now());
+		model.addAttribute("habitentry", e);
 		model.addAttribute("habits", repo.findAll());
 		return "add-habitentry";
 	}

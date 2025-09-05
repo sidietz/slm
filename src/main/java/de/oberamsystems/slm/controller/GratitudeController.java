@@ -31,13 +31,13 @@ public class GratitudeController {
 		toDate = toDate == null ? repo.findMaxDate() : toDate;
 		toDate = toDate == null ? LocalDate.now() : toDate;
 
-		LocalDate minDate = repo.findMinDate();
+		LocalDate minDate = repo.findMinDate().minusDays(1);
 	    LocalDate maxDate = repo.findMaxDate();
 	    
 	    minDate = minDate == null ? LocalDate.now().minusDays(1) : minDate;
 	    maxDate = maxDate == null ? LocalDate.now() : maxDate;
 
-		model.addAttribute("gratitudes", repo.findByDateAfter(LocalDate.now().minusDays(1), Sort.by("date"))); // find getup time instead of gotobed
+		model.addAttribute("gratitudes", repo.findByDateAfter(fromDate, Sort.by("date"))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
 		model.addAttribute("minDate", minDate); //fixes off by one bug
@@ -47,7 +47,9 @@ public class GratitudeController {
 	
 	@GetMapping("/add-gratitude")
 	public String addEvent(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("gratitude", new Gratitude());
+		Gratitude g = new Gratitude();
+		g.setDate(LocalDate.now());
+		model.addAttribute("gratitude", g);
 		return "add-gratitude";
 	}
 	

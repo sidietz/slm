@@ -47,14 +47,15 @@ public class CalendarEventController {
 	
 	@GetMapping("/add-event")
 	public String addEvent(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("event", new CalendarEvent());
-		log.warn(String.format("%d", id));
+		CalendarEvent e = new CalendarEvent();
+		e.setStart(LocalDateTime.now());
+		e.setEnd(LocalDateTime.now());
+		model.addAttribute("event", e);
 		return "add-event";
 	}
 	
 	@PostMapping("/add-event")
 	public String submitEvent(@ModelAttribute CalendarEvent event, Model model) {
-		log.warn(event.toString());
 		repo.save(event);
 		model.addAttribute("event", event);
 		return "add-event";

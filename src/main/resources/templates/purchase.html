@@ -30,7 +30,7 @@
 					<td th:text="${e.title}"></td>
 					<td th:text="${e.vendor.name}"></td>
 					<td th:text="${e.price}"></td>
-					<td th:text="${#dates.format(e.purchaseDate, 'dd.MM.yyyy')}"></td>
+					<td th:text="${#temporals.format(e.purchaseDate, 'dd.MM.yyyy')}"></td>
 				</tr>
 			</tbody>
 		</table>

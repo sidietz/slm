@@ -49,7 +49,10 @@ public class SportController {
 	
 	@GetMapping("/add-sport")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("sport", new SportSession());
+		SportSession s = new SportSession();
+		s.setStart(LocalDateTime.now());
+		s.setEnd(LocalDateTime.now());
+		model.addAttribute("sport", s);
 		model.addAttribute("sports", typeRepo.findAll());
 		return "add-sport";
 	}
