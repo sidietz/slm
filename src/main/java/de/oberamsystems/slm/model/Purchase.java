@@ -69,7 +69,4 @@ public class Purchase {
 	public void setPurchaseDate(LocalDate purchaseDate) {
 		this.purchaseDate = purchaseDate;
 	}
-	
-	
-	
 }

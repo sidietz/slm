@@ -36,7 +36,4 @@ public class SportType {
 	public String toString() {
 		return String.format("SportType [name=%s]", name);
 	}
-	
-	
-
 }

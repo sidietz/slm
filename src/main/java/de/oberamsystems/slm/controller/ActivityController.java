@@ -64,8 +64,4 @@ public class ActivityController {
 		model.addAttribute("activity", activity);
 		return "add-activity";
 	}
-	
-	
-	
-	
 }

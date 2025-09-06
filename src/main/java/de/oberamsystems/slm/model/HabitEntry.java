@@ -45,6 +45,4 @@ public class HabitEntry {
 	public void setLastDone(LocalDateTime lastDone) {
 		this.lastDone = lastDone;
 	}
-	
-	
 }

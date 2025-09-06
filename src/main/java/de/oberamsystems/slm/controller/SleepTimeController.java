@@ -65,5 +65,4 @@ public class SleepTimeController {
 		model.addAttribute("sleeptime", sleepTime);
 		return "add-sleeptime";
 	}
-
 }

@@ -79,8 +79,4 @@ public class PurchaseController {
 		model.addAttribute("vendor", ts);
 		return "add-vendor";
 	}
-	
-	
-	
-	
 }

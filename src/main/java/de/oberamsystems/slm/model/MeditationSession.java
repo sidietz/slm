@@ -60,8 +60,4 @@ public class MeditationSession {
 	public String toString() {
 		return String.format("SportSession [id=%s, start=%s, end=%s, duration=%s]", id, start, end, duration);
 	}
-	
-	
-	
-
 }

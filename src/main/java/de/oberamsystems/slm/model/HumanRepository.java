@@ -9,5 +9,4 @@ public interface HumanRepository extends JpaRepository<Human, Long> {
 	public Human findFirstByOrderByDaysUntilBirthdayAsc();
 
 	public List<Human> findAllByOrderByDaysUntilBirthdayAsc();
-
 }

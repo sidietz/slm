@@ -9,5 +9,4 @@ public interface TrainStation2Repository extends JpaRepository<TrainStation2, Lo
 	public List<TrainStation2> findByLinesIn(List<TrainLine> lines);
 	
 	public List<TrainStation2> findByLines_Id(@Param("id") long id);
-	
 }

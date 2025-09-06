@@ -64,8 +64,4 @@ public class SportController {
 		model.addAttribute("sport", sport);
 		return "add-sport";
 	}
-	
-	
-	
-	
 }

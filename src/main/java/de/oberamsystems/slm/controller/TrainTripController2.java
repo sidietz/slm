@@ -125,5 +125,4 @@ public class TrainTripController2 {
 		model.addAttribute("trainline", new TrainLine());
 		return "add-trainline";
 	}
-	
 }

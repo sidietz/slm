@@ -43,5 +43,4 @@ public class HumanController {
 		model.addAttribute("human", human);
 		return "add-human";
 	}
-	
 }

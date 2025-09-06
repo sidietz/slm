@@ -57,5 +57,4 @@ public class Habit {
 	public void setEntries(List<HabitEntry> entries) {
 		this.entries = entries;
 	}
-
 }

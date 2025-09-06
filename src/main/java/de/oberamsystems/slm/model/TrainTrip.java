@@ -96,9 +96,4 @@ public class TrainTrip {
 	public Long getId() {
 		return id;
 	}
-	
-	
-	
-	
-
 }

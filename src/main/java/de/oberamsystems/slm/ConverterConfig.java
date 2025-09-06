@@ -13,5 +13,4 @@ public class ConverterConfig {
 	public Converter<Duration, String> durationConverter() {
 		return new DurationConverter();
 	}
-
 }

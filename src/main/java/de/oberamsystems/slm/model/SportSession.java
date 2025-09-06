@@ -84,8 +84,4 @@ public class SportSession {
 		return String.format("SportSession [id=%s, type=%s, start=%s, end=%s, duration=%s, comment=%s]", id, type,
 				start, end, duration, comment);
 	}
-	
-	
-	
-
 }
