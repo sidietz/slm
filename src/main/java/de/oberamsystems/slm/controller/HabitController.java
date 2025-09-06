@@ -70,6 +70,16 @@ public class HabitController {
 		return "habitentry";
 	}
 	
+	@GetMapping("/last-done-habitentry")
+	public String getLastDoneHabitEntries(
+			@RequestParam(required = false) Long id, Model model) {
+		id = id == null ? 0 : id;
+		model.addAttribute("habitId", id);
+		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
+		return "last-done-habitentry";
+	}
+
 	@GetMapping("/add-habitentry")
 	public String addHabitEntry(@RequestParam(required = false) Long id, Model model) {
 		HabitEntry e = new HabitEntry();
@@ -100,7 +110,4 @@ public class HabitController {
 		model.addAttribute("habit", ts);
 		return "add-habit";
 	}
-	
-	
-	
 }
