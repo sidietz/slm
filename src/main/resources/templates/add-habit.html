@@ -16,10 +16,10 @@
 	<form action="#" th:action="@{/add-habit}" th:object="${habit}"
 		method="post">
 		<p>
-			name: <input type="text" th:field="*{name}" />
+			name: <input class="form-control" type="text" th:field="*{name}" />
 		</p>
 		<p>
-			description: <input type="text" th:field="*{description}" />
+			description: <input class="form-control" type="text" th:field="*{description}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

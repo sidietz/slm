@@ -16,7 +16,7 @@
 	<form action="#" th:action="@{/add-gratitude}" th:object="${gratitude}"
 		method="post">
 		<p>
-			start: <input type="date" th:field="*{date}" />
+			start: <input class="form-control" type="date" th:field="*{date}" />
 		</p>
 		<p>
 			<textarea class="form-control" id="description" rows="5"

@@ -16,7 +16,7 @@
 	<form action="#" th:action="@{/add-vendor}" th:object="${vendor}"
 		method="post">
 		<p>
-			name: <input type="text" th:field="*{name}" />
+			name: <input class="form-control" type="text" th:field="*{name}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

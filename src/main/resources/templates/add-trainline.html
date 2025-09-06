@@ -12,14 +12,14 @@
 <body>
 	<div th:insert="~{header :: header}">...</div>
 	<div th:insert="~{header :: trainheader}"></div>
-	<h2>add trainstation2</h2>
+	<h2>add trainline</h2>
 	<form action="#" th:action="@{/add-trainline}" th:object="${trainline}"
 		method="post">
 		<p>
-			name: <input type="text" th:field="*{name}" />
+			name: <input class="form-control" type="text" th:field="*{name}" />
 		</p>
 		<p>
-			description: <input type="text" th:field="*{description}" />
+			description: <input class="form-control" type="text" th:field="*{description}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

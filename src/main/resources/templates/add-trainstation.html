@@ -16,10 +16,10 @@
 	<form action="#" th:action="@{/add-trainstation}" th:object="${trainstation}"
 		method="post">
 		<p>
-			ds100: <input type="text" th:field="*{ds100}" />
+			ds100: <input class="form-control" type="text" th:field="*{ds100}" />
 		</p>
 		<p>
-			name: <input type="text" th:field="*{name}" />
+			name: <input class="form-control" type="text" th:field="*{name}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

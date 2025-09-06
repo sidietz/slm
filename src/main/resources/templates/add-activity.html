@@ -22,16 +22,16 @@
 					th:text="${s.name}"></option>
 			</select>
 		<p>
-			title: <input type="text" th:field="*{title}" />
+			title: <input class="form-control" type="text" th:field="*{title}" />
 		</p>
 		<p>
-			place: <input type="text" th:field="*{location}" />
+			place: <input class="form-control" type="text" th:field="*{location}" />
 		</p>
 		<p>
-			start: <input type="datetime-local" th:field="*{start}" />
+			start: <input class="form-control" type="datetime-local" th:field="*{start}" />
 		</p>
 		<p>
-			end: <input type="datetime-local" th:field="*{end}" />
+			end: <input class="form-control" type="datetime-local" th:field="*{end}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

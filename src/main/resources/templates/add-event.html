@@ -16,16 +16,16 @@
 	<form action="#" th:action="@{/add-event}" th:object="${event}"
 		method="post">
 		<p>
-			title: <input type="text" th:field="*{title}">
+			title: <input class="form-control" type="text" th:field="*{title}">
 		</p>
 		<p>
-			start: <input type="datetime-local" th:field="*{start}" />
+			start: <input class="form-control" type="datetime-local" th:field="*{start}" />
 		</p>
 		<p>
-			end: <input type="datetime-local" th:field="*{end}" />
+			end: <input class="form-control" type="datetime-local" th:field="*{end}" />
 		</p>
 		<p>
-			description: <input type="text" th:field="*{description}">
+			description: <input class="form-control" type="text" th:field="*{description}">
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>
