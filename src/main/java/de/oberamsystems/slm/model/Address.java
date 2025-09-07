@@ -22,9 +22,8 @@ public class Address {
     private String country;
 
     public Address() {
-    	
     }
-    
+
     public Address(long id, Human human, String street, Integer streetnumber, String plz, String place,
 			String country) {
 		this.id = id;
