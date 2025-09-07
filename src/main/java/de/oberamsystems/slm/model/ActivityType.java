@@ -30,7 +30,4 @@ public class ActivityType {
 	public Long getId() {
 		return id;
 	}
-	
-	
-
 }

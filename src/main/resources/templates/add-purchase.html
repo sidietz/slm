@@ -7,7 +7,6 @@
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
 	defer></script>
 <title>add purchase</title>
-
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
@@ -23,13 +22,13 @@
 			</select>
 		</p>
 		<p>
-			title: <input type="text" th:field="*{title}" />
+			title: <input class="form-control" type="text" th:field="*{title}" />
 		</p>
 		<p>
-			price: <input type="number" step="0.01" th:field="*{price}" />
+			price: <input class="form-control" type="number" step="0.01" th:field="*{price}" />
 		</p>
 		<p>
-			buy date: <input type="date" th:field="*{purchaseDate}" />
+			buy date: <input class="form-control" type="date" th:field="*{purchaseDate}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

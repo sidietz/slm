@@ -13,7 +13,6 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @EnableWebSecurity
-
 public class SecurityConfig {
 
 	@Bean
@@ -30,10 +29,13 @@ public class SecurityConfig {
 						.requestMatchers("/human", "/human.html", "/add-human", "/add-human.html").permitAll()
 						.requestMatchers("/meditation", "/add-meditation").permitAll()
 						.requestMatchers("/traintrip", "/traintrip.html", "/trainstation", "/trainstation.html", "/add-traintrip", "/add-traintrip.html", "/add-trainstation", "/add-trainstation.html").permitAll()
+						.requestMatchers("/traintrip2", "/traintrip2.html", "/trainstation2", "/trainstation2.html", "/add-traintrip2", "/add-traintrip2.html", "/add-trainstation2", "/add-trainstation2.html", "/add-trainline", "/add-trainline.html").permitAll()
 						.requestMatchers("/purchase", "/purchase.html", "/vendor", "/vendor.html", "/add-purchase", "/add-purchase.html", "/add-vendor", "/add-vendor.html").permitAll()
-						.requestMatchers("/habit", "/habit.html", "/habitentry", "/habitentry.html", "/add-habit", "/add-habit.html", "/add-habitentry", "/add-habitentry.html").permitAll()
+						.requestMatchers("/habit", "/habit.html", "/habitentry", "/habitentry.html", "/add-habit", "/add-habit.html", "/add-habitentry", "/add-habitentry.html", "/last-done-habitentry").permitAll()
 						.requestMatchers("/gratitude", "/gratitude.html", "/add-gratitude", "/add-gratitude.html").permitAll()
-						.requestMatchers("/api/sleeptimes").permitAll()
+						.requestMatchers("/mood", "/mood.html", "/add-mood", "/add-mood.html", "/mood-bb", "/mood-bb.html").permitAll()
+						.requestMatchers("/book", "/book.html", "/author", "/author.html", "/press", "/press.html", "/readingsession", "/readingsession.html", "/add-book", "/add-book.html", "/add-author", "/add-author.html", "/add-press", "/add-press.html", "/add-reading-session", "/add-reading-session.html").permitAll()
+						.requestMatchers("/api/sleeptimes", "/api/moods").permitAll()
 						.requestMatchers("/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());
 		return http.build();

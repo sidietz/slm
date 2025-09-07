@@ -83,6 +83,4 @@ public class Human {
 	public int getDaysUntilBirthday() {
 		return daysUntilBirthday;
 	}
-	
-	
 }

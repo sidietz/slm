@@ -39,8 +39,4 @@ public class TrainStation {
 	public Long getId() {
 		return id;
 	}
-	
-	
-	
-	
 }

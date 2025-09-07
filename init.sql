@@ -12,6 +12,12 @@ BEGIN
 END
 $func$;
 
+CREATE TYPE book_genre AS ENUM ('ACTION', 'BIOGRAPHY', 'CHILDREN', 'CRIME', 'ESSAY', 'FANTASY',
+'FOODDRINK', 'GRAPHICNOVEL', 'GUIDE', 'HISTORICALFICTION', 'HISTORY', 'HORROR' ,'HUMANITIES',
+'HUMOR', 'IT', 'NEWADULT', 'PARENTING', 'PHILOSOPHICFICTION', 'PHOTOGRAPHY', 'RELIGION', 'ROMANCE',
+'SCIENCE', 'SCIFI', 'SELFHELP', 'SHORTSTORY', 'THRILLER', 'TRAVEL', 'TRUECRIME', 'YOUNGADULT');
+
+CREATE TYPE book_type AS ENUM ('FICTION', 'NONFICTION');
 
 CREATE TABLE sporttype(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 
@@ -37,4 +43,24 @@ CREATE TABLE habit(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE, description TEXT)
 CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFERENCES habit(id), last_done TIMESTAMP);
 
 CREATE TABLE gratitude(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
+
+CREATE TABLE trainline(id BIGSERIAL PRIMARY KEY, name TEXT, description TEXT);
+CREATE TABLE trainstation2(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
+CREATE TABLE line_station(line_id BIGINT NOT NULL REFERENCES trainline(id), station_id BIGINT NOT NULL REFERENCES trainstation2(id));
+
+CREATE TABLE train_trip2(id BIGSERIAL PRIMARY KEY, line_id BIGSERIAL NOT NULL REFERENCES trainline(id),
+origin_id BIGSERIAL NOT NULL REFERENCES trainstation2(id), destination_id BIGSERIAL NOT NULL REFERENCES trainstation2(id),
+starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+
+CREATE TABLE mood(id BIGSERIAL PRIMARY KEY, tracked_at DATE UNIQUE NOT NULL, happiness INTEGER, impetus INTEGER, stress INTEGER,
+CHECK (happiness BETWEEN 1 AND 10), CHECK (impetus BETWEEN 1 AND 10), CHECK (stress BETWEEN 1 AND 10));
+
+CREATE TABLE author(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birthday DATE);
+CREATE TABLE press(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
+
+CREATE TABLE book(id BIGSERIAL PRIMARY KEY, isbn VARCHAR(13) UNIQUE, title TEXT, series TEXT, page_count INTEGER,
+price REAL, buy_date DATE, last_read DATE, author_id BIGSERIAL NOT NULL REFERENCES author(id), press_id BIGSERIAL NOT NULL REFERENCES press(id),
+book_type book_type, book_genre book_genre);
+
+CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 

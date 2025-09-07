@@ -60,8 +60,4 @@ public class GratitudeController {
 		model.addAttribute("gratitude", gratitude);
 		return "add-gratitude";
 	}
-	
-	
-	
-	
 }

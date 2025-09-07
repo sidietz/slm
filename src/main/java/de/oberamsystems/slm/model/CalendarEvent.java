@@ -78,5 +78,4 @@ public class CalendarEvent {
 	public Duration getDuration() {
 		return duration;
 	}
-	
 }

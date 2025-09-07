@@ -60,8 +60,4 @@ public class CalendarEventController {
 		model.addAttribute("event", event);
 		return "add-event";
 	}
-	
-	
-	
-	
 }

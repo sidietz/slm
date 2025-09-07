@@ -13,11 +13,8 @@ public class DurationConverter implements Converter<Duration, String> {
 	
 	@Override
 	public String convert(Duration source) {
-
 		log.trace(source.toString());
-		
 		String str = "";
-		
 		long days = source.toDaysPart();
 		int hours = source.toHoursPart();
 		int minutes = source.toMinutesPart();
@@ -27,7 +24,6 @@ public class DurationConverter implements Converter<Duration, String> {
 		}
 		
 		str = str + String.format("%02d", hours) + ":" + String.format("%02d", minutes);
-		
 		return str;
 	}
 

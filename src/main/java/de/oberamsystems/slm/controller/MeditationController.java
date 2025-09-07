@@ -60,8 +60,4 @@ public class MeditationController {
 		model.addAttribute("meditation", meditation);
 		return "add-meditation";
 	}
-	
-	
-	
-	
 }

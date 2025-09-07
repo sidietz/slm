@@ -13,9 +13,7 @@
 <body>
 	<div th:insert="~{header :: header}">...</div>
 	<div th:insert="~{header :: habitheader}">...</div>
-
 	<div class="list" th:unless="${#lists.isEmpty(habits)}">
-
 		<table class="table table-striped table-bordered">
 			<thead>
 				<tr>

@@ -1,6 +1,5 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.slf4j.Logger;
@@ -65,8 +64,4 @@ public class ActivityController {
 		model.addAttribute("activity", activity);
 		return "add-activity";
 	}
-	
-	
-	
-	
 }

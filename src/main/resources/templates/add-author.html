@@ -1,0 +1,32 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<title>add vendor</title>
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: bookheader}"></div>
+	<h2>add author</h2>
+	<form action="#" th:action="@{/add-author}" th:object="${author}"
+		method="post">
+		<p>
+			firstname: <input class="form-control" type="text" th:field="*{firstname}" />
+		</p>
+		<p>
+			lastname: <input class="form-control" type="text" th:field="*{lastname}" />
+		</p>
+		<p>
+			birthday: <input class="form-control" type="date" th:field="*{birthday}" />
+		</p>
+		<p>
+			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="reset" class="btn btn-secondary">Reset</button>
+		</p>
+	</form>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<title>add traintrip</title>
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: trainheader}"></div>
+	<h2>add traintrip</h2>
+	<form action="#" th:action="@{/add-traintrip2}" th:object="${traintrip}"
+		method="post">
+		<p>
+			<select class="form-select" name="selectLine"
+				onchange="updateLine(event)">
+				<option th:each="l : ${lines}" th:value=${l.id}
+					th:text="${l.name + ' - ' + l.description}" th:selected ="(${lineId} == ${l.id})"></option>
+			</select>
+		</p>
+		<p>
+			<select class="form-select" name="selectOrigin"
+				onchange="updateOrigin(event)" th:field="*{origin}">
+				<option th:each="s : ${traintrips}" th:value="${s.id}"
+					th:text="${s.ds100 + ' - ' + s.name}"></option>
+			</select>
+		<p>
+				<p>
+			<select class="form-select" name="selectDestination"
+				onchange="updateDestination(event)" th:field="*{destination}">
+				<option th:each="s : ${traintrips}" th:value="${s.id}"
+					th:text="${s.ds100 + ' - ' + s.name}"></option>
+			</select>
+		<p>
+			start: <input class="form-control" type="datetime-local" th:field="*{start}" />
+		</p>
+		<p>
+			end: <input class="form-control" type="datetime-local" th:field="*{end}" />
+		</p>
+		<p>
+			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="reset" class="btn btn-secondary">Reset</button>
+		</p>
+	</form>
+<script>
+function updateLine(event) {
+	var searchParams = new URLSearchParams(window.location.search);
+	searchParams.set("id", event.target.value);
+	window.location.search = searchParams.toString();
+}
+</script>
+</body>
+</html>

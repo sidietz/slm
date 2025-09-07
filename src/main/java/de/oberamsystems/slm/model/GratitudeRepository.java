@@ -20,5 +20,4 @@ public interface GratitudeRepository extends JpaRepository<Gratitude, Long> {
     LocalDate findMinDate();
     @Query("SELECT MAX(g.date) FROM Gratitude g")
     LocalDate findMaxDate();
-    
 }

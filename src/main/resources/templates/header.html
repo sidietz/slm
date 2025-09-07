@@ -16,18 +16,21 @@
 				<li class="nav-item"><a class="nav-link" th:href="@{/sport}">sport</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/meditation}">meditation</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/habit}">habit</a></li>
-				<li class="nav-item"><a class="nav-link" th:href="@{/traintrip}">traintrip</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/mood}">mood</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/gratitude}">gratitude</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/purchase}">purchase</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/traintrip2}">traintrip</a></li>
 			</ul>
 		</nav>
 	</div>
 	<div th:fragment="trainheader">
 		<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
 			<ul class="navbar-nav">
-				<li class="nav-item"><a class="nav-link" th:href="@{/traintrip}">traintrip</a></li>
-				<li class="nav-item"><a class="nav-link" th:href="@{/trainstation}">trainstation</a></li>
-				<li class="nav-item"><a class="nav-link" th:href="@{/add-traintrip}">add traintrip</a></li>
-				<li class="nav-item"><a class="nav-link" th:href="@{/add-trainstation}">add trainstation</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/traintrip2}">traintrip</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/trainstation2}">trainstation</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-traintrip2}">add traintrip</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-trainstation2}">add trainstation</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-trainline}">add trainline</a></li>
 			</ul>
 		</nav>
 	</div>
@@ -95,6 +98,7 @@
 			<ul class="navbar-nav">
 				<li class="nav-item"><a class="nav-link" th:href="@{/habitentry}">habitentry</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/habit}">habit</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/last-done-habitentry}">last done habitentry</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/add-habitentry}">add habitentry</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/add-habit}">add habit</a></li>
 			</ul>
@@ -105,6 +109,29 @@
 			<ul class="navbar-nav">
 				<li class="nav-item"><a class="nav-link" th:href="@{/gratitude}">gratitude</a></li>
 				<li class="nav-item"><a class="nav-link" th:href="@{/add-gratitude}">add gratitude</a></li>
+			</ul>
+		</nav>
+	</div>
+	<div th:fragment="moodheader">
+		<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
+			<ul class="navbar-nav">
+				<li class="nav-item"><a class="nav-link" th:href="@{/mood}">mood</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-mood}">add mood</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/mood-bb}">mood-bb</a></li>
+			</ul>
+		</nav>
+	</div>
+	<div th:fragment="bookheader">
+		<nav class="navbar navbar-expand-sm bg-light navbar-fixed-top">
+			<ul class="navbar-nav">
+				<li class="nav-item"><a class="nav-link" th:href="@{/readingsession}">readingsession</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/book}">book</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/author}">author</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/press}">press</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-reading-session}">add reading session</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-book}">add book</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-author}">add author</a></li>
+				<li class="nav-item"><a class="nav-link" th:href="@{/add-press}">add press</a></li>
 			</ul>
 		</nav>
 	</div>
