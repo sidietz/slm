@@ -34,6 +34,15 @@ starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (e
 CREATE TABLE mood(id BIGSERIAL PRIMARY KEY, tracked_at DATE UNIQUE NOT NULL, happiness INTEGER, impetus INTEGER, stress INTEGER,
 CHECK (happiness BETWEEN 1 AND 10), CHECK (impetus BETWEEN 1 AND 10), CHECK (stress BETWEEN 1 AND 10));
 
+CREATE TABLE author(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birthday DATE);
+CREATE TABLE press(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
+
+CREATE TABLE book(id BIGSERIAL PRIMARY KEY, isbn VARCHAR(13) UNIQUE, title TEXT, series TEXT, page_count INTEGER,
+price REAL, buy_date DATE, last_read DATE, author_id BIGSERIAL NOT NULL REFERENCES author(id), press_id BIGSERIAL NOT NULL REFERENCES press(id),
+book_type book_type, book_genre book_genre);
+
+CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+
 -- SELECT habit, last_done, last_done - LAG(last_done) OVER () as diff FROM habit_entry WHERE habit = 2;
 
 CREATE OR REPLACE FUNCTION this_years_birthday(_dut date)
