@@ -100,7 +100,7 @@ public class BookController {
 		Duration dur = Duration.between(rs.getStart(), rs.getEnd());
 		long mins = dur.toMinutes();
 		long pages = rs.getEndPageCount() - rs.getStartPageCount();
-		float readingSpeed = (pages / mins) * 60;
+		float readingSpeed = ((float) pages / (float) mins) * 60.0F;
 		rs.setReadingSpeed(readingSpeed);
 		readingSessionRepo.save(rs);
 		model.addAttribute("book", rs);
