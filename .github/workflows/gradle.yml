@@ -31,7 +31,6 @@ jobs:
     - run: ls
     - run: pwd
     - run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
-    - run: psql postgresql://slm:slm@localhost:5432/slm -c "SELECT 1"
       env:
         PGSERVICE: postgres
         PGPASSWORD: N0m1596.
