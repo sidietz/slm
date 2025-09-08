@@ -27,6 +27,7 @@ jobs:
     - run: psql postgresql://slm:slm@localhost:5432/slm -c "SELECT 1"
       env:
         PGSERVICE: postgres
+        PGPASSWORD: N0m1596.
 
   build:
     needs: job_1
