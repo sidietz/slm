@@ -14,8 +14,22 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  job_1:
+    name: job_1
+    runs-on: ubuntu-latest
+    steps:
+    - uses: ikalnytskyi/action-setup-postgres@v7
+      with:
+        username: slm
+        password: N0m1596.
+        database: slm
+    - run: psql -U slm -d slm -a -f init.sql
+    - run: psql postgresql://postgres:postgres@localhost:5432/slm -c "SELECT 1"
+      env:
+        PGSERVICE: postgres
 
+  build:
+    needs: job_1
     runs-on: ubuntu-latest
     permissions:
       contents: read
