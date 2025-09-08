@@ -35,6 +35,7 @@ public class SecurityConfig {
 						.requestMatchers("/gratitude", "/gratitude.html", "/add-gratitude", "/add-gratitude.html").permitAll()
 						.requestMatchers("/mood", "/mood.html", "/add-mood", "/add-mood.html", "/mood-bb", "/mood-bb.html").permitAll()
 						.requestMatchers("/book", "/book.html", "/author", "/author.html", "/press", "/press.html", "/readingsession", "/readingsession.html", "/add-book", "/add-book.html", "/add-author", "/add-author.html", "/add-press", "/add-press.html", "/add-reading-session", "/add-reading-session.html").permitAll()
+						.requestMatchers("/learning-session", "/learning-session.html", "/learningitem", "/learningitem.html", "/add-learning-session", "/add-learningitem").permitAll()
 						.requestMatchers("/api/sleeptimes", "/api/moods").permitAll()
 						.requestMatchers("/api/**").authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());

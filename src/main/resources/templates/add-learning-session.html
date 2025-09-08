@@ -1,0 +1,39 @@
+<!DOCTYPE HTML>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<title>add learning session</title>
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: learningheader}"></div>
+	<h2>add learning session</h2>
+	<form action="#" th:action="@{/add-learning-session}" th:object="${learningsession}"
+		method="post">
+		<p>
+			<select class="form-select" name="selectitem"
+				onchange="updateItem(event)" th:field="*{learningItem}">
+				<option th:each="p : ${items}" th:value="${p.id}"
+					th:text="${p.title}"></option>
+			</select>
+		</p>
+		<p>
+			start: <input class="form-control" type="datetime-local" th:field="*{start}" />
+		</p>
+		<p>
+			end: <input class="form-control" type="datetime-local" th:field="*{end}" />
+		</p>
+		<p>
+			comment: <input class="form-control" type="text" th:field="*{comment}" />
+		</p>
+		<p>
+			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="reset" class="btn btn-secondary">Reset</button>
+		</p>
+	</form>
+</body>
+</html>

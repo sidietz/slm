@@ -31,7 +31,7 @@ public class GratitudeController {
 		toDate = toDate == null ? repo.findMaxDate() : toDate;
 		toDate = toDate == null ? LocalDate.now() : toDate;
 
-		LocalDate minDate = repo.findMinDate().minusDays(1);
+		LocalDate minDate = repo.findMinDate();
 	    LocalDate maxDate = repo.findMaxDate();
 	    
 	    minDate = minDate == null ? LocalDate.now().minusDays(1) : minDate;

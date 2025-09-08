@@ -43,6 +43,12 @@ book_type book_type, book_genre book_genre);
 
 CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
+CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
+CREATE TABLE learning_session(id BIGSERIAL PRIMARY KEY, learning_item_id BIGINT REFERENCES learning_item(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
+
+-- LearningItem	id, userId, title, author/creator, description, coverUrl, sourceType (BOOK/COURSE/PODCAST), externalId, status (PLANNED, IN_PROGRESS, COMPLETED), progressPercent, startDate, endDate, lastUpdate
+-- One table is enough; you can store a JSON blob for source‑specific data if needed.
+
 -- SELECT habit, last_done, last_done - LAG(last_done) OVER () as diff FROM habit_entry WHERE habit = 2;
 
 CREATE OR REPLACE FUNCTION this_years_birthday(_dut date)

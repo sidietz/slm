@@ -16,8 +16,10 @@ CREATE TYPE book_genre AS ENUM ('ACTION', 'BIOGRAPHY', 'CHILDREN', 'CRIME', 'ESS
 'FOODDRINK', 'GRAPHICNOVEL', 'GUIDE', 'HISTORICALFICTION', 'HISTORY', 'HORROR' ,'HUMANITIES',
 'HUMOR', 'IT', 'NEWADULT', 'PARENTING', 'PHILOSOPHICFICTION', 'PHOTOGRAPHY', 'RELIGION', 'ROMANCE',
 'SCIENCE', 'SCIFI', 'SELFHELP', 'SHORTSTORY', 'THRILLER', 'TRAVEL', 'TRUECRIME', 'YOUNGADULT');
-
 CREATE TYPE book_type AS ENUM ('FICTION', 'NONFICTION');
+
+CREATE TYPE source_type AS ENUM ('BOOK', 'COURSE', 'LECTURE', 'TUTORIAL', 'YOUTUBE');
+CREATE TYPE status_type AS ENUM('PLANNED', 'IN_PROGRESS', 'COMPLETED');
 
 CREATE TABLE sporttype(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 
@@ -63,4 +65,7 @@ price REAL, buy_date DATE, last_read DATE, author_id BIGSERIAL NOT NULL REFERENC
 book_type book_type, book_genre book_genre);
 
 CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+
+CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
+CREATE TABLE learning_session(id BIGSERIAL PRIMARY KEY, learning_item_id BIGINT REFERENCES learning_item(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
 
