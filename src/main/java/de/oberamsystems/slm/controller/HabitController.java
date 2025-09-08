@@ -40,7 +40,7 @@ public class HabitController {
 	@GetMapping("/last-done-habitentry")
 	public String getLastDoneHabitEntries(
 			@RequestParam(required = false) Long id, Model model) {
-		id = id == null ? 0 : id;
+		id = id == null ? 1 : id;
 		model.addAttribute("habitId", id);
 		model.addAttribute("habits", repo.findAll());
 		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));

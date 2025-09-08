@@ -16,6 +16,8 @@ import de.oberamsystems.slm.model.Human;
 import de.oberamsystems.slm.model.HumanRepository;
 import de.oberamsystems.slm.model.MeditationSession;
 import de.oberamsystems.slm.model.MeditationSessionRepository;
+import de.oberamsystems.slm.model.ReadingSession;
+import de.oberamsystems.slm.model.ReadingSessionRepository;
 import de.oberamsystems.slm.model.SportSession;
 import de.oberamsystems.slm.model.SportSessionRepository;
 import de.oberamsystems.utils.Utils;
@@ -34,12 +36,15 @@ public class IndexController {
 	@Autowired
 	private HumanRepository humanRepo;
 	
-	
+	@Autowired
+	private ReadingSessionRepository readingsessionRepo;
+
 	@GetMapping({"/index.html", "index", "/"})
 	public String index(Model model) {
 		SportSession s = sportRepo.findFirstByOrderByStartDesc();
 		Human h = humanRepo.findFirstByOrderByDaysUntilBirthdayAsc();
 		MeditationSession m = meditationRepo.findFirstByOrderByStartDesc();
+		ReadingSession rs = readingsessionRepo.findFirstByOrderByStartDesc();
 
 		List<String> msgs = new ArrayList<String>();
 
@@ -48,7 +53,6 @@ public class IndexController {
 		}
 
 		if (s != null) {
-			log.warn(s.toString());
 			String kind = s.getType().getName();
 			LocalDateTime ldt = s.getStart();
 			Duration diff = Duration.between(ldt, LocalDateTime.now());
@@ -56,8 +60,13 @@ public class IndexController {
 		}
 
 		if (m != null) {
-			Duration diff2 = Duration.between(m.getStart(), LocalDateTime.now());
+			Duration diff2 = Duration.between(m.getEnd(), LocalDateTime.now());
 			msgs.add(String.format("Last meditation was at %s and was %s ago.", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
+		}
+
+		if (rs != null) {
+			Duration diff3 = Duration.between(rs.getEnd(), LocalDateTime.now());
+			msgs.add(String.format("Last reading session was at %s and was %s ago.", Utils.LocalDateTimeToString(rs.getStart()), Utils.DurationToString(diff3)));
 		}
 
 		model.addAttribute("msgs", msgs);
