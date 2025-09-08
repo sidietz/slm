@@ -61,7 +61,7 @@ public class BookController {
 	
 	@GetMapping("/readingsession")
 	public String getReadingSession(Model model) {
-		model.addAttribute("readingsessions", readingSessionRepo.findAll());
+		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
 		return "readingsession";
 	}
 	
