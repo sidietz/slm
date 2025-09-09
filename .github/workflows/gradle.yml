@@ -43,8 +43,9 @@ jobs:
         java-version: '24'
         distribution: 'temurin'
     - name: cd in slm folder
-      run: cd slm/slm
+      run: cd slm
     - run: ls
+    - run: pwd
     - name: Copy mail.properties
       run: cp src/main/resources/default-mail.properties src/main/resources/mail.properties
 
