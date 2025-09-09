@@ -52,6 +52,8 @@ jobs:
     - run: cd slm
     - run: ls -la
     - run: pwd
+    - run: cd slm
+    - run: ls -la
     - name: Copy mail.properties
       run: cp src/main/resources/default-mail.properties src/main/resources/mail.properties
 
