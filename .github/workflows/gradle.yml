@@ -33,10 +33,10 @@ jobs:
     - run: pwd
     - run: sudo chmod 0640  /home/runner/work/_temp/pgdata/pg_service.conf
     - run: sudo chown postgres  /home/runner/work/_temp/pgdata/pg_service.conf
-    - run: PGPASSWORD=N0m1596. psql service=${{ steps.postgres.outputs.service-name }} -h localhost -U slm -d slm -a -f slm/init.sql
-      env:
+    - env:
         PGSERVICE: postgres
         PGPASSWORD: N0m1596.
+      run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
 
   build:
     needs: job_1
