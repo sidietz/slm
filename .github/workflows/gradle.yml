@@ -51,8 +51,8 @@ jobs:
       run: cp slm/src/main/resources/default-mail.properties slm/src/main/resources/mail.properties
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
-    - name: Build with Gradle 8.9
-      run: cd slm && gradle build
+    - name: Build with Gradle 9.0
+      run: cd slm && gradle build -S
 
 
   build:
