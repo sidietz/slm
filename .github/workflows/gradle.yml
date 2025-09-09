@@ -42,10 +42,7 @@ jobs:
     - run: cd slm
     - env:
         PGSERVICE: "${{ steps.postgres.outputs.service-name }}"
-      run: |
-        createuser slm
-        createdb --owner slm slm
-        psql -c "ALTER USER slm WITH PASSWORD 'N0m1596.'"
+      run: psql -c "ALTER USER slm WITH PASSWORD 'N0m1596.'"
     - env:
         PGSERVICE: "${{ steps.postgres.outputs.service-name }}"
         PGPASSWORD: N0m1596.
