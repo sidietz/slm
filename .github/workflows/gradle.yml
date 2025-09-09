@@ -27,7 +27,6 @@ jobs:
         password: N0m1596.
         database: slm
     - run: cd ..
-    - run: git clone https://github.com/sidietz/slm.git
     - run: cd slm
     - run: ls
     - run: pwd
@@ -43,8 +42,10 @@ jobs:
         java-version: '24'
         distribution: 'temurin'
     - name: cd in slm folder
-      run: cd slm
-    - run: ls
+      run: cd ..
+    - name: checkout code
+      run: git clone https://github.com/sidietz/slm.git
+    - run: cd slm
     - run: pwd
     - name: Copy mail.properties
       run: cp src/main/resources/default-mail.properties src/main/resources/mail.properties
