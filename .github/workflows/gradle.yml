@@ -42,11 +42,16 @@ jobs:
     - run: cd slm
     - env:
         PGSERVICE: "${{ steps.postgres.outputs.service-name }}"
+      run: |
+        createuser slm
+        createdb --owner slm slm
+        psql -c "ALTER USER slm WITH PASSWORD 'N0m1596.'"
+    - env:
+        PGSERVICE: "${{ steps.postgres.outputs.service-name }}"
         PGPASSWORD: N0m1596.
       run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
     - name: Copy mail.properties
       run: cp slm/src/main/resources/default-mail.properties slm/src/main/resources/mail.properties
-
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Build with Gradle 8.9
@@ -106,3 +111,4 @@ jobs:
       uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
       with:
         use-gradlew: false
+        gradle-version: 9.0
