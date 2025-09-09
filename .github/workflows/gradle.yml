@@ -21,6 +21,7 @@ jobs:
       contents: read
     steps:
     - uses: ikalnytskyi/action-setup-postgres@v7
+      id: postgres
       with:
         username: slm
         password: N0m1596.
@@ -32,7 +33,7 @@ jobs:
     - run: pwd
     - run: sudo chmod 0640  /home/runner/work/_temp/pgdata/pg_service.conf
     - run: sudo chown postgres  /home/runner/work/_temp/pgdata/pg_service.conf
-    - run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
+    - run: PGPASSWORD=N0m1596. psql service=${{ steps.postgres.outputs.service-name }} -h localhost -U slm -d slm -a -f slm/init.sql
       env:
         PGSERVICE: postgres
         PGPASSWORD: N0m1596.
