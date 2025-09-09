@@ -30,8 +30,8 @@ jobs:
     - run: cd slm
     - run: ls
     - run: pwd
-    - run: chmod 0640  /home/runner/work/_temp/pgdata/pg_service.conf
-    - run: chown postgres  /home/runner/work/_temp/pgdata/pg_service.conf
+    - run: sudo chmod 0640  /home/runner/work/_temp/pgdata/pg_service.conf
+    - run: sudo chown postgres  /home/runner/work/_temp/pgdata/pg_service.conf
     - run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
       env:
         PGSERVICE: postgres
