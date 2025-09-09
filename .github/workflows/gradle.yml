@@ -37,6 +37,19 @@ jobs:
         PGSERVICE: "${{ steps.postgres.outputs.service-name }}"
         PGPASSWORD: N0m1596.
       run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
+    - name: Set up JDK 24
+      uses: actions/setup-java@v4
+      with:
+        java-version: '24'
+        distribution: 'temurin'
+    - name: Copy mail.properties
+      run: cp src/main/resources/default-mail.properties src/main/resources/mail.properties
+
+    # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
+    # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
+    - name: Build with Gradle 8.9
+      run: gradle build
+
 
   build:
     needs: job_1
@@ -57,7 +70,7 @@ jobs:
 
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
-    - name: Build with Gradle 8.9
+    - name: Build with Gradle 9.0
       run: gradle build
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
@@ -89,3 +102,5 @@ jobs:
     # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
     - name: Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+      with:
+        use-gradlew: false
