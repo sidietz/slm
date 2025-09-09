@@ -26,8 +26,6 @@ jobs:
         username: slm
         password: N0m1596.
         database: slm
-    - run: cd ..
-    - run: cd slm
     - run: ls
     - run: pwd
     - run: sudo chmod 0640  /home/runner/work/_temp/pgdata/pg_service.conf
