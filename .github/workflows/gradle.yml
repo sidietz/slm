@@ -73,4 +73,4 @@ jobs:
     - name: Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@v4
       with:
-        gradle-version: '9'
+        gradle-version: '8.14.3'
