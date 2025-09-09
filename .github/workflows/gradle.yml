@@ -46,6 +46,7 @@ jobs:
       run: PGPASSWORD=N0m1596. psql -h localhost -U slm -d slm -a -f slm/init.sql
     - run: cd slm
     - run: ls -la
+    - run: cd slm
     - name: Copy mail.properties
       run: cp src/main/resources/default-mail.properties src/main/resources/mail.properties
 
