@@ -6,19 +6,22 @@
 	rel="stylesheet" />
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
 	defer></script>
-<title>add trainstation</title>
+<title>add manufacturer</title>
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
-	<div th:insert="~{header :: trainheader}"></div>
-	<h2>add trainstation</h2>
-	<form action="#" th:action="@{/add-trainstation}" th:object="${trainstation}"
+	<div th:insert="~{header :: gamingheader}"></div>
+	<h2>add manufacturer</h2>
+	<form action="#" th:action="@{/add-manufacturer}" th:object="${manufacturer}"
 		method="post">
 		<p>
-			ds100: <input class="form-control" type="text" th:field="*{ds100}" />
+			name: <input class="form-control" type="text" th:field="*{name}" />
 		</p>
 		<p>
-			name: <input class="form-control" type="text" th:field="*{name}" />
+			hq: <input class="form-control" type="text" th:field="*{hq}" />
+		</p>
+		<p>
+			founding date: <input class="form-control" type="date" th:field="*{foundingDate}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>

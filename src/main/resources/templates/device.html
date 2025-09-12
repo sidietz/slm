@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<link href="../static/css/table.css" th:href="@{/css/table.css}"
+	rel="stylesheet" />
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<title>SLM</title>
+</head>
+<body>
+	<div th:insert="~{header :: header}">...</div>
+	<div th:insert="~{header :: gamingheader}"></div>
+	<div class="list" th:unless="${#lists.isEmpty(devices)}">
+		<table class="table table-striped table-bordered">
+			<thead>
+				<tr>
+					<td>ID</td>
+					<td>name</td>
+					<td>model name</td>
+					<td>serial number</td>
+					<td>purchase date</td>
+					<td>price</td>
+					<td>device type</td>
+					<td>vendor</td>
+					<td>manufacturer</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr th:each="e : ${devices}">
+					<td th:text="${e.id}"></td>
+					<td th:text="${e.name}"></td>
+					<td th:text="${e.modelName}"></td>
+					<td th:text="${e.serialNumber}"></td>
+					<td th:text="${#temporals.format(e.purchaseDate, 'dd.MM.yyyy')}"></td>
+					<td th:text="${e.price}"></td>
+					<td th:text="${e.deviceType.name}"></td>
+					<td th:text="${e.vendor.name}"></td>
+					<td th:text="${e.manufacturer.name}"></td>
+					</tr>
+			</tbody>
+		</table>
+	</div>
+</body>
+</html>
