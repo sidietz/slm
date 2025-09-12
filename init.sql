@@ -69,3 +69,19 @@ CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENC
 CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
 CREATE TABLE learning_session(id BIGSERIAL PRIMARY KEY, learning_item_id BIGINT REFERENCES learning_item(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
 
+CREATE TABLE platform(id BIGSERIAL PRIMARY KEY, name TEXT);
+CREATE TABLE manufacturer(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
+CREATE TABLE device_type(id BIGSERIAL PRIMARY KEY, name TEXT);
+CREATE TABLE device(id BIGSERIAL PRIMARY KEY, name TEXT, model_name TEXT,
+serial_number TEXT, type BIGINT NOT NULL REFERENCES device_type(id),
+purchase_date DATE, price REAL, vendor_id BIGINT NOT NULL REFERENCES vendor(id), manufacturer_id
+BIGINT NOT NULL REFERENCES manufacturer(id));
+
+CREATE TABLE platform(id BIGSERIAL PRIMARY KEY, name TEXT);
+CREATE TABLE publisher(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
+CREATE TABLE studio(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
+
+CREATE TABLE game(id BIGSERIAL PRIMARY KEY, title TEXT, series TEXT, publisher_id BIGINT NOT NULL REFERENCES publisher(id), studio_id BIGINT NOT NULL REFERENCES studio(id), price REAL, release_date DATE, last_played DATE);
+
+CREATE TABLE gaming_session(id BIGSERIAL PRIMARY KEY, game_id BIGINT NOT NULL REFERENCES game(id), device_id BIGINT NOT NULL REFERENCES device(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
+
