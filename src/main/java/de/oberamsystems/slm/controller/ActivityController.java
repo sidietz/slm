@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -39,7 +40,7 @@ public class ActivityController {
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusDays(1); //fixes off by one bug
 	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
 
-		model.addAttribute("activities", repo.findByStartBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
+		model.addAttribute("activities", repo.findByStartBetween(fromDate, toDate.plusDays(1), Sort.by("start"))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
 		model.addAttribute("minDate", minDate); //fixes off by one bug
