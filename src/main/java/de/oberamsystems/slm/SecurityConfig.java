@@ -31,6 +31,7 @@ public class SecurityConfig {
 						.requestMatchers("/traintrip", "/traintrip.html", "/trainstation", "/trainstation.html", "/add-traintrip", "/add-traintrip.html", "/add-trainstation", "/add-trainstation.html").permitAll()
 						.requestMatchers("/traintrip2", "/traintrip2.html", "/trainstation2", "/trainstation2.html", "/add-traintrip2", "/add-traintrip2.html", "/add-trainstation2", "/add-trainstation2.html", "/add-trainline", "/add-trainline.html").permitAll()
 						.requestMatchers("/purchase", "/purchase.html", "/vendor", "/vendor.html", "/add-purchase", "/add-purchase.html", "/add-vendor", "/add-vendor.html").permitAll()
+						.requestMatchers("/contract", "/contract.html", "/contractor", "/contractor.html", "/add-contract", "/add-contract.html", "/add-contractor", "/add-contractor.html").permitAll()
 						.requestMatchers("/habit", "/habit.html", "/habitentry", "/habitentry.html", "/add-habit", "/add-habit.html", "/add-habitentry", "/add-habitentry.html", "/last-done-habitentry").permitAll()
 						.requestMatchers("/gaming-session", "/gaming-session.html", "/game", "/game.html", "/add-gaming-session", "/add-game", "/add-publisher", "/add-studio", "/publisher", "/studio", "/add-manufacturer", "/add-device-type", "/manufacturer", "/device-type", "/add-device", "/device").permitAll()
 						.requestMatchers("/gratitude", "/gratitude.html", "/add-gratitude", "/add-gratitude.html").permitAll()
