@@ -11,10 +11,10 @@ public class Purchase {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	public long id;
+	private long id;
 	private String title;
 	@ManyToOne
-	@JoinColumn(name="vendor", referencedColumnName = "id")
+	@JoinColumn(name = "vendor", referencedColumnName = "id")
 	private Vendor vendor;
 	private float price;
 	@Column(name = "purchase_date", columnDefinition = "DATE")
