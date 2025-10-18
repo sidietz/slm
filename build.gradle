@@ -1,6 +1,6 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.0-M2'
+	id 'org.springframework.boot' version '4.0.0-M3'
 	id 'io.spring.dependency-management' version '1.1.7'
 }
 
@@ -25,7 +25,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.webjars:bootstrap:5.3.8'
-	implementation 'io.hypersistence:hypersistence-utils-hibernate-70:3.10.1'
+	implementation 'io.hypersistence:hypersistence-utils-hibernate-71:3.11.0'
 	implementation 'jakarta.mail:jakarta.mail-api:2.1.4'
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

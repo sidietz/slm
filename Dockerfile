@@ -1,5 +1,5 @@
 # the base image
-FROM amazoncorretto:24-alpine
+FROM amazoncorretto:25-alpine
 
 # Copy the JAR file from the build context into the Docker image
 COPY build/libs/slm-0.0.1-SNAPSHOT.jar application.jar
