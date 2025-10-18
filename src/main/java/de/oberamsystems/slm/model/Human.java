@@ -3,6 +3,8 @@ package de.oberamsystems.slm.model;
 import java.util.Date;
 
 import org.hibernate.annotations.Formula;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import jakarta.persistence.*;
@@ -18,6 +20,9 @@ public class Human {
 	@Column(name = "birthday", columnDefinition = "DATE")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private Date birthday;
+	@Enumerated(EnumType.STRING)
+	@JdbcType(value = PostgreSQLEnumJdbcType.class)
+	private HumanCategory category;
 	
 	@Formula(value = "date_part('year', age(birthday))")
 	private int age;
@@ -40,12 +45,13 @@ public class Human {
 	public Human() {
 	}
 
-	public Human(long id, String firstname, String lastname, Date birthday) {
+	public Human(long id, String firstname, String lastname, Date birthday, HumanCategory category) {
 		super();
 		this.id = id;
 		this.firstname = firstname;
 		this.lastname = lastname;
 		this.birthday = birthday;
+		this.category = category;
 	}
 	
 	public long getId() {
@@ -82,5 +88,13 @@ public class Human {
 
 	public int getDaysUntilBirthday() {
 		return daysUntilBirthday;
+	}
+
+	public HumanCategory getCategory() {
+		return category;
+	}
+
+	public void setCategory(HumanCategory category) {
+		this.category = category;
 	}
 }

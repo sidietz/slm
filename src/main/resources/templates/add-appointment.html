@@ -6,32 +6,37 @@
 	rel="stylesheet" />
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
 	defer></script>
-<title>add activity</title>
+<title>add appointment</title>
 </head>
 <body>
 	<div th:insert="~{header :: header}">...</div>
-	<div th:insert="~{header :: activityheader}"></div>
-	<h2>add activity</h2>
-	<form action="#" th:action="@{/add-activity}" th:object="${activity}"
+	<div th:insert="~{header :: doctorheader}"></div>
+	<h2>add appointment</h2>
+	<form action="#" th:action="@{/add-appointment}" th:object="${appointment}"
 		method="post">
 		<p>
-			<select class="form-select" name="selectActivity"
-				onchange="updateId(event)" th:field="*{type}">
-				<option th:each="s : ${activities}" th:value="${s.id}"
-					th:text="${s.name}"></option>
+			<select class="form-select" name="selectDoctor"
+				onchange="updateId(event)" th:field="*{doctor}">
+				<option th:each="s : ${doctors}" th:value="${s.id}"
+					th:text="${s.firstname} + ${s.lastname}"></option>
 			</select>
+		<p>
+			title: <input class="form-control" type="text" th:field="*{comment}" />
 		</p>
 		<p>
-			title: <input class="form-control" type="text" th:field="*{title}" />
+			departure: <input class="form-control" type="datetime-local" th:field="*{departure}" />
 		</p>
 		<p>
-			place: <input class="form-control" type="text" th:field="*{location}" />
+			arrival: <input class="form-control" type="datetime-local" th:field="*{arrival}" />
 		</p>
 		<p>
 			start: <input class="form-control" type="datetime-local" th:field="*{start}" />
 		</p>
 		<p>
 			end: <input class="form-control" type="datetime-local" th:field="*{end}" />
+		</p>
+		<p>
+			arrival home: <input class="form-control" type="datetime-local" th:field="*{arrivalHome}" />
 		</p>
 		<p>
 			<button type="submit" class="btn btn-primary">Submit</button>
