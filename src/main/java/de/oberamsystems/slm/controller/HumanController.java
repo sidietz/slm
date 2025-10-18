@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import de.oberamsystems.slm.model.Human;
+import de.oberamsystems.slm.model.HumanCategory;
 import de.oberamsystems.slm.model.HumanRepository;
 
 @Controller
@@ -33,12 +34,14 @@ public class HumanController {
 	
 	@GetMapping({"/add-human", "/add-human.html"})
 	public String addHuman(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("categories", HumanCategory.values());
 		model.addAttribute("human", new Human());
 		return "add-human";
 	}
 	
 	@PostMapping({"/add-human", "/add-human.html"})
 	public String submitHuman(@ModelAttribute Human human, Model model) {
+		model.addAttribute("categories", HumanCategory.values());
 		repo.save(human);
 		model.addAttribute("human", human);
 		return "add-human";

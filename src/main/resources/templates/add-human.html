@@ -15,6 +15,13 @@
 	<form action="#" th:action="@{/add-human}" th:object="${human}"
 		method="post">
 		<p>
+			<select class="form-select" name="selectCategory"
+				onchange="updateCategory(event)" th:field="*{category}">
+				<option th:each="p : ${categories}" th:value="${p}"
+					th:text="${p}"></option>
+			</select>
+		</p>
+		<p>
 			firstname: <input class="form-control" type="text" th:field="*{firstname}" />
 		<p>
 			lastname: <input class="form-control" type="text" th:field="*{lastname}" />
