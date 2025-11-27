@@ -47,6 +47,26 @@ public class SportController {
 		return "sport";
 	}
 	
+	@GetMapping("/sports")
+	public String addSports(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("sports", repo.findAll());
+		SportSession s = new SportSession();
+		s.setStart(LocalDateTime.now());
+		s.setEnd(LocalDateTime.now());
+		model.addAttribute("sport", s);
+		model.addAttribute("sportTypes", typeRepo.findAll());
+		return "sports";
+	}
+	
+	@PostMapping("/sports")
+	public String submitSports(@ModelAttribute SportSession sport, Model model) {
+		model.addAttribute("sports", repo.findAll());
+		model.addAttribute("sportTypes", typeRepo.findAll());
+		repo.save(sport);
+		model.addAttribute("sport", sport);
+		return "redirect:/sports";
+	}
+	
 	@GetMapping("/add-sport")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
 		SportSession s = new SportSession();

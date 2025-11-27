@@ -59,6 +59,26 @@ public class GameController {
 		return "gaming-session";
 	}
 	
+	@GetMapping("/gaming-sessions")
+	public String addGamingSessions(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("gamingsessions", sessionRepo.findAll());
+		GamingSession gs = new GamingSession();
+		model.addAttribute("devices", deviceRepo.findAll());
+		model.addAttribute("games", repo.findAll());
+		model.addAttribute("gamingsession", gs);
+		return "gaming-sessions";
+	}
+	
+	@PostMapping("/gaming-sessions")
+	public String submitGamingSessions(@ModelAttribute GamingSession gs, Model model) {
+		model.addAttribute("gamingsessions", sessionRepo.findAll());
+		model.addAttribute("devices", deviceRepo.findAll());
+		model.addAttribute("games", repo.findAll());
+		sessionRepo.save(gs);
+		model.addAttribute("gamingsession", gs);
+		return "redirect:/gaming-sessions";
+	}
+	
 	@GetMapping("/add-gaming-session")
 	public String addGamingSession(@RequestParam(required = false) Long id, Model model) {
 		GamingSession gs = new GamingSession();

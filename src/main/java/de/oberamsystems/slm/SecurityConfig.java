@@ -40,7 +40,10 @@ public class SecurityConfig {
 						.requestMatchers("/learning-session", "/learning-session.html", "/learningitem", "/learningitem.html", "/add-learning-session", "/add-learningitem").permitAll()
 						.requestMatchers("/api/sleeptimes", "/api/moods").permitAll()
 						.requestMatchers("/doctor", "/add-doctor", "/appointment", "/add-appointment", "/speciality", "/add-speciality").permitAll()
-						.requestMatchers("/api/**").authenticated().anyRequest().denyAll())
+						.requestMatchers("/activity-management").permitAll()
+						.requestMatchers("/activities", "/sports", "/sleep-times", "/gaming-sessions").permitAll()
+						.requestMatchers("/api/**")
+						.authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());
 		return http.build();
 	}

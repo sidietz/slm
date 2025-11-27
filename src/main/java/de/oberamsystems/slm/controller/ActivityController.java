@@ -58,6 +58,26 @@ public class ActivityController {
 		return "add-activity";
 	}
 	
+	@PostMapping("/activities")
+	public String submitActivity(@ModelAttribute Activity activity, Model model) {
+		model.addAttribute("activities", repo.findAll());
+		model.addAttribute("activityTypes", typeRepo.findAll());
+		repo.save(activity);
+		model.addAttribute("activity", activity);
+		return "redirect:/activities";
+	}
+	
+	@GetMapping("/activities")
+	public String addActivity(@RequestParam(required = false) Long id, Model model) {
+		Activity a = new Activity();
+		a.setStart(LocalDateTime.now());
+		a.setEnd(LocalDateTime.now());
+		model.addAttribute("activities", repo.findAll());
+		model.addAttribute("activity", a);
+		model.addAttribute("activityTypes", typeRepo.findAll());
+		return "activities";
+	}
+	
 	@PostMapping("/add-activity")
 	public String submitSport(@ModelAttribute Activity activity, Model model) {
 		model.addAttribute("activities", typeRepo.findAll());

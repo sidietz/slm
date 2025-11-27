@@ -49,6 +49,24 @@ public class SleepTimeController {
 	    model.addAttribute("maxDate", maxDate);
 		return "sleeptime";
 	}
+	
+	@GetMapping("/sleep-times")
+	public String addSleepTimes(Model model) {
+		model.addAttribute("sleeptimes", repo.findAll());
+		SleepTime st = new SleepTime();
+		st.setGotobed(LocalDateTime.now().minusHours(9));
+		st.setGetup(LocalDateTime.now());
+		model.addAttribute("sleeptime", st);
+		return "sleep-times";
+	}
+	
+	@PostMapping("/sleep-times")
+	public String submitSleepTimes(@ModelAttribute SleepTime sleepTime, Model model) {
+		model.addAttribute("sleeptimes", repo.findAll());
+		repo.save(sleepTime);
+		model.addAttribute("sleeptime", sleepTime);
+		return "redirect:/sleep-times";
+	}
 
 	@GetMapping("/add-sleeptime")
 	public String addSleepTime(Model model) {
