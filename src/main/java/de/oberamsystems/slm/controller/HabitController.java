@@ -25,6 +25,40 @@ public class HabitController {
 	@Autowired
 	private HabitEntryRepository entryRepo;
 	
+	@GetMapping("/habits")
+	public String addHabits(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habit", new Habit());
+		return "habits";
+	}
+	
+	@PostMapping("/habits")
+	public String submitHabits(@ModelAttribute Habit ts, Model model) {
+		model.addAttribute("habits", repo.findAll());
+		repo.save(ts);
+		model.addAttribute("habit", ts);
+		return "redirect:/habits";
+	}
+	
+	@GetMapping("/habit-entries")
+	public String addHabitEntries(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("habitentries", entryRepo.findAll());
+		HabitEntry e = new HabitEntry();
+		e.setLastDone(LocalDateTime.now());
+		model.addAttribute("habitentry", e);
+		model.addAttribute("habits", repo.findAll());
+		return "habit-entries";
+	}
+	
+	@PostMapping("/habit-entries")
+	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model) {
+		model.addAttribute("habitentries", entryRepo.findAll());
+		model.addAttribute("habits", repo.findAll());
+		entryRepo.save(entry);
+		model.addAttribute("habitentry", entry);
+		return "redirect:/habit-entries";
+	}
+	
 	@GetMapping("/habit")
 	public String getSport(Model model) {
 		model.addAttribute("habits", repo.findAll());
@@ -66,6 +100,7 @@ public class HabitController {
 	
 	@GetMapping("/add-habit")
 	public String addHabit(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("habits", repo.findAll());
 		model.addAttribute("habit", new Habit());
 		return "add-habit";
 	}

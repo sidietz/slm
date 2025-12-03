@@ -26,6 +26,57 @@ public class ContractController {
 	@Autowired
 	private ContractorRepository contractorRepo;
 	
+	@GetMapping("/contracts")
+	public String addContracts(@RequestParam(required = false) Long id, Model model) {
+		List<Contract> contracts = repo.findAll();
+		float totalPrice = 0;
+		
+		for (Contract p : contracts) {
+			totalPrice = totalPrice + p.getFee();
+		}
+
+		model.addAttribute("contracts", contracts);
+		model.addAttribute("totalFee", totalPrice);
+		Contract p = new Contract();
+		p.setStartDate(LocalDate.now());
+		p.setActive(true);
+		model.addAttribute("contract", p);
+		model.addAttribute("contractors", contractorRepo.findAll());
+		return "contracts";
+	}
+	
+	@PostMapping("/contracts")
+	public String submitContracts(@ModelAttribute Contract tt, Model model) {
+		List<Contract> contracts = repo.findAll();
+		float totalPrice = 0;
+		
+		for (Contract p : contracts) {
+			totalPrice = totalPrice + p.getFee();
+		}
+
+		model.addAttribute("contracts", contracts);
+		model.addAttribute("totalFee", totalPrice);
+		model.addAttribute("contractors", contractorRepo.findAll());
+		repo.save(tt);
+		model.addAttribute("contract", tt);
+		return "redirect:/contracts";
+	}
+	
+	@GetMapping("/contractors")
+	public String addContractors(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("contractor", new Contractor());
+		return "contractors";
+	}
+	
+	@PostMapping("/contractors")
+	public String submitContractors(@ModelAttribute Contractor ts, Model model) {
+		model.addAttribute("contractors", contractorRepo.findAll());
+		contractorRepo.save(ts);
+		model.addAttribute("contractor", ts);
+		return "redirect:/contractors";
+	}
+	
 	@GetMapping("/contract")
 	public String getContract(Model model) {
 		
@@ -41,7 +92,7 @@ public class ContractController {
 		return "contract";
 	}
 	
-	@GetMapping({"/contractor.html", "/contractors.html", "/contractor", "/contractors"})
+	@GetMapping({"/contractor.html", "/contractor"})
 	public String contractor(Model model) {
 		List<Contractor> tss = contractorRepo.findAll();
 		model.addAttribute("contractors", tss);

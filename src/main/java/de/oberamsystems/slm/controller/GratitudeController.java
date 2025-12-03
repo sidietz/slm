@@ -22,6 +22,23 @@ public class GratitudeController {
 	@Autowired
 	private GratitudeRepository repo;
 	
+	@GetMapping("/gratitudes")
+	public String addGratitude(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("gratitudes", repo.findAll());
+		Gratitude g = new Gratitude();
+		g.setDate(LocalDate.now());
+		model.addAttribute("gratitude", g);
+		return "gratitudes";
+	}
+	
+	@PostMapping("/gratitudes")
+	public String submitGratitude(@ModelAttribute Gratitude gratitude, Model model) {
+		model.addAttribute("gratitudes", repo.findAll());
+		repo.save(gratitude);
+		model.addAttribute("gratitude", gratitude);
+		return "redirect:/gratitudes";
+	}
+	
 	@GetMapping({"/gratitude", "gratitude.html"})
 	public String getEvent(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDate fromDate,

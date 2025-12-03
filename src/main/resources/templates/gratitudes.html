@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Gratitudes</title>
+    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+</head>
+
+<body class="container mt-5">
+    <h1 class="mb-4">Gratitudes</h1>
+
+    <div class="table-responsive">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>date</th>
+                    <th>description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="e : ${gratitudes}">
+					<td th:text="${e.id}"></td>
+					<td th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}"></td>
+					<td th:text="${e.description}"></td>
+				</tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h2 class="mt-5">Add Gratitude</h2>
+    <form action="#" th:action="@{/gratitudes}" th:object="${gratitude}" class="mb-5" method="post">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="place" class="form-label">Date:</label>
+                <input type="date" th:field="*{date}" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="place" class="form-label">Description:</label>
+                <textarea class="form-control" id="description" rows="5"
+                              name="description"
+                              placeholder="Description" th:field="*{description}"
+                              required="required"></textarea>            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Gratitude</button>
+    </form>
+    <a href="/habit-management" class="btn btn-secondary">Back to Dashboard</a>
+
+</body>
+
+</html>

@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.oberamsystems.slm.model.SportSession;
 import de.oberamsystems.slm.model.SportSessionRepository;
+import de.oberamsystems.slm.model.SportType;
 import de.oberamsystems.slm.model.SportTypeRepository;
 
 @Controller
@@ -65,6 +66,22 @@ public class SportController {
 		repo.save(sport);
 		model.addAttribute("sport", sport);
 		return "redirect:/sports";
+	}
+	
+	@GetMapping("/sport-types")
+	public String addSportType(@RequestParam(required = false) Long id, Model model) {
+		SportType t = new SportType();
+		model.addAttribute("type", t);
+		model.addAttribute("types", typeRepo.findAll());
+		return "sport-types";
+	}
+	
+	@PostMapping("/sport-types")
+	public String submitSportType(@ModelAttribute SportType type, Model model) {
+		model.addAttribute("sports", typeRepo.findAll());
+		typeRepo.save(type);
+		model.addAttribute("type", type);
+		return "redirect:/sport-types";
 	}
 	
 	@GetMapping("/add-sport")

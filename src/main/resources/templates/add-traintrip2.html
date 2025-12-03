@@ -17,7 +17,7 @@
 		<p>
 			<select class="form-select" name="selectLine"
 				onchange="updateLine(event)">
-				<option th:each="l : ${lines}" th:value=${l.id}
+					<option th:each="l : ${lines}" th:value=${l.id}
 					th:text="${l.name + ' - ' + l.description}" th:selected ="(${lineId} == ${l.id})"></option>
 			</select>
 		</p>

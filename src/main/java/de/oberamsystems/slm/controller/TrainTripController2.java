@@ -35,6 +35,73 @@ public class TrainTripController2 {
 	@Autowired
 	private TrainLineRepository lineRepo;
 	
+	@GetMapping("/train-trips")
+	public String addTrainTrips(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("traintrips2", repo.findAll());
+		TrainTrip2 tt = new TrainTrip2();
+		id = id == null ? 0 : id;
+		TrainLine l = lineRepo.getReferenceById(id);
+		tt.setLine(l);
+		model.addAttribute("lineId", id);
+		tt.setStart(LocalDateTime.now());
+		tt.setEnd(LocalDateTime.now());
+		model.addAttribute("traintrip", tt);
+		model.addAttribute("traintrips", stationRepo.findByLines_Id(l.getId()));
+		model.addAttribute("lines", lineRepo.findAll());
+		return "train-trips";
+	}
+	
+	@PostMapping("/train-trips")
+	public String submitTrainTrips(@RequestParam(required = false) Long id, @ModelAttribute TrainTrip2 tt, Model model) {
+		id = id == null ? 0 : id;
+		model.addAttribute("traintrips2", repo.findAll());
+		tt.setLine(lineRepo.getReferenceById(id));
+		model.addAttribute("lineId", id);
+		model.addAttribute("traintrip", tt);
+		model.addAttribute("traintrips", stationRepo.findAll());
+		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("stations", stationRepo.findAll());
+		repo.save(tt);
+		model.addAttribute("traintrip", tt);
+		return "train-trips";
+	}
+	
+	@GetMapping("/train-stations")
+	public String addTrainStations(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("stations", stationRepo.findAll());
+		model.addAttribute("trainstation", new TrainStation2Dto());
+		model.addAttribute("lineId", 0);
+		model.addAttribute("lines", lineRepo.findAll());
+		return "train-stations";
+	}
+	
+	@PostMapping("/train-stations")
+	public String submitTrainStations(@ModelAttribute TrainStation2Dto tsdto, Model model) {
+		model.addAttribute("stations", stationRepo.findAll());
+		model.addAttribute("lines", lineRepo.findAll());
+		log.warn(String.format("lineId: %d", tsdto.getLineId()));
+		TrainStation2 ts = new TrainStation2(tsdto.getDs100(), tsdto.getName());
+		ts.addLine(lineRepo.getReferenceById(tsdto.getLineId()));
+		stationRepo.save(ts);
+		model.addAttribute("trainstation", new TrainStation2Dto());
+		return "redirect:/train-stations";
+	}
+	
+	@GetMapping("/train-lines")
+	public String addTrainLines(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("trainline", new TrainLine());
+		return "train-lines";
+	}
+	
+	@PostMapping("/train-lines")
+	public String submitTrainLines(@ModelAttribute TrainLine line, Model model) {
+		model.addAttribute("lines", lineRepo.findAll());
+		lineRepo.save(line);
+		model.addAttribute("trainline", new TrainLine());
+		return "redirect:/train-lines";
+	}
+	
 	@GetMapping("/traintrip2")
 	public String getTrainTrip2(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,

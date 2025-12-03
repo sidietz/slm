@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.oberamsystems.slm.model.Activity;
 import de.oberamsystems.slm.model.ActivityRepository;
+import de.oberamsystems.slm.model.ActivityType;
 import de.oberamsystems.slm.model.ActivityTypeRepository;
 
 @Controller
@@ -58,13 +59,12 @@ public class ActivityController {
 		return "add-activity";
 	}
 	
-	@PostMapping("/activities")
-	public String submitActivity(@ModelAttribute Activity activity, Model model) {
-		model.addAttribute("activities", repo.findAll());
-		model.addAttribute("activityTypes", typeRepo.findAll());
+	@PostMapping("/add-activity")
+	public String submitSport(@ModelAttribute Activity activity, Model model) {
+		model.addAttribute("activities", typeRepo.findAll());
 		repo.save(activity);
 		model.addAttribute("activity", activity);
-		return "redirect:/activities";
+		return "add-activity";
 	}
 	
 	@GetMapping("/activities")
@@ -78,11 +78,28 @@ public class ActivityController {
 		return "activities";
 	}
 	
-	@PostMapping("/add-activity")
-	public String submitSport(@ModelAttribute Activity activity, Model model) {
-		model.addAttribute("activities", typeRepo.findAll());
+	@PostMapping("/activities")
+	public String submitActivity(@ModelAttribute Activity activity, Model model) {
+		model.addAttribute("activities", repo.findAll());
+		model.addAttribute("activityTypes", typeRepo.findAll());
 		repo.save(activity);
 		model.addAttribute("activity", activity);
-		return "add-activity";
+		return "redirect:/activities";
+	}
+	
+	@GetMapping("/activity-types")
+	public String addActivityType(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("activityTypes", typeRepo.findAll());
+		ActivityType type = new ActivityType();
+		model.addAttribute("type", type);
+		return "activity-types";
+	}
+	
+	@PostMapping("/activity-types")
+	public String submitActivityType(@ModelAttribute ActivityType type, Model model) {
+		model.addAttribute("activityTypes", typeRepo.findAll());
+		typeRepo.save(type);
+		model.addAttribute("type", type);
+		return "redirect:/activity-types";
 	}
 }

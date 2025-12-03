@@ -34,26 +34,57 @@
         </div>
 
         <div class="col-md-4">
-            <div class="card h-100 card-hover border-warning">
+            <div class="card h-100 card-hover border-success">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-warning mb-3">Human Management</h5>
+                    <h5 class="card-title text-success mb-3">Human Management</h5>
                     <p class="card-text">Manage humans and their categories.</p>
-                    <a href="/human-management" class="btn btn-warning text-white stretched-link">Go to Human
+                    <a href="/human-management" class="btn btn-success text-white stretched-link">Go to Human
                         Management</a>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
-            <div class="card h-100 card-hover border-success">
+            <div class="card h-100 card-hover border-danger">
                 <div class="card-body text-center">
-                    <h5 class="card-title text-success mb-3">Activity Management</h5>
+                    <h5 class="card-title text-danger mb-3">Activity Management</h5>
                     <p class="card-text">Track sleep, activities, sports, and gaming.</p>
-                    <a href="/activity-management" class="btn btn-success text-white stretched-link">Go to Activity
+                    <a href="/activity-management" class="btn btn-danger text-white stretched-link">Go to Activity
                         Management</a>
                 </div>
             </div>
         </div>
+		<div class="col-md-4">
+            <div class="card h-100 card-hover border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning mb-3">Habit Management</h5>
+                    <p class="card-text">Track learning items, habits...</p>
+                    <a href="/habit-management" class="btn btn-warning text-white stretched-link">Go to Habit
+                        Management</a>
+                </div>
+            </div>
+        </div>
+		<div class="col-md-4">
+            <div class="card h-100 card-hover border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info mb-3">Spend Management</h5>
+                    <p class="card-text">Track purchases and contracts.</p>
+                    <a href="/spend-management" class="btn btn-info text-white stretched-link">Go to Spend
+                        Management</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 card-hover border-secondary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-secondary mb-3">Misc Management</h5>
+                    <p class="card-text">Track traintrips & appointments.</p>
+                    <a href="/misc-management" class="btn btn-secondary text-white stretched-link">Go to Misc
+                        Management</a>
+                </div>
+            </div>
+        </div>
+
     </div>
     
     <div class="mt-3" th:each="e: ${msgs}">

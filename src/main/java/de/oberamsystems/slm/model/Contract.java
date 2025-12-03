@@ -105,4 +105,12 @@ public class Contract {
 	public void setActive(boolean isActive) {
 		this.isActive = isActive;
 	}
+	
+	public void setIsActive(boolean isActive) {
+		this.isActive = isActive;
+	}
+	
+	public boolean getIsActive() {
+		return isActive;
+	}
 }

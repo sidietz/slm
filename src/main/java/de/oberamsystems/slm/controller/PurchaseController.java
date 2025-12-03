@@ -28,6 +28,41 @@ public class PurchaseController {
 	@Autowired
 	private VendorRepository vendorRepo;
 	
+	@GetMapping("/purchases")
+	public String addPurchases(@RequestParam(required = false) Long id, Model model) {
+		List<Purchase> purchases = repo.findAll(Sort.by("purchaseDate"));
+		float totalPrice = 0;
+		
+		for (Purchase p : purchases) {
+			totalPrice = totalPrice + p.getPrice();
+		}
+
+		model.addAttribute("purchases", purchases);
+		model.addAttribute("totalPrice", totalPrice);
+		Purchase p = new Purchase();
+		p.setPurchaseDate(LocalDate.now());
+		model.addAttribute("purchase", new Purchase());
+		model.addAttribute("vendors", vendorRepo.findAll());
+		return "purchases";
+	}
+	
+	@PostMapping("/purchases")
+	public String submitPurchases(@ModelAttribute Purchase tt, Model model) {
+		List<Purchase> purchases = repo.findAll(Sort.by("purchaseDate"));
+		float totalPrice = 0;
+		
+		for (Purchase p : purchases) {
+			totalPrice = totalPrice + p.getPrice();
+		}
+
+		model.addAttribute("purchases", purchases);
+		model.addAttribute("totalPrice", totalPrice);
+		model.addAttribute("vendors", vendorRepo.findAll());
+		repo.save(tt);
+		model.addAttribute("purchase", tt);
+		return "redirect:/purchases";
+	}
+	
 	@GetMapping("/purchase")
 	public String getpurchase(Model model) {
 		
@@ -43,7 +78,7 @@ public class PurchaseController {
 		return "purchase";
 	}
 	
-	@GetMapping({"/vendor.html", "/vendors.html", "/vendor", "/vendors"})
+	@GetMapping({"/vendor.html", "/vendor"})
 	public String index(Model model) {
 		List<Vendor> tss = vendorRepo.findAll();
 		model.addAttribute("vendors", tss);

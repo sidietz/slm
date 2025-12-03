@@ -24,8 +24,27 @@ public class HumanController {
 	@Autowired
 	private HumanRepository repo;
 	
+	@GetMapping({"/humans"})
+	public String addHumans(@RequestParam(required = false) Long id, Model model) {
+		List<Human> humans = repo.findAllByOrderByDaysUntilBirthdayAsc();
+		model.addAttribute("humans", humans);
+		model.addAttribute("categories", HumanCategory.values());
+		model.addAttribute("human", new Human());
+		return "humans";
+	}
 	
-	@GetMapping({"/human.html", "/humans.html", "/human", "/humans"})
+	@PostMapping({"/humans"})
+	public String submitHumans(@ModelAttribute Human human, Model model) {
+		List<Human> humans = repo.findAllByOrderByDaysUntilBirthdayAsc();
+		model.addAttribute("humans", humans);
+		model.addAttribute("categories", HumanCategory.values());
+		repo.save(human);
+		model.addAttribute("human", human);
+		return "humans";
+	}
+	
+	
+	@GetMapping({"/human.html", "/human"})
 	public String index(Model model) {
 		List<Human> humans = repo.findAllByOrderByDaysUntilBirthdayAsc();
 		model.addAttribute("humans", humans);

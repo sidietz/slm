@@ -21,6 +21,25 @@ public class MeditationController {
 	@Autowired
 	private MeditationSessionRepository repo;
 	
+	@GetMapping("/meditations")
+	public String addMeditations(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("meditations", repo.findAll());
+		MeditationSession ms = new MeditationSession();
+		ms.setStart(LocalDateTime.now());
+		ms.setEnd(LocalDateTime.now());
+		model.addAttribute("meditation", ms);
+		log.warn(String.format("%d", id));
+		return "meditations";
+	}
+	
+	@PostMapping("/meditations")
+	public String submitMeditations(@ModelAttribute MeditationSession meditation, Model model) {
+		model.addAttribute("meditations", repo.findAll());
+		repo.save(meditation);
+		model.addAttribute("meditation", meditation);
+		return "redirect:/meditations";
+	}
+	
 	@GetMapping({"/meditation", "meditation.html"})
 	public String getMeditation(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
