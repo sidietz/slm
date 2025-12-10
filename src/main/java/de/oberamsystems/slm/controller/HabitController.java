@@ -49,7 +49,7 @@ public class HabitController {
 		model.addAttribute("habits", repo.findAll());
 		return "habit-entries";
 	}
-	
+
 	@PostMapping("/habit-entries")
 	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model) {
 		model.addAttribute("habitentries", entryRepo.findAll());
@@ -57,6 +57,37 @@ public class HabitController {
 		entryRepo.save(entry);
 		model.addAttribute("habitentry", entry);
 		return "redirect:/habit-entries";
+	}
+
+	@GetMapping("/last-done-habit-entries")
+	public String getLastDoneHabitEntries(
+			@RequestParam(required = false) Long id, Model model) {
+		id = id == null ? 1 : id;
+		Habit selected = repo.getById(id);
+		model.addAttribute("habit", selected);
+		model.addAttribute("habitId", id);
+		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
+		HabitEntry e = new HabitEntry();
+		e.setHabit(selected);
+		e.setLastDone(LocalDateTime.now());
+		model.addAttribute("habitentry", e);
+		return "last-done-habit-entries";
+	}
+
+	@PostMapping("/last-done-habit-entries")
+	public String submitLastDoneHabitEntries(@RequestParam(required = false) Long id, @ModelAttribute HabitEntry entry, Model model) {
+		id = id == null ? 1 : id;
+		model.addAttribute("habitId", id);
+		Habit selected = repo.getById(id);
+		entry.setHabit(selected);
+		model.addAttribute("habit", selected);
+		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
+		model.addAttribute("habitentries", entryRepo.findAll());
+		entryRepo.save(entry);
+		model.addAttribute("habitentry", entry);
+		return "last-done-habit-entries";
 	}
 	
 	@GetMapping("/habit")
@@ -72,7 +103,7 @@ public class HabitController {
 	}
 	
 	@GetMapping("/last-done-habitentry")
-	public String getLastDoneHabitEntries(
+	public String getLastDoneHabitEntry(
 			@RequestParam(required = false) Long id, Model model) {
 		id = id == null ? 1 : id;
 		model.addAttribute("habitId", id);
