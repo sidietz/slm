@@ -26,29 +26,6 @@ public class SleepTimeController {
 		model.addAttribute("sleeptimes", repo.findAll());
 		return "sleeptime-bb";
 	}
-
-	@GetMapping("/sleeptime")
-	public String getSleepTimes(
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
-			Model model) {
-
-		fromDate = fromDate == null ? LocalDateTime.now().minusDays(28) : fromDate;
-		toDate = toDate == null ? LocalDateTime.now() : toDate;
-
-		LocalDateTime minDate = repo.findMinDate();
-	    LocalDateTime maxDate = repo.findMaxDate();
-
-	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusHours(22); //fixes off by one bug
-	    maxDate = maxDate == null ? LocalDateTime.now() : maxDate;
-
-		model.addAttribute("sleeptimes", repo.findByGotobedBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
-		model.addAttribute("fromDate", fromDate);
-		model.addAttribute("toDate", toDate);
-		model.addAttribute("minDate", minDate);
-	    model.addAttribute("maxDate", maxDate);
-		return "sleeptime";
-	}
 	
 	@GetMapping("/sleep-times")
 	public String addSleepTimes(Model model) {
@@ -66,21 +43,5 @@ public class SleepTimeController {
 		repo.save(sleepTime);
 		model.addAttribute("sleeptime", sleepTime);
 		return "redirect:/sleep-times";
-	}
-
-	@GetMapping("/add-sleeptime")
-	public String addSleepTime(Model model) {
-		SleepTime st = new SleepTime();
-		st.setGotobed(LocalDateTime.now().minusHours(9));
-		st.setGetup(LocalDateTime.now());
-		model.addAttribute("sleeptime", st);
-		return "add-sleeptime";
-	}
-
-	@PostMapping("/add-sleeptime")
-	public String submitSleepTime(@ModelAttribute SleepTime sleepTime, Model model) {
-		repo.save(sleepTime);
-		model.addAttribute("sleeptime", sleepTime);
-		return "add-sleeptime";
 	}
 }
