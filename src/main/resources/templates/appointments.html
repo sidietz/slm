@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="https://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<link href="../static/css/table.css" th:href="@{/css/table.css}"
+	rel="stylesheet" />
+
+<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<link rel="stylesheet"
+	href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css">
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+<script
+	src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+<script
+	src="https://cdn.jsdelivr.net/npm/luxon@3.7.1/build/global/luxon.min.js"></script>
+<title>Appointments</title>
+</head>
+<body class="container mt-5">
+	<h1 class="mb-4">Appointments</h1>
+	<form method="get" action="/appointments" id="filterForm" class="mb-3">
+		<div class="col-auto flex-grow-1">
+			<div id="date-slider"></div>
+		</div>
+		<input type="hidden" name="fromDate" id="fromDate"
+			th:value="${fromDate}"> <input type="hidden" name="toDate"
+			id="toDate" th:value="${toDate}">
+		<div class="col-auto">
+			<button type="submit" class="btn btn-primary">Apply</button>
+			<a href="/appointments" class="btn btn-secondary">Reset</a>
+		</div>
+	</form>
+    
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Doctor</th>
+                <th>Comment</th>
+                <th>Departure</th>
+                <th>Arrival</th>
+                <th>Start</th>
+                <th>End</th>
+                <th>Arrival Home</th>
+                <th>Duration Appointment</th>
+                <th>Duration end-to-end</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="e : ${appointments}">
+					<td th:text="${e.id}"></td>
+					<td th:text="${e.doctor.lastname} + ${e.doctor.speciality.title}"></td>
+					<td th:text="${e.comment}"></td>
+					<td th:text="${#temporals.format(e.departure, 'dd.MM.yyyy HH:mm')}"></td>
+					<td th:text="${#temporals.format(e.arrival, 'dd.MM.yyyy HH:mm')}"></td>
+					<td th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
+					<td th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
+					<td th:text="${#temporals.format(e.arrivalHome, 'dd.MM.yyyy HH:mm')}"></td>
+					<td th:text="${{e.duration}}"></td>
+					<td th:text="${{e.completeDuration}}"></td>
+				</tr>
+        </tbody>
+    </table>
+    <h2 class="mt-5">Add Appointment</h2>
+    <form action="#" th:action="@{/appointments}" th:object="${appointment}" method="post" class="mb-5">
+        <div class="row">
+        	<div class="col-md-6 mb-3">
+            	<label for="doctorId" class="form-label">Doctor:</label>
+            	<select class="form-select" name="selectBook"
+				onchange="updatePress(event)" th:field="*{doctor}">
+					<option th:each="p : ${doctors}" th:value="${p.id}"
+					th:text="${p.lastname} + ${p.speciality.title}"></option>
+				</select>
+       		</div>
+        	<div class="col-md-6 mb-3">
+                <label for="comment" class="form-label">Comment</label>
+                <input type="text" th:field="*{comment}" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="departure" class="form-label">Departure:</label>
+                <input type="datetime-local" th:field="*{departure}" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="arrival" class="form-label">Arrival:</label>
+                <input type="datetime-local" th:field="*{arrival}" class="form-control" required>
+            </div>
+			<div class="col-md-6 mb-3">
+                <label for="start" class="form-label">Start:</label>
+                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="end" class="form-label">End:</label>
+                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="arrivalHome" class="form-label">Arrival Home:</label>
+                <input type="datetime-local" th:field="*{arrivalHome}" class="form-control" required>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Doctor</button>
+    </form>
+    <a href="/misc-management" class="btn btn-secondary">Back to Dashboard</a>
+    <a href="/" class="btn btn-secondary">Back to Home</a>
+</body>
+</html>

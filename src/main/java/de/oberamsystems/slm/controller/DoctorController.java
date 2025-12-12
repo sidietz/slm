@@ -33,6 +33,61 @@ public class DoctorController {
 	@Autowired
 	private SpecialityRepository specRepo;
 	
+	@GetMapping("/appointments")
+	public String addAppointments(@RequestParam(required = false) Long id, Model model) {
+		Appointment a = new Appointment();
+		a.setStart(LocalDateTime.now());
+		a.setEnd(LocalDateTime.now());
+		a.setDeparture(LocalDateTime.now());
+		a.setArrival(LocalDateTime.now());
+		a.setArrivalHome(LocalDateTime.now());
+		model.addAttribute("appointment", a);
+		model.addAttribute("doctors", doctorRepo.findAll());
+		model.addAttribute("appointments", repo.findAll());
+		return "appointments";
+	}
+	
+	@PostMapping("/appointments")
+	public String submitAppointment(@ModelAttribute Appointment app, Model model) {
+		model.addAttribute("appointments", repo.findAll());
+		model.addAttribute("doctors", doctorRepo.findAll());
+		repo.save(app);
+		model.addAttribute("appointment", app);
+		return "redirect:/appointments";
+	}
+	
+	@GetMapping("/doctors")
+	public String addDoctors(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("specialities", specRepo.findAll());
+		model.addAttribute("doctors", doctorRepo.findAll());
+		model.addAttribute("doctor", new Doctor());
+		return "doctors";
+	}
+	
+	@PostMapping("/doctors")
+	public String submitDoctors(@ModelAttribute Doctor doc, Model model) {
+		model.addAttribute("specialities", specRepo.findAll());
+		model.addAttribute("doctors", doctorRepo.findAll());
+		doctorRepo.save(doc);
+		model.addAttribute("doctor", doc);
+		return "redirect:/doctors";
+	}
+
+	@GetMapping("/specialities")
+	public String addSpecialities(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("speciality", new Speciality());
+		model.addAttribute("specialities", specRepo.findAll());
+		return "specialities";
+	}
+
+	@PostMapping("/specialities")
+	public String submitSpecialities(@ModelAttribute Speciality spec, Model model) {
+		specRepo.save(spec);
+		model.addAttribute("speciality", spec);
+		model.addAttribute("specialities", specRepo.findAll());
+		return "redirect:/specialities";
+	}
+
 	@GetMapping("/appointment")
 	public String getSport(
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
@@ -55,7 +110,7 @@ public class DoctorController {
 		return "appointment";
 	}
 	
-	@GetMapping({"/doctor.html", "/doctors.html", "/doctor", "/doctors"})
+	@GetMapping({"/doctor.html", "/doctor"})
 	public String index(Model model) {
 		List<Doctor> docs = doctorRepo.findAll();
 		model.addAttribute("doctors", docs);
