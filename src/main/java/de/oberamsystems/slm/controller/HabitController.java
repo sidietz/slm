@@ -25,56 +25,68 @@ public class HabitController {
 	@Autowired
 	private HabitEntryRepository entryRepo;
 	
-	@GetMapping("/habit")
-	public String getSport(Model model) {
+	@GetMapping("/habits")
+	public String addHabits(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("habits", repo.findAll());
-		return "habit";
+		model.addAttribute("habit", new Habit());
+		return "habits";
 	}
 	
-	@GetMapping("/habitentry")
-	public String getHabitEntries(Model model) {
+	@PostMapping("/habits")
+	public String submitHabits(@ModelAttribute Habit ts, Model model) {
+		model.addAttribute("habits", repo.findAll());
+		repo.save(ts);
+		model.addAttribute("habit", ts);
+		return "redirect:/habits";
+	}
+	
+	@GetMapping("/habit-entries")
+	public String addHabitEntries(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("habitentries", entryRepo.findAll());
-		return "habitentry";
-	}
-	
-	@GetMapping("/last-done-habitentry")
-	public String getLastDoneHabitEntries(
-			@RequestParam(required = false) Long id, Model model) {
-		id = id == null ? 1 : id;
-		model.addAttribute("habitId", id);
-		model.addAttribute("habits", repo.findAll());
-		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
-		return "last-done-habitentry";
-	}
-
-	@GetMapping("/add-habitentry")
-	public String addHabitEntry(@RequestParam(required = false) Long id, Model model) {
 		HabitEntry e = new HabitEntry();
 		e.setLastDone(LocalDateTime.now());
 		model.addAttribute("habitentry", e);
 		model.addAttribute("habits", repo.findAll());
-		return "add-habitentry";
+		return "habit-entries";
 	}
-	
-	@PostMapping("/add-habitentry")
-	public String submitHabitEntry(@ModelAttribute HabitEntry entry, Model model) {
+
+	@PostMapping("/habit-entries")
+	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model) {
+		model.addAttribute("habitentries", entryRepo.findAll());
 		model.addAttribute("habits", repo.findAll());
 		entryRepo.save(entry);
 		model.addAttribute("habitentry", entry);
-		return "add-habitentry";
+		return "redirect:/habit-entries";
 	}
-	
-	@GetMapping("/add-habit")
-	public String addHabit(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("habit", new Habit());
-		return "add-habit";
-	}
-	
-	@PostMapping("/add-habit")
-	public String submitHabit(@ModelAttribute Habit ts, Model model) {
+
+	@GetMapping("/last-done-habit-entries")
+	public String getLastDoneHabitEntries(
+			@RequestParam(required = false) Long id, Model model) {
+		id = id == null ? 1 : id;
+		Habit selected = repo.getById(id);
+		model.addAttribute("habit", selected);
+		model.addAttribute("habitId", id);
 		model.addAttribute("habits", repo.findAll());
-		repo.save(ts);
-		model.addAttribute("habit", ts);
-		return "add-habit";
+		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
+		HabitEntry e = new HabitEntry();
+		e.setHabit(selected);
+		e.setLastDone(LocalDateTime.now());
+		model.addAttribute("habitentry", e);
+		return "last-done-habit-entries";
+	}
+
+	@PostMapping("/last-done-habit-entries")
+	public String submitLastDoneHabitEntries(@RequestParam(required = false) Long id, @ModelAttribute HabitEntry entry, Model model) {
+		id = id == null ? 1 : id;
+		model.addAttribute("habitId", id);
+		Habit selected = repo.getById(id);
+		entry.setHabit(selected);
+		model.addAttribute("habit", selected);
+		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
+		model.addAttribute("habitentries", entryRepo.findAll());
+		entryRepo.save(entry);
+		model.addAttribute("habitentry", entry);
+		return "last-done-habit-entries";
 	}
 }

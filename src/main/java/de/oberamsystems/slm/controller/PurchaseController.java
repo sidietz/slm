@@ -6,6 +6,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -27,10 +28,9 @@ public class PurchaseController {
 	@Autowired
 	private VendorRepository vendorRepo;
 	
-	@GetMapping("/purchase")
-	public String getpurchase(Model model) {
-		
-		List<Purchase> purchases = repo.findAll();
+	@GetMapping("/purchases")
+	public String addPurchases(@RequestParam(required = false) Long id, Model model) {
+		List<Purchase> purchases = repo.findAll(Sort.by("purchaseDate"));
 		float totalPrice = 0;
 		
 		for (Purchase p : purchases) {
@@ -39,44 +39,27 @@ public class PurchaseController {
 
 		model.addAttribute("purchases", purchases);
 		model.addAttribute("totalPrice", totalPrice);
-		return "purchase";
-	}
-	
-	@GetMapping({"/vendor.html", "/vendors.html", "/vendor", "/vendors"})
-	public String index(Model model) {
-		List<Vendor> tss = vendorRepo.findAll();
-		model.addAttribute("vendors", tss);
-		return "vendor";
-	}
-	
-	@GetMapping("/add-purchase")
-	public String addPurchase(@RequestParam(required = false) Long id, Model model) {
 		Purchase p = new Purchase();
 		p.setPurchaseDate(LocalDate.now());
 		model.addAttribute("purchase", new Purchase());
 		model.addAttribute("vendors", vendorRepo.findAll());
-		return "add-purchase";
+		return "purchases";
 	}
 	
-	@PostMapping("/add-purchase")
-	public String submitPurchase(@ModelAttribute Purchase tt, Model model) {
+	@PostMapping("/purchases")
+	public String submitPurchases(@ModelAttribute Purchase tt, Model model) {
+		List<Purchase> purchases = repo.findAll(Sort.by("purchaseDate"));
+		float totalPrice = 0;
+		
+		for (Purchase p : purchases) {
+			totalPrice = totalPrice + p.getPrice();
+		}
+
+		model.addAttribute("purchases", purchases);
+		model.addAttribute("totalPrice", totalPrice);
 		model.addAttribute("vendors", vendorRepo.findAll());
 		repo.save(tt);
 		model.addAttribute("purchase", tt);
-		return "add-purchase";
-	}
-	
-	@GetMapping("/add-vendor")
-	public String addVendor(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("vendor", new Vendor());
-		return "add-vendor";
-	}
-	
-	@PostMapping("/add-vendor")
-	public String submitVendor(@ModelAttribute Vendor ts, Model model) {
-		model.addAttribute("vendors", vendorRepo.findAll());
-		vendorRepo.save(ts);
-		model.addAttribute("vendor", ts);
-		return "add-vendor";
+		return "redirect:/purchases";
 	}
 }

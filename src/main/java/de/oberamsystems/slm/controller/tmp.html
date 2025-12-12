@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+<form action="#" th:action="@{/add-appointment}" th:object="${appointment}"
+		method="post">
+		<p>
+			<select class="form-select" name="selectDoctor"
+				onchange="updateId(event)" th:field="*{doctor}">
+				<option th:each="s : ${doctors}" th:value="${s.id}"
+					th:text="${s.firstname} + ${s.lastname}"></option>
+			</select>
+		<p>
+			title: <input class="form-control" type="text" th:field="*{comment}" />
+		</p>
+		<p>
+			departure: <input class="form-control" type="datetime-local" th:field="*{departure}" />
+		</p>
+		<p>
+			arrival: <input class="form-control" type="datetime-local" th:field="*{arrival}" />
+		</p>
+		<p>
+			start: <input class="form-control" type="datetime-local" th:field="*{start}" />
+		</p>
+		<p>
+			end: <input class="form-control" type="datetime-local" th:field="*{end}" />
+		</p>
+		<p>
+			arrival home: <input class="form-control" type="datetime-local" th:field="*{arrivalHome}" />
+		</p>
+		<p>
+			<button type="submit" class="btn btn-primary">Submit</button>
+			<button type="reset" class="btn btn-secondary">Reset</button>
+		</p>
+	</form>	
+
+</body>
+</html>

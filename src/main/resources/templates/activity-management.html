@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <title>Activity Management</title>
+    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+	rel="stylesheet" />
+<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
+	defer></script>
+	<style>
+        .card-hover:hover {
+            transform: scale(1.05);
+            transition: transform 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+
+<body class="container mt-5">
+    <h1 class="mb-5 text-center">Activity Management</h1>
+
+    <div class="row g-4">
+        <!-- Sleep Management -->
+        <div class="col-md-3">
+            <div class="card h-100 card-hover border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary mb-3">Sleep</h5>
+                    <p class="card-text">Track your sleep patterns.</p>
+                    <a href="/sleep-times" class="btn btn-primary stretched-link">Manage Sleep</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Management -->
+        <div class="col-md-3">
+            <div class="card h-100 card-hover border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success mb-3">Activities</h5>
+                    <p class="card-text">Log general activities.</p>
+                    <a href="/activities" class="btn btn-success stretched-link">Manage Activities</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sport Management -->
+        <div class="col-md-3">
+            <div class="card h-100 card-hover border-danger">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-danger mb-3">Sports</h5>
+                    <p class="card-text">Record your sport sessions.</p>
+                    <a href="/sports" class="btn btn-danger stretched-link">Manage Sports</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gaming Management -->
+        <div class="col-md-3">
+            <div class="card h-100 card-hover border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning mb-3">Gaming</h5>
+                    <p class="card-text">Track your gaming sessions.</p>
+                    <a href="/gaming-sessions" class="btn btn-warning text-white stretched-link">Manage Gaming</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Configuration Section -->
+        <div class="col-12 mt-4">
+            <h3 class="mb-3">Configuration</h3>
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <a href="/activity-types" class="btn btn-outline-secondary w-100">Activity Types</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/sport-types" class="btn btn-outline-secondary w-100">Sport Types</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/games" class="btn btn-outline-secondary w-100">Games Library</a>
+                </div>
+                
+                <div class="col-md-3">
+                    <a href="/devices" class="btn btn-outline-secondary w-100">Devices</a>
+                </div>
+            </div>
+            <div class="row g-3">
+            	<div class="col-md-3">
+                    <a href="/publishers" class="btn btn-outline-secondary w-100">Publishers</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/studios" class="btn btn-outline-secondary w-100">Studios</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/vendors" class="btn btn-outline-secondary w-100">Vendors</a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/manufacturers" class="btn btn-outline-secondary w-100">Manufacturers</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-5">
+        <a href="/" class="btn btn-secondary">Back to Home</a>
+    </div>
+
+    <footer class="mt-5 text-center text-muted">
+        <p>&copy; 2025 SLM</p>
+    </footer>
+</body>
+</html>

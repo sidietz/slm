@@ -22,6 +22,7 @@ import de.oberamsystems.slm.model.Publisher;
 import de.oberamsystems.slm.model.PublisherRepository;
 import de.oberamsystems.slm.model.Studio;
 import de.oberamsystems.slm.model.StudioRepository;
+import de.oberamsystems.slm.model.Vendor;
 import de.oberamsystems.slm.model.VendorRepository;
 
 @Controller
@@ -52,140 +53,130 @@ public class GameController {
 	
 	@Autowired
 	private VendorRepository vendorRepo;
-
-	@GetMapping("/gaming-session")
-	public String getGamingSession(Model model) {
-		model.addAttribute("gamingsessions", sessionRepo.findAll());
-		return "gaming-session";
-	}
 	
-	@GetMapping("/add-gaming-session")
-	public String addGamingSession(@RequestParam(required = false) Long id, Model model) {
+	@GetMapping("/gaming-sessions")
+	public String addGamingSessions(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("gamingsessions", sessionRepo.findAll());
 		GamingSession gs = new GamingSession();
 		model.addAttribute("devices", deviceRepo.findAll());
 		model.addAttribute("games", repo.findAll());
 		model.addAttribute("gamingsession", gs);
-		return "add-gaming-session";
+		return "gaming-sessions";
 	}
 	
-	@PostMapping("/add-gaming-session")
-	public String submitGamingSession(@ModelAttribute GamingSession gs, Model model) {
+	@PostMapping("/gaming-sessions")
+	public String submitGamingSessions(@ModelAttribute GamingSession gs, Model model) {
+		model.addAttribute("gamingsessions", sessionRepo.findAll());
 		model.addAttribute("devices", deviceRepo.findAll());
 		model.addAttribute("games", repo.findAll());
 		sessionRepo.save(gs);
 		model.addAttribute("gamingsession", gs);
-		return "add-gaming-session";
-	}
-
-	@GetMapping("/game")
-	public String getGame(Model model) {
-		model.addAttribute("games", repo.findAll());
-		return "game";
+		return "redirect:/gaming-sessions";
 	}
 	
-	@GetMapping("/add-game")
-	public String addGame(@RequestParam(required = false) Long id, Model model) {
-		Game a = new Game();
+	@GetMapping("/games")
+	public String addGames(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("games", repo.findAll());
 		model.addAttribute("studios", studioRepo.findAll());
 		model.addAttribute("publishers", publisherRepo.findAll());
-		model.addAttribute("game", a);
-		return "add-game";
+		Game g = new Game();
+		model.addAttribute("game", g);
+		return "games";
 	}
 	
-	@PostMapping("/add-game")
-	public String submitGame(@ModelAttribute Game game, Model model) {
-		List<Studio> studios = studioRepo.findAll();
-		List<Publisher> publishers = publisherRepo.findAll();
-		model.addAttribute("studios", studios);
-		model.addAttribute("publishers", publishers);
-		repo.save(game);
-		model.addAttribute("game", game);
-		return "add-game";
+	@PostMapping("/games")
+	public String submitGames(@ModelAttribute Game g, Model model) {
+		model.addAttribute("games", repo.findAll());
+		model.addAttribute("studios", studioRepo.findAll());
+		model.addAttribute("publishers", publisherRepo.findAll());
+		repo.save(g);
+		model.addAttribute("game", g);
+		return "redirect:/games";
 	}
-
-	@GetMapping("/device")
-	public String getDevices(Model model) {
+	
+	@GetMapping("/devices")
+	public String addDevices(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("devices", deviceRepo.findAll());
-		return "device";
-	}
-	
-	@GetMapping("/add-device")
-	public String addDevice(@RequestParam(required = false) Long id, Model model) {
 		Device d = new Device();
 		model.addAttribute("deviceTypes", deviceTypeRepo.findAll());
 		model.addAttribute("vendors", vendorRepo.findAll());
 		model.addAttribute("manufacturers", manufacturerRepo.findAll());
 		model.addAttribute("device",d);
-		return "add-device";
+		return "devices";
 	}
 	
-	@PostMapping("/add-device")
-	public String submitDevice(@ModelAttribute Device device, Model model) {
+	@PostMapping("/devices")
+	public String submitDevices(@ModelAttribute Device device, Model model) {
+		model.addAttribute("devices", deviceRepo.findAll());
 		model.addAttribute("deviceTypes", deviceTypeRepo.findAll());
 		model.addAttribute("vendors", vendorRepo.findAll());
 		model.addAttribute("manufacturers", manufacturerRepo.findAll());
 		deviceRepo.save(device);
 		model.addAttribute("device", device);
-		return "add-device";
+		return "redirect:/devices";
 	}
 	
-	@GetMapping("/studio")
-	public String getStudios(Model model) {
-		model.addAttribute("studios", studioRepo.findAll());
-		return "studio";
-	}
-	
-	@GetMapping("/add-studio")
-	public String addStudio(@RequestParam(required = false) Long id, Model model) {
-		Studio s = new Studio();
-		model.addAttribute("studio",s);
-		return "add-studio";
-	}
-	
-	@PostMapping("/add-studio")
-	public String submitStudio(@ModelAttribute Studio studio, Model model) {
-		studioRepo.save(studio);
-		model.addAttribute("studio", studio);
-		return "add-studio";
-	}
-	
-	@GetMapping("/publisher")
-	public String getPublishers(Model model) {
+	@GetMapping("/publishers")
+	public String addPublishers(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("publishers", publisherRepo.findAll());
-		return "publisher";
-	}
-	
-	@GetMapping("/add-publisher")
-	public String addPublisher(@RequestParam(required = false) Long id, Model model) {
 		Publisher p = new Publisher();
 		model.addAttribute("publisher",p);
-		return "add-publisher";
+		return "publishers";
 	}
 	
-	@PostMapping("/add-publisher")
-	public String submitPublisher(@ModelAttribute Publisher pub, Model model) {
-		publisherRepo.save(pub);
-		model.addAttribute("publisher", pub);
-		return "add-publisher";
+	@PostMapping("/publishers")
+	public String submitPublishers(@ModelAttribute Publisher p, Model model) {
+		model.addAttribute("publishers", publisherRepo.findAll());
+		publisherRepo.save(p);
+		model.addAttribute("publisher", p);
+		return "redirect:/publishers";
 	}
-
-	@GetMapping("/manufacturer")
-	public String getmanufacturers(Model model) {
+	
+	@GetMapping("/studios")
+	public String addStudios(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("studios", studioRepo.findAll());
+		Studio s = new Studio();
+		model.addAttribute("studio",s);
+		return "studios";
+	}
+	
+	@PostMapping("/studios")
+	public String submitStudios(@ModelAttribute Studio s, Model model) {
+		model.addAttribute("studios", studioRepo.findAll());
+		studioRepo.save(s);
+		model.addAttribute("studio", s);
+		return "redirect:/studios";
+	}
+	
+	@GetMapping("/vendors")
+	public String addVendors(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("vendors", vendorRepo.findAll());
+		Vendor v = new Vendor();
+		model.addAttribute("vendor",v);
+		return "vendors";
+	}
+	
+	@PostMapping("/vendors")
+	public String submitVendors(@ModelAttribute Vendor v, Model model) {
+		model.addAttribute("vendors", vendorRepo.findAll());
+		vendorRepo.save(v);
+		model.addAttribute("vendor", v);
+		return "redirect:/vendors";
+	}
+	
+	@GetMapping("/manufacturers")
+	public String addManufacturers(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("manufacturers", manufacturerRepo.findAll());
-		return "manufacturer";
+		Manufacturer m = new Manufacturer();
+		model.addAttribute("manufacturer", m);
+		return "manufacturers";
 	}
 	
-	@GetMapping("/add-manufacturer")
-	public String addmanufacturer(@RequestParam(required = false) Long id, Model model) {
-		Manufacturer f = new Manufacturer();
-		model.addAttribute("manufacturer", f);
-		return "add-manufacturer";
-	}
-	
-	@PostMapping("/add-manufacturer")
-	public String submitmanufacturer(@ModelAttribute Manufacturer manufacturer, Model model) {
-		manufacturerRepo.save(manufacturer);
-		model.addAttribute("manufacturer", manufacturer);
-		return "add-manufacturer";
+	@PostMapping("/manufacturers")
+	public String submitManufacturers(@ModelAttribute Manufacturer m, Model model) {
+		model.addAttribute("manufacturers", manufacturerRepo.findAll());
+		manufacturerRepo.save(m);
+		model.addAttribute("manufacturer", m);
+		return "redirect:/manufacturers";
 	}
 }

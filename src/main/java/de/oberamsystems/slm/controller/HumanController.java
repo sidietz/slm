@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import de.oberamsystems.slm.model.Human;
+import de.oberamsystems.slm.model.HumanCategory;
 import de.oberamsystems.slm.model.HumanRepository;
 
 @Controller
@@ -23,24 +24,22 @@ public class HumanController {
 	@Autowired
 	private HumanRepository repo;
 	
-	
-	@GetMapping({"/human.html", "/humans.html", "/human", "/humans"})
-	public String index(Model model) {
+	@GetMapping({"/humans"})
+	public String addHumans(@RequestParam(required = false) Long id, Model model) {
 		List<Human> humans = repo.findAllByOrderByDaysUntilBirthdayAsc();
 		model.addAttribute("humans", humans);
-		return "human";
-	}
-	
-	@GetMapping({"/add-human", "/add-human.html"})
-	public String addHuman(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("categories", HumanCategory.values());
 		model.addAttribute("human", new Human());
-		return "add-human";
+		return "humans";
 	}
 	
-	@PostMapping({"/add-human", "/add-human.html"})
-	public String submitHuman(@ModelAttribute Human human, Model model) {
+	@PostMapping({"/humans"})
+	public String submitHumans(@ModelAttribute Human human, Model model) {
+		List<Human> humans = repo.findAllByOrderByDaysUntilBirthdayAsc();
+		model.addAttribute("humans", humans);
+		model.addAttribute("categories", HumanCategory.values());
 		repo.save(human);
 		model.addAttribute("human", human);
-		return "add-human";
+		return "humans";
 	}
 }

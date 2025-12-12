@@ -21,29 +21,24 @@ public class MoodController {
 
 	@Autowired
 	private MoodRepository repo;
-
-	@GetMapping({"/mood", "/mood.html"})
-	public String getmood(Model model) {
-		List<Mood> moods = repo.findAll();
-		model.addAttribute("moods", moods);
-		return "mood";
-	}
-
-	@GetMapping("/add-mood")
-	public String addMood(@RequestParam(required = false) Long id, Model model) {
+	
+	@GetMapping("/moods")
+	public String addMoods(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("moods", repo.findAll());
 		Mood m = new Mood();
 		m.setDate(LocalDate.now());
 		model.addAttribute("mood", m);
-		return "add-mood";
+		return "moods";
 	}
 
-	@PostMapping("/add-mood")
-	public String submitMood(@ModelAttribute Mood m, Model model) {
+	@PostMapping("/moods")
+	public String submitMoods(@ModelAttribute Mood m, Model model) {
+		model.addAttribute("moods", repo.findAll());
 		repo.save(m);
 		model.addAttribute("mood", m);
-		return "add-mood";
+		return "redirect:/moods";
 	}
-	
+
 	@GetMapping("/mood-bb")
 	public String moodBb(Model model) {
 		model.addAttribute("moods", repo.findAll());

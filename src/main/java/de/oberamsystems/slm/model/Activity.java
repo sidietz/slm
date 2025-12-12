@@ -15,7 +15,7 @@ public class Activity {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 	@ManyToOne
-	@JoinColumn(name="type", referencedColumnName = "id")
+	@JoinColumn(name = "type", referencedColumnName = "id")
 	private ActivityType type;
 	private String title;
 	private String location;

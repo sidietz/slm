@@ -39,63 +39,56 @@ public class BookController {
 	@Autowired
 	private ReadingSessionRepository readingSessionRepo;
 	
-	@GetMapping("/book")
-	public String getbook(Model model) {
-		List<Book> books = repo.findAll();
-		model.addAttribute("books", books);
-		return "book";
-	}
-	
-	@GetMapping({"/author.html", "/authors.html", "/author", "/authors"})
-	public String index(Model model) {
-		List<Author> tss = authorRepo.findAll();
-		model.addAttribute("authors", tss);
-		return "author";
-	}
-	
-	@GetMapping("/press")
-	public String getPress(Model model) {
-		model.addAttribute("presses", pressRepo.findAll());
-		return "press";
-	}
-	
-	@GetMapping("/readingsession")
-	public String getReadingSession(Model model) {
-		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
-		return "readingsession";
-	}
-	
-	@GetMapping("/add-book")
-	public String addBook(@RequestParam(required = false) Long id, Model model) {
+	@GetMapping("/books")
+	public String addBooks(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("books", repo.findAll());
 		Book p = new Book();
 		model.addAttribute("book", p);
 		model.addAttribute("authors", authorRepo.findAll());
 		model.addAttribute("presses", pressRepo.findAll());
 		model.addAttribute("types", BookTypeEnum.values());
 		model.addAttribute("genres", BookGenreEnum.values());
-		return "add-book";
+		return "books";
 	}
 	
-	@PostMapping("/add-book")
-	public String submitBook(@ModelAttribute Book tt, Model model) {
+	@PostMapping("/books")
+	public String submitBooks(@ModelAttribute Book tt, Model model) {
+		model.addAttribute("books", repo.findAll());
 		model.addAttribute("authors", authorRepo.findAll());
 		model.addAttribute("presses", pressRepo.findAll());
 		model.addAttribute("types", BookTypeEnum.values());
 		model.addAttribute("genres", BookGenreEnum.values());
 		repo.save(tt);
 		model.addAttribute("book", tt);
-		return "add-book";
+		return "redirect:/books";
 	}
 	
-	@GetMapping("/add-reading-session")
-	public String addReadingSession(@RequestParam(required = false) Long id, Model model) {
+	@GetMapping("/authors")
+	public String addAuthors(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("authors", authorRepo.findAll());
+		model.addAttribute("author", new Author());
+		return "authors";
+	}
+	
+	@PostMapping("/authors")
+	public String submitAuthors(@ModelAttribute Author a, Model model) {
+		model.addAttribute("authors", authorRepo.findAll());
+		authorRepo.save(a);
+		model.addAttribute("author", a);
+		return "redirect:/authors";
+	}
+	
+	@GetMapping("/reading-sessions")
+	public String addReadingSessions(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
 		model.addAttribute("readingsession", new ReadingSession());
 		model.addAttribute("books", repo.findAll());
-		return "add-reading-session";
+		return "reading-sessions";
 	}
 	
-	@PostMapping("/add-reading-session")
-	public String submitReadingSession(@ModelAttribute ReadingSession rs, Model model) {
+	@PostMapping("/reading-sessions")
+	public String submitReadingSessions(@ModelAttribute ReadingSession rs, Model model) {
+		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
 		model.addAttribute("books", repo.findAll());
 		Duration dur = Duration.between(rs.getStart(), rs.getEnd());
 		long mins = dur.toMinutes();
@@ -105,34 +98,6 @@ public class BookController {
 		readingSessionRepo.save(rs);
 		model.addAttribute("book", rs);
 		model.addAttribute("readingsession", new ReadingSession());
-		return "add-reading-session";
-	}
-	
-	@GetMapping("/add-author")
-	public String addAuthor(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("author", new Author());
-		return "add-author";
-	}
-	
-	@PostMapping("/add-author")
-	public String submitAuthor(@ModelAttribute Author ts, Model model) {
-		model.addAttribute("authors", authorRepo.findAll());
-		authorRepo.save(ts);
-		model.addAttribute("author", ts);
-		return "add-author";
-	}
-	
-	@GetMapping("/add-press")
-	public String addPress(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("press", new Press());
-		return "add-press";
-	}
-	
-	@PostMapping("/add-press")
-	public String submitPress(@ModelAttribute Press ts, Model model) {
-		model.addAttribute("authors", authorRepo.findAll());
-		pressRepo.save(ts);
-		model.addAttribute("author", ts);
-		return "add-press";
+		return "redirect:/reading-sessions";
 	}
 }

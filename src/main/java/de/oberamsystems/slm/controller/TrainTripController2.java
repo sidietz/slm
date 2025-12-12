@@ -35,37 +35,9 @@ public class TrainTripController2 {
 	@Autowired
 	private TrainLineRepository lineRepo;
 	
-	@GetMapping("/traintrip2")
-	public String getTrainTrip2(
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
-			Model model) {
-		fromDate = fromDate == null ? LocalDateTime.now().minusMonths(1) : fromDate; // TODO: fix by setting time to start of day
-		toDate = toDate == null ? LocalDateTime.now() : toDate;
-
-		LocalDateTime minDate = repo.findMinDate();
-	    LocalDateTime maxDate = repo.findMaxDate();
-
-	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusDays(1); //fixes off by one bug
-	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
-
-		model.addAttribute("traintrips", repo.findByStartBetween(fromDate, toDate.plusDays(1))); // find getup time instead of gotobed
-		model.addAttribute("fromDate", fromDate);
-		model.addAttribute("toDate", toDate.plusDays(1));
-		model.addAttribute("minDate", minDate); //fixes off by one bug
-	    model.addAttribute("maxDate", maxDate);
-		return "traintrip2";
-	}
-	
-	@GetMapping({"/trainstation2.html", "/trainstations2.html", "/trainstation2", "/trainstations2"})
-	public String index2(Model model) {
-		List<TrainStation2> tss = stationRepo.findAll(Sort.by("ds100"));
-		model.addAttribute("trainstations", tss);
-		return "trainstation2";
-	}
-	
-	@GetMapping("/add-traintrip2")
-	public String addTrainTrip2(@RequestParam(required = false) Long id, Model model) {
+	@GetMapping("/train-trips")
+	public String addTrainTrips(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("traintrips2", repo.findAll());
 		TrainTrip2 tt = new TrainTrip2();
 		id = id == null ? 0 : id;
 		TrainLine l = lineRepo.getReferenceById(id);
@@ -76,12 +48,13 @@ public class TrainTripController2 {
 		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findByLines_Id(l.getId()));
 		model.addAttribute("lines", lineRepo.findAll());
-		return "add-traintrip2";
+		return "train-trips";
 	}
 	
-	@PostMapping("/add-traintrip2")
-	public String submitTrainTrip2(@RequestParam(required = false) Long id, @ModelAttribute TrainTrip2 tt, Model model) {
+	@PostMapping("/train-trips")
+	public String submitTrainTrips(@RequestParam(required = false) Long id, @ModelAttribute TrainTrip2 tt, Model model) {
 		id = id == null ? 0 : id;
+		model.addAttribute("traintrips2", repo.findAll());
 		tt.setLine(lineRepo.getReferenceById(id));
 		model.addAttribute("lineId", id);
 		model.addAttribute("traintrip", tt);
@@ -90,19 +63,20 @@ public class TrainTripController2 {
 		model.addAttribute("stations", stationRepo.findAll());
 		repo.save(tt);
 		model.addAttribute("traintrip", tt);
-		return "add-traintrip2";
+		return "train-trips";
 	}
 	
-	@GetMapping("/add-trainstation2")
-	public String addTrainStation2(@RequestParam(required = false) Long id, Model model) {
+	@GetMapping("/train-stations")
+	public String addTrainStations(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("stations", stationRepo.findAll());
 		model.addAttribute("trainstation", new TrainStation2Dto());
 		model.addAttribute("lineId", 0);
 		model.addAttribute("lines", lineRepo.findAll());
-		return "add-trainstation2";
+		return "train-stations";
 	}
 	
-	@PostMapping("/add-trainstation2")
-	public String submitTrainStation2(@ModelAttribute TrainStation2Dto tsdto, Model model) {
+	@PostMapping("/train-stations")
+	public String submitTrainStations(@ModelAttribute TrainStation2Dto tsdto, Model model) {
 		model.addAttribute("stations", stationRepo.findAll());
 		model.addAttribute("lines", lineRepo.findAll());
 		log.warn(String.format("lineId: %d", tsdto.getLineId()));
@@ -110,19 +84,21 @@ public class TrainTripController2 {
 		ts.addLine(lineRepo.getReferenceById(tsdto.getLineId()));
 		stationRepo.save(ts);
 		model.addAttribute("trainstation", new TrainStation2Dto());
-		return "add-trainstation2";
+		return "redirect:/train-stations";
 	}
 	
-	@GetMapping("/add-trainline")
-	public String addTrainLine(@RequestParam(required = false) Long id, Model model) {
+	@GetMapping("/train-lines")
+	public String addTrainLines(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("lines", lineRepo.findAll());
 		model.addAttribute("trainline", new TrainLine());
-		return "add-trainline";
+		return "train-lines";
 	}
 	
-	@PostMapping("/add-trainline")
-	public String submitTrainLine(@ModelAttribute TrainLine line, Model model) {
+	@PostMapping("/train-lines")
+	public String submitTrainLines(@ModelAttribute TrainLine line, Model model) {
+		model.addAttribute("lines", lineRepo.findAll());
 		lineRepo.save(line);
 		model.addAttribute("trainline", new TrainLine());
-		return "add-trainline";
+		return "redirect:/train-lines";
 	}
 }

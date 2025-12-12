@@ -1,19 +1,98 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head>
-<meta charset="UTF-8">
-<link href="../static/css/table.css" th:href="@{/css/table.css}"
-	rel="stylesheet" />
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
+    <title>SLM - Home</title>
+    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
 	rel="stylesheet" />
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
 	defer></script>
-<title>SLM</title>
+	    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+    </style>
 </head>
-<body>
-	<div th:insert="~{header :: header}">...</div>
-	<div class="mt-3" th:each="e: ${msgs}">
+
+<body class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">Welcome to SLM</h1>
+        <p class="lead text-muted">Select a management module to proceed.</p>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+        <div class="col-md-4">
+            <div class="card h-100 card-hover border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary mb-3">Book Management</h5>
+                    <p class="card-text">Manage your personal library, authors, and reading sessions.</p>
+                    <a href="/book-management" class="btn btn-primary stretched-link">Go to Book Management</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 card-hover border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success mb-3">Human Management</h5>
+                    <p class="card-text">Manage humans and their categories.</p>
+                    <a href="/human-management" class="btn btn-success text-white stretched-link">Go to Human
+                        Management</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 card-hover border-danger">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-danger mb-3">Activity Management</h5>
+                    <p class="card-text">Track sleep, activities, sports, and gaming.</p>
+                    <a href="/activity-management" class="btn btn-danger text-white stretched-link">Go to Activity
+                        Management</a>
+                </div>
+            </div>
+        </div>
+		<div class="col-md-4">
+            <div class="card h-100 card-hover border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning mb-3">Habit Management</h5>
+                    <p class="card-text">Track learning items, habits...</p>
+                    <a href="/habit-management" class="btn btn-warning text-white stretched-link">Go to Habit
+                        Management</a>
+                </div>
+            </div>
+        </div>
+		<div class="col-md-4">
+            <div class="card h-100 card-hover border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-info mb-3">Spend Management</h5>
+                    <p class="card-text">Track purchases and contracts.</p>
+                    <a href="/spend-management" class="btn btn-info text-white stretched-link">Go to Spend
+                        Management</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 card-hover border-secondary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-secondary mb-3">Misc Management</h5>
+                    <p class="card-text">Track traintrips & appointments.</p>
+                    <a href="/misc-management" class="btn btn-secondary text-white stretched-link">Go to Misc
+                        Management</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <div class="mt-3" th:each="e: ${msgs}">
 		<p th:text="${e}"></p>
 	</div>
+
+    <footer class="mt-5 text-center text-muted">
+        <p>&copy; 2025 SLM</p>
+    </footer>
 </body>
 </html>
