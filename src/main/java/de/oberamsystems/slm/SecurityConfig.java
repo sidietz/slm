@@ -46,6 +46,7 @@ public class SecurityConfig {
 						.requestMatchers("/activities", "/sports", "/sleep-times", "/gaming-sessions").permitAll()
 						.requestMatchers("/books", "/authors", "/reading-sessions").permitAll()
 						.requestMatchers("/humans").permitAll()
+						.requestMatchers("/appointments", "/doctors", "/specialities").permitAll()
 						.requestMatchers("/last-done-habit-entries").permitAll()
 						.requestMatchers("/train-trips", "/train-stations", "/train-lines").permitAll()
 						.requestMatchers("/purchases", "/contracts", "/contractors").permitAll()

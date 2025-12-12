@@ -27,46 +27,6 @@ public class ActivityController {
 	@Autowired
 	private ActivityTypeRepository typeRepo;
 	
-	@GetMapping("/activity")
-	public String getSport(
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
-			Model model) {
-		fromDate = fromDate == null ? LocalDateTime.now().minusDays(28) : fromDate;
-		toDate = toDate == null ? LocalDateTime.now() : toDate;
-
-		LocalDateTime minDate = repo.findMinDate();
-	    LocalDateTime maxDate = repo.findMaxDate();
-
-	    minDate = minDate == null ? LocalDateTime.now().minusDays(7) : minDate.minusDays(1); //fixes off by one bug
-	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
-
-		model.addAttribute("activities", repo.findByStartBetween(fromDate, toDate.plusDays(1), Sort.by("start"))); // find getup time instead of gotobed
-		model.addAttribute("fromDate", fromDate);
-		model.addAttribute("toDate", toDate.plusDays(1));
-		model.addAttribute("minDate", minDate); //fixes off by one bug
-	    model.addAttribute("maxDate", maxDate);
-		return "activity";
-	}
-	
-	@GetMapping("/add-activity")
-	public String addSport(@RequestParam(required = false) Long id, Model model) {
-		Activity a = new Activity();
-		a.setStart(LocalDateTime.now());
-		a.setEnd(LocalDateTime.now());
-		model.addAttribute("activity", a);
-		model.addAttribute("activities", typeRepo.findAll());
-		return "add-activity";
-	}
-	
-	@PostMapping("/add-activity")
-	public String submitSport(@ModelAttribute Activity activity, Model model) {
-		model.addAttribute("activities", typeRepo.findAll());
-		repo.save(activity);
-		model.addAttribute("activity", activity);
-		return "add-activity";
-	}
-	
 	@GetMapping("/activities")
 	public String addActivity(@RequestParam(required = false) Long id, Model model) {
 		Activity a = new Activity();
