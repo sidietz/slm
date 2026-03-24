@@ -22,6 +22,7 @@ CREATE TABLE habit(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE, description TEXT)
 CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFERENCES habit(id), last_done TIMESTAMP);
 
 CREATE TABLE gratitude(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
+CREATE TABLE diary(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
 
 CREATE TABLE trainline(id BIGSERIAL PRIMARY KEY, name TEXT, description TEXT);
 CREATE TABLE trainstation2(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
