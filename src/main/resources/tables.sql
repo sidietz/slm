@@ -69,6 +69,8 @@ CREATE TABLE speciality(id BIGSERIAL PRIMARY KEY, title TEXT UNIQUE);
 CREATE TABLE doctor(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, speciality BIGINT NOT NULL REFERENCES speciality(id), place TEXT, city TEXT, plz TEXT, air_distance REAL);
 CREATE TABLE appointment(id BIGSERIAL PRIMARY KEY, doctor_id BIGINT NOT NULL REFERENCES doctor(id), title TEXT, location TEXT, departure TIMESTAMP, arrival TIMESTAMP, travel_duration INTERVAL GENERATED ALWAYS AS (arrival - departure) STORED, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, arrival_home TIMESTAMP, complete_duration INTERVAL GENERATED ALWAYS AS (arrival_home - departure) STORED, comment TEXT);
 
+CREATE TABLE selfie(id BIGSERIAL PRIMARY KEY, created_at DATE, location TEXT);
+
 
 -- LearningItem	id, userId, title, author/creator, description, coverUrl, sourceType (BOOK/COURSE/PODCAST), externalId, status (PLANNED, IN_PROGRESS, COMPLETED), progressPercent, startDate, endDate, lastUpdate
 -- One table is enough; you can store a JSON blob for source‑specific data if needed.
