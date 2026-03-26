@@ -22,6 +22,7 @@ CREATE TABLE habit(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE, description TEXT)
 CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFERENCES habit(id), last_done TIMESTAMP);
 
 CREATE TABLE gratitude(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
+CREATE TABLE diary(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
 
 CREATE TABLE trainline(id BIGSERIAL PRIMARY KEY, name TEXT, description TEXT);
 CREATE TABLE trainstation2(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
@@ -67,6 +68,8 @@ CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT
 CREATE TABLE speciality(id BIGSERIAL PRIMARY KEY, title TEXT UNIQUE);
 CREATE TABLE doctor(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, speciality BIGINT NOT NULL REFERENCES speciality(id), place TEXT, city TEXT, plz TEXT, air_distance REAL);
 CREATE TABLE appointment(id BIGSERIAL PRIMARY KEY, doctor_id BIGINT NOT NULL REFERENCES doctor(id), title TEXT, location TEXT, departure TIMESTAMP, arrival TIMESTAMP, travel_duration INTERVAL GENERATED ALWAYS AS (arrival - departure) STORED, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, arrival_home TIMESTAMP, complete_duration INTERVAL GENERATED ALWAYS AS (arrival_home - departure) STORED, comment TEXT);
+
+CREATE TABLE selfie(id BIGSERIAL PRIMARY KEY, created_at DATE, location TEXT);
 
 
 -- LearningItem	id, userId, title, author/creator, description, coverUrl, sourceType (BOOK/COURSE/PODCAST), externalId, status (PLANNED, IN_PROGRESS, COMPLETED), progressPercent, startDate, endDate, lastUpdate
