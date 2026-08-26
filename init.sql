@@ -22,8 +22,9 @@ CREATE TYPE source_type AS ENUM ('BOOK', 'COURSE', 'LECTURE', 'TUTORIAL', 'YOUTU
 CREATE TYPE status_type AS ENUM('PLANNED', 'IN_PROGRESS', 'COMPLETED');
 
 CREATE TYPE human_category AS ENUM ('FAMILY', 'CLASSMATE', 'FRIEND', 'FRIEND_OF_FRIEND', 'TEACHER', 'LECTURER', 'CELEBRITY', 'OTHER');
-
 CREATE TABLE sporttype(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
+
+
 CREATE TABLE sportsession(id BIGSERIAL PRIMARY KEY, type BIGINT NOT NULL REFERENCES sporttype(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
 
 CREATE TABLE meditationsession(id BIGSERIAL PRIMARY KEY, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
@@ -46,6 +47,7 @@ CREATE TABLE habit(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE, description TEXT)
 CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFERENCES habit(id), last_done TIMESTAMP);
 
 CREATE TABLE gratitude(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
+CREATE TABLE diary(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
 
 CREATE TABLE trainline(id BIGSERIAL PRIMARY KEY, name TEXT, description TEXT);
 CREATE TABLE trainstation2(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
@@ -65,13 +67,21 @@ CREATE TABLE book(id BIGSERIAL PRIMARY KEY, isbn VARCHAR(13) UNIQUE, title TEXT,
 price REAL, buy_date DATE, last_read DATE, author_id BIGSERIAL NOT NULL REFERENCES author(id), press_id BIGSERIAL NOT NULL REFERENCES press(id),
 book_type book_type, book_genre book_genre);
 
+CREATE TABLE manufacturer(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
+
+
+CREATE TABLE point(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, latitude TEXT NOT NULL, longitude TEXT NOT NULL);
+CREATE TABLE route(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, start_point BIGINT NOT NULL REFERENCES point(id), end_point BIGINT NOT NULL REFERENCES point(id), air_distance REAL NOT NULL, drive_distance REAL NOT NULL);
+CREATE TABLE car(id BIGSERIAL PRIMARY KEY, vin TEXT, name TEXT, model_name TEXT, key_number TEXT, manufacturer_id BIGINT NOT NULL REFERENCES manufacturer(id), vendor_id BIGINT NOT NULL REFERENCES vendor(id), purchase_date DATE, approval_date DATE, manufacturing_date DATE, purchase_price REAL, sell_price REAL, purchase_kilometers BIGINT, sell_kilometers BIGINT, price_per_100_km REAL);
+CREATE TABLE car_trip(id BIGSERIAL PRIMARY KEY, car_id BIGSERIAL NOT NULL REFERENCES car(id), route_id BIGSERIAL NOT NULL REFERENCES route(id), is_way_back BOOLEAN, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+
+
 CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
 CREATE TABLE learning_session(id BIGSERIAL PRIMARY KEY, learning_item_id BIGINT REFERENCES learning_item(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
 
 CREATE TABLE platform(id BIGSERIAL PRIMARY KEY, name TEXT);
-CREATE TABLE manufacturer(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
 CREATE TABLE device_type(id BIGSERIAL PRIMARY KEY, name TEXT);
 CREATE TABLE device(id BIGSERIAL PRIMARY KEY, name TEXT, model_name TEXT,
 serial_number TEXT, type BIGINT NOT NULL REFERENCES device_type(id),
@@ -87,4 +97,9 @@ CREATE TABLE gaming_session(id BIGSERIAL PRIMARY KEY, game_id BIGINT NOT NULL RE
 CREATE TABLE contractor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, end_date DATE, active BOOL);
 
+CREATE TABLE speciality(id BIGSERIAL PRIMARY KEY, title TEXT UNIQUE);
+CREATE TABLE doctor(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, speciality BIGINT NOT NULL REFERENCES speciality(id), place TEXT, city TEXT, plz TEXT, air_distance REAL);
+CREATE TABLE appointment(id BIGSERIAL PRIMARY KEY, doctor_id BIGINT NOT NULL REFERENCES doctor(id), title TEXT, location TEXT, departure TIMESTAMP, arrival TIMESTAMP, travel_duration INTERVAL GENERATED ALWAYS AS (arrival - departure) STORED, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, arrival_home TIMESTAMP, complete_duration INTERVAL GENERATED ALWAYS AS (arrival_home - departure) STORED, comment TEXT);
+
+CREATE TABLE selfie(id BIGSERIAL PRIMARY KEY, created_at DATE, location TEXT);
 

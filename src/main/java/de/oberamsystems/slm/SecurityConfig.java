@@ -83,6 +83,7 @@ public class SecurityConfig {
 						.requestMatchers("/purchases", "/contracts", "/contractors").permitAll()
 						.requestMatchers("/learning-sessions", "/habits", "/meditations", "/gratitudes").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()
+						.requestMatchers("/points", "/routes", "/car-trips", "/cars").permitAll()
 						.requestMatchers("/api/**")
 						.authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.util.StringUtils;
+
 import de.oberamsystems.slm.model.Selfie;
 import de.oberamsystems.slm.model.SelfieRepository;
 
@@ -35,8 +37,8 @@ public class SelfieController {
 	@PostMapping("/selfies")
 	public String uploadSelfie(@RequestParam("file") MultipartFile file, 
 							   @RequestParam("date") @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
-		if (file.isEmpty() || !file.getOriginalFilename().toLowerCase().endsWith(".jpg")) {
-			return "redirect:/selfies?error=Invalid file. Only .jpg files are allowed.";
+		if (file.isEmpty() || (!file.getOriginalFilename().toLowerCase().endsWith(".jpg")) && !file.getOriginalFilename().toLowerCase().endsWith(".heic")) {
+			return "redirect:/selfies?error=Invalid file. Only .jpg or .heic files are allowed.";
 		}
 
 		try {
@@ -45,8 +47,9 @@ public class SelfieController {
 			if (!dir.exists()) {
 				dir.mkdirs();
 			}
-
-			String filename = date.toString() + ".jpg";
+			
+			String suffix = StringUtils.getFilenameExtension(file.getOriginalFilename());
+			String filename = date.toString() + "." + suffix;
 			Path filepath = Paths.get(uploadDir, filename);
 			Files.write(filepath, file.getBytes());
 

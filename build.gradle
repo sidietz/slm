@@ -1,16 +1,17 @@
 plugins {
 	id 'java'
-	id 'org.springframework.boot' version '4.0.4'
+	id 'org.springframework.boot' version '4.1.1'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'de.oberamsystems'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.1a-SNAPSHOT'
 description = "simon's life manager"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(25)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -25,7 +26,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.webjars:bootstrap:5.3.8'
-	implementation 'io.hypersistence:hypersistence-utils-hibernate-71:3.13.2'
+	implementation 'io.hypersistence:hypersistence-utils-hibernate-73:3.15.3'
 	implementation 'jakarta.mail:jakarta.mail-api:2.1.5'
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
@@ -34,4 +35,19 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = false
+        csv.required = true
+        html.required = true
+    }
+}
+
+task getDeps(type: Copy) {
+  from sourceSets.main.runtimeClasspath
+  into 'runtime/'
 }

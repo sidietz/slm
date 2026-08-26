@@ -87,6 +87,6 @@ public class HabitController {
 		model.addAttribute("habitentries", entryRepo.findAll());
 		entryRepo.save(entry);
 		model.addAttribute("habitentry", entry);
-		return "last-done-habit-entries";
+		return "redirect:/last-done-habit-entries";
 	}
 }
