@@ -18,12 +18,13 @@ public class DurationConverter implements Converter<Duration, String> {
 		long days = source.toDaysPart();
 		int hours = source.toHoursPart();
 		int minutes = source.toMinutesPart();
+		int seconds = source.toSecondsPart();
 		
 		if (days != 0) {
 			str = str + String.valueOf(days) + "D ";
 		}
 		
-		str = str + String.format("%02d", hours) + ":" + String.format("%02d", minutes);
+		str = str + String.format("%02d", hours) + ":" + String.format("%02d", minutes)+ ":" + String.format("%02d", seconds);
 		return str;
 	}
 
