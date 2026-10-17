@@ -127,4 +127,10 @@ public class LearningItem {
 	public Long getId() {
 		return id;
 	}
+
+	@Override
+	public String toString() {
+		return String.format("LearningItem [id=%s, title=%s, author=%s, source=%s, status=%s, progress=%s]",
+				id, title, author, source, status, progress);
+	}
 }

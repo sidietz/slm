@@ -1,0 +1,70 @@
+package de.oberamsystems.slm.model;
+
+import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.UUID;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+public class SessionModelTest {
+
+	@Test
+	public void testPrePersistGeneratesUuidV7() {
+		// Anonymous subclass of abstract Session for testing
+		Session session = new Session() {
+		};
+
+		assertNull(session.getId());
+		session.prePersist();
+
+		assertNotNull(session.getId());
+		UUID parsed = UUID.fromString(session.getId());
+		assertEquals(7, parsed.version(), "Generated UUID must be RFC 9562 Version 7");
+
+		// If ID is already set, prePersist should not overwrite it
+		String existingId = "custom-id-123";
+		session.setId(existingId);
+		session.prePersist();
+		assertEquals(existingId, session.getId());
+	}
+
+	@Test
+	public void testSessionFieldsAndDefaults() {
+		Session session = new Session() {
+		};
+
+		assertEquals("COMPLETED", session.getStatus());
+		assertEquals(Duration.ZERO, session.getBreakDuration());
+
+		LocalDateTime start = LocalDateTime.of(2026, 10, 17, 10, 0);
+		LocalDateTime end = LocalDateTime.of(2026, 10, 17, 12, 0);
+		Duration breakDur = Duration.ofMinutes(15);
+		Duration grossDur = Duration.ofHours(2);
+		Duration netDur = Duration.ofMinutes(105);
+
+		session.setId("test-uuid");
+		session.setStatus("IN_PROGRESS");
+		session.setStart(start);
+		session.setEnd(end);
+		session.setBreakDuration(breakDur);
+		session.setDuration(grossDur);
+		session.setNetDuration(netDur);
+		session.setFocusRating(4);
+		session.setComment("Deep focus work");
+		session.setOutcomeSummary("Implemented feature X");
+
+		assertEquals("test-uuid", session.getId());
+		assertEquals("IN_PROGRESS", session.getStatus());
+		assertEquals(start, session.getStart());
+		assertEquals(end, session.getEnd());
+		assertEquals(breakDur, session.getBreakDuration());
+		assertEquals(grossDur, session.getDuration());
+		assertEquals(netDur, session.getNetDuration());
+		assertEquals(4, session.getFocusRating());
+		assertEquals("Deep focus work", session.getComment());
+		assertEquals("Implemented feature X", session.getOutcomeSummary());
+		assertTrue(session.toString().contains("test-uuid"));
+	}
+}
