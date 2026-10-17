@@ -226,3 +226,26 @@ EXCEPTION WHEN undefined_function THEN
 END;
 $$ LANGUAGE plpgsql;
 ```
+
+---
+
+### Application Version Synchronization
+
+#### Decision:
+Use the standard Spring Boot approach (`springBoot { buildInfo() }` and `org.springframework.boot.info.BuildProperties`) to make `build.gradle` the single source of truth for the application version.
+
+#### Implementation:
+1. **Gradle Build Info (`build.gradle`):**
+   ```groovy
+   springBoot {
+       buildInfo()
+   }
+   ```
+   Gradle automatically generates `META-INF/build-info.properties` during the build lifecycle (`bootBuildInfo`), populating `build.version`, `build.name`, `build.group`, and `build.time`.
+2. **Spring Context Auto-Configuration:**
+   Spring Boot automatically creates an instance of `BuildProperties` if `META-INF/build-info.properties` is present on the classpath.
+3. **Controller Integration (`ImprintController.java`):**
+   Injected via `@Autowired(required = false) BuildProperties buildProperties`, retrieving `buildProperties.getVersion()` dynamically.
+4. **Configuration Cleanup:**
+   Removed hardcoded `version=...` from `application.properties` to prevent version drift.
+
