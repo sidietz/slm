@@ -33,7 +33,7 @@ jobs:
     - name: Set up JDK 24
       uses: actions/setup-java@v4
       with:
-        java-version: '24'
+        java-version: '27'
         distribution: 'temurin'
     - name: cd in slm folder
       run: cd ..
@@ -62,10 +62,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Set up JDK 24
+    - name: Set up JDK 27
       uses: actions/setup-java@v4
       with:
-        java-version: '24'
+        java-version: '27'
         distribution: 'temurin'
 
     # Generates and submits a dependency graph, enabling Dependabot Alerts for all project dependencies.
@@ -73,4 +73,4 @@ jobs:
     - name: Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@v4
       with:
-        gradle-version: '8.14.3'
+        gradle-version: '9.8.1'
