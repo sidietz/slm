@@ -15,7 +15,7 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Contractor / Client</label>
-                        <select th:field="*{contractor}" class="form-select">
+                        <select th:field="*{client}" class="form-select">
                             <option value="">-- Direct / Internal --</option>
                             <option th:each="c : ${contractors}" th:value="${c.id}" th:text="${c.name}"></option>
                         </select>
@@ -122,8 +122,8 @@
                         <tr th:each="s : ${sessions}">
                             <td>
                                 <strong th:text="${s.project}">Project</strong>
-                                <div class="text-muted small" th:if="${s.contractor != null}">
-                                    <i class="bi bi-building me-1"></i><span th:text="${s.contractor.name}">Client</span>
+                                <div class="text-muted small" th:if="${s.client != null}">
+                                    <i class="bi bi-building me-1"></i><span th:text="${s.client.name}">Client</span>
                                 </div>
                             </td>
                             <td>

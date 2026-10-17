@@ -27,7 +27,7 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label fw-semibold">Ticket / Issue</label>
-                        <input type="text" th:field="*{ticketNumber}" class="form-control" placeholder="e.g. #42, JIRA-101" />
+                        <input type="text" th:field="*{ticket}" class="form-control" placeholder="e.g. #42, JIRA-101" />
                     </div>
 
                     <div class="col-md-3">
@@ -117,7 +117,7 @@
                             </td>
                             <td>
                                 <span th:if="${s.branch != null and !s.branch.empty}" class="code-pill me-1" th:text="${s.branch}">main</span>
-                                <span th:if="${s.ticketNumber != null and !s.ticketNumber.empty}" class="badge bg-secondary-subtle text-secondary" th:text="${s.ticketNumber}">#101</span>
+                                <span th:if="${s.ticket != null and !s.ticket.empty}" class="badge bg-secondary-subtle text-secondary" th:text="${s.ticket}">#101</span>
                             </td>
                             <td>
                                 <span th:if="${s.language != null and !s.language.empty}" class="badge bg-info-subtle text-info-emphasis" th:text="${s.language}">Java</span>
