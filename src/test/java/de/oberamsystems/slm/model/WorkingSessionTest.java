@@ -12,8 +12,8 @@ public class WorkingSessionTest {
 	@Test
 	public void testWorkingSessionGettersAndSetters() {
 		WorkingSession ws = new WorkingSession();
-		Contractor client = new Contractor(1L, "Acme Corp");
-		ws.setClient(client);
+		Employer employer = new Employer(1L, "Acme Corp");
+		ws.setEmployer(employer);
 		ws.setProject("Enterprise Cloud");
 		ws.setBillable(true);
 		ws.setHourlyRate(new BigDecimal("125.50"));
@@ -23,19 +23,20 @@ public class WorkingSessionTest {
 		ws.prePersist();
 
 		assertNotNull(ws.getId());
-		assertEquals(client, ws.getClient());
+		assertEquals(employer, ws.getEmployer());
 		assertEquals("Enterprise Cloud", ws.getProject());
 		assertTrue(ws.getBillable());
 		assertEquals(new BigDecimal("125.50"), ws.getHourlyRate());
 		assertEquals("Backend Development", ws.getTaskCategory());
 		assertTrue(ws.toString().contains("Enterprise Cloud"));
+		assertTrue(ws.toString().contains("Acme Corp"));
 	}
 
 	@Test
 	public void testWorkingSessionConstructor() {
-		Contractor client = new Contractor(2L, "Globex");
-		WorkingSession ws = new WorkingSession(client, "Core API", false, new BigDecimal("95.00"), "Consulting");
-		assertEquals(client, ws.getClient());
+		Employer employer = new Employer(2L, "Globex");
+		WorkingSession ws = new WorkingSession(employer, "Core API", false, new BigDecimal("95.00"), "Consulting");
+		assertEquals(employer, ws.getEmployer());
 		assertEquals("Core API", ws.getProject());
 		assertFalse(ws.getBillable());
 		assertEquals(new BigDecimal("95.00"), ws.getHourlyRate());

@@ -80,7 +80,7 @@ public class SecurityConfig {
 						.requestMatchers("/appointments", "/doctors", "/specialities").permitAll()
 						.requestMatchers("/last-done-habit-entries").permitAll()
 						.requestMatchers("/train-trips", "/train-stations", "/train-lines").permitAll()
-						.requestMatchers("/purchases", "/contracts", "/contractors").permitAll()
+						.requestMatchers("/purchases", "/contracts", "/contractors", "/employers").permitAll()
 						.requestMatchers("/learning-sessions", "/habits", "/meditations", "/gratitudes").permitAll()
 						.requestMatchers("/sessions", "/sessions/**", "/coding-sessions", "/working-sessions").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()

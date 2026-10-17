@@ -61,7 +61,7 @@ public class SessionController {
 	private SportTypeRepository sportTypeRepo;
 
 	@Autowired
-	private ContractorRepository contractorRepo;
+	private EmployerRepository employerRepo;
 
 	@GetMapping("/sessions")
 	public String viewSessions(@RequestParam(required = false, defaultValue = "ALL") String type, Model model) {
@@ -151,7 +151,7 @@ public class SessionController {
 		List<WorkingSession> list = workingSessionRepo.findAll();
 		list.sort(Comparator.comparing(WorkingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
-		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("employers", employerRepo.findAll());
 		WorkingSession ws = new WorkingSession();
 		ws.setStart(LocalDateTime.now().minusHours(2));
 		ws.setEnd(LocalDateTime.now());
@@ -250,6 +250,6 @@ public class SessionController {
 		model.addAttribute("devices", deviceRepo.findAll());
 		model.addAttribute("books", bookRepo.findAll());
 		model.addAttribute("sportTypes", sportTypeRepo.findAll());
-		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("employers", employerRepo.findAll());
 	}
 }

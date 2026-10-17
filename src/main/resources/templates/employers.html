@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: standard-head('Employers &amp; Clients')}">
+    <title>Employers &amp; Clients</title>
+</head>
+<body class="bg-light">
+
+    <header th:replace="~{fragments/layout :: header('Employers &amp; Clients', 'Manage employers, contracting firms, and direct clients for professional working sessions', 'bi bi-briefcase', 'theme-work', '/spend-management', 'Spend Dashboard')}"></header>
+
+    <main class="container my-5">
+        <div class="row g-4 mb-5">
+            <div class="col-lg-7">
+                <div class="card slm-table-card shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold text-dark">
+                            <i class="bi bi-briefcase me-2 text-primary"></i>Employer Directory
+                        </h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(employers)} + ' employers'">0 employers</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table slm-table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3" style="width: 80px;">ID</th>
+                                    <th class="pe-3">Employer / Client Name</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="e : ${employers}">
+                                    <td class="ps-3 text-secondary font-monospace small" th:text="${e.id}"></td>
+                                    <td class="pe-3 fw-semibold text-dark">
+                                        <i class="bi bi-building me-1 text-muted"></i>
+                                        <span th:text="${e.name}"></span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(employers)}">
+                                    <td colspan="2" class="text-center py-4 text-muted">
+                                        <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                        No employers or clients configured yet. Add your first employer on the right.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="card slm-form-card shadow-sm">
+                    <div class="card-header py-3 border-0">
+                        <h5 class="mb-0 fw-semibold text-dark">
+                            <i class="bi bi-plus-circle me-2 text-primary"></i>Add Employer
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="#" th:action="@{/employers}" th:object="${employer}" method="post">
+                            <div class="mb-4">
+                                <label for="employerName" class="form-label">
+                                    Employer / Client Name <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" id="employerName" th:field="*{name}" class="form-control" placeholder="e.g. Acme Corp, Oberam Systems, TechCorp" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">
+                                <i class="bi bi-plus-circle me-1"></i> Add Employer
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

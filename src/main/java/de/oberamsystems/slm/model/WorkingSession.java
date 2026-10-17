@@ -10,8 +10,8 @@ import jakarta.persistence.*;
 public class WorkingSession extends Session {
 
 	@ManyToOne
-	@JoinColumn(name = "contractor_id", referencedColumnName = "id")
-	private Contractor client;
+	@JoinColumn(name = "employer_id", referencedColumnName = "id")
+	private Employer employer;
 
 	@Column(name = "project", columnDefinition = "TEXT")
 	private String project;
@@ -29,22 +29,22 @@ public class WorkingSession extends Session {
 		super();
 	}
 
-	public WorkingSession(Contractor client, String project, Boolean billable, BigDecimal hourlyRate,
+	public WorkingSession(Employer employer, String project, Boolean billable, BigDecimal hourlyRate,
 			String taskCategory) {
 		super();
-		this.client = client;
+		this.employer = employer;
 		this.project = project;
 		this.billable = billable;
 		this.hourlyRate = hourlyRate;
 		this.taskCategory = taskCategory;
 	}
 
-	public Contractor getClient() {
-		return client;
+	public Employer getEmployer() {
+		return employer;
 	}
 
-	public void setClient(Contractor client) {
-		this.client = client;
+	public void setEmployer(Employer employer) {
+		this.employer = employer;
 	}
 
 	public String getProject() {
@@ -82,7 +82,7 @@ public class WorkingSession extends Session {
 	@Override
 	public String toString() {
 		return String.format(
-				"WorkingSession [id=%s, client=%s, project=%s, billable=%s, hourlyRate=%s, taskCategory=%s, session=%s]",
-				getId(), client, project, billable, hourlyRate, taskCategory, super.toString());
+				"WorkingSession [id=%s, employer=%s, project=%s, billable=%s, hourlyRate=%s, taskCategory=%s, session=%s]",
+				getId(), employer, project, billable, hourlyRate, taskCategory, super.toString());
 	}
 }

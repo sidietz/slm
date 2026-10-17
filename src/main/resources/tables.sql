@@ -70,7 +70,8 @@ CREATE TABLE studio(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date 
 CREATE TABLE game(id BIGSERIAL PRIMARY KEY, title TEXT, series TEXT, publisher_id BIGINT NOT NULL REFERENCES publisher(id), studio_id BIGINT NOT NULL REFERENCES studio(id), price REAL, release_date DATE, last_played DATE);
 CREATE TABLE gaming_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, game_id BIGINT NOT NULL REFERENCES game(id), device_id BIGINT REFERENCES device(id), game_mode TEXT);
 CREATE TABLE coding_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, project TEXT, repository TEXT, branch TEXT, ticket TEXT, language TEXT);
-CREATE TABLE working_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, contractor_id BIGINT REFERENCES contractor(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
+CREATE TABLE employer(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
+CREATE TABLE working_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
 
 CREATE TABLE contractor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, end_date DATE, active BOOL);

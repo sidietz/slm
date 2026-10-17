@@ -30,7 +30,7 @@ public class SessionControllerTest {
     private DeviceRepository deviceRepo;
     private BookRepository bookRepo;
     private SportTypeRepository sportTypeRepo;
-    private ContractorRepository contractorRepo;
+    private EmployerRepository employerRepo;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -49,7 +49,7 @@ public class SessionControllerTest {
         deviceRepo = mock(DeviceRepository.class);
         bookRepo = mock(BookRepository.class);
         sportTypeRepo = mock(SportTypeRepository.class);
-        contractorRepo = mock(ContractorRepository.class);
+        employerRepo = mock(EmployerRepository.class);
 
         setField("sessionRepo", sessionRepo);
         setField("codingSessionRepo", codingSessionRepo);
@@ -64,7 +64,7 @@ public class SessionControllerTest {
         setField("deviceRepo", deviceRepo);
         setField("bookRepo", bookRepo);
         setField("sportTypeRepo", sportTypeRepo);
-        setField("contractorRepo", contractorRepo);
+        setField("employerRepo", employerRepo);
     }
 
     private void setField(String fieldName, Object val) throws Exception {
@@ -156,13 +156,13 @@ public class SessionControllerTest {
     @Test
     public void testWorkingSessionsViewAndSubmit() {
         when(workingSessionRepo.findAll()).thenReturn(new ArrayList<>());
-        when(contractorRepo.findAll()).thenReturn(new ArrayList<>());
+        when(employerRepo.findAll()).thenReturn(new ArrayList<>());
 
         ConcurrentModel model = new ConcurrentModel();
         String view = controller.viewWorkingSessions(model);
         assertEquals("working-sessions", view);
         assertNotNull(model.getAttribute("workingSession"));
-        assertNotNull(model.getAttribute("contractors"));
+        assertNotNull(model.getAttribute("employers"));
 
         WorkingSession ws = new WorkingSession();
         ws.setProject("Client Project");
