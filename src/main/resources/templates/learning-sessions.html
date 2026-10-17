@@ -2,69 +2,188 @@
 <html xmlns:th="http://www.thymeleaf.org">
 
 <head>
-    <title>Learning Sessions</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Sessions | SLM</title>
+    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}" defer></script>
+    <style>
+        :root {
+            --slm-learning-gradient: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        .header-learning {
+            background: var(--slm-learning-gradient);
+            color: white;
+            padding: 2.25rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 1.25rem 1.25rem;
+            box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.3);
+        }
+        .card-custom {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            background: #ffffff;
+        }
+        .star-rating {
+            color: #f59e0b;
+        }
+    </style>
 </head>
 
-<body class="container mt-5">
-    <h1 class="mb-4">Learning Sessions</h1>
-
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>learning item</th>
-                    <th>start</th>
-                    <th>end</th>
-                    <th>duration</th>
-                    <th>comment</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="e : ${learningsessions}">
-					<td th:text="${e.id}"></td>
-					<td th:text="${e.learningItem.title}"></td>
-					<td th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${{e.duration}}"></td>
-					<td th:text="${e.comment}"></td>
-				</tr>
-            </tbody>
-        </table>
-    </div>
-
-    <h2 class="mt-5">Add Learning Session</h2>
-    <form action="#" th:action="@{/learning-sessions}" th:object="${learningsession}" class="mb-5" method="post">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="title" class="form-label">Learning Item:</label>
-                <select class="form-select" name="selectitem"
-				onchange="updateItem(event)" th:field="*{learningItem}">
-				<option th:each="p : ${items}" th:value="${p.id}"
-					th:text="${p.title}"></option>
-			</select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Start:</label>
-                <input type="datetime-local" th:field="*{start}" class="form-control">
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="start" class="form-label">End:</label>
-                <input type="datetime-local" th:field="*{end}" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="end" class="form-label">Comment:</label>
-                <input type="text" th:field="*{comment}" class="form-control">
+<body>
+    <!-- Header -->
+    <header class="header-learning">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="h2 fw-bold mb-1"><i class="bi bi-mortarboard-fill me-2"></i>Learning Sessions</h1>
+                    <p class="mb-0 text-white-50">Track studies, knowledge acquisition, and skill mastery</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="/sessions?type=LEARNING" class="btn btn-light fw-semibold shadow-sm">
+                        <i class="bi bi-layers-fill text-primary me-1"></i> Sessions Hub
+                    </a>
+                    <a href="/learning-items" class="btn btn-outline-light">
+                        <i class="bi bi-journal-bookmark me-1"></i> Learning Items
+                    </a>
+                    <a href="/habit-management" class="btn btn-outline-light">
+                        <i class="bi bi-arrow-left me-1"></i> Habit Dashboard
+                    </a>
+                </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Add Learning Session</button>
-    </form>
-    <a href="/habit-management" class="btn btn-secondary">Back to Dashboard</a>
+    </header>
 
+    <main class="container mb-5">
+        <!-- Add Learning Session Form Card -->
+        <section class="card card-custom p-4 mb-4">
+            <h2 class="h4 fw-bold mb-3" style="color: #6d28d9;"><i class="bi bi-plus-circle me-2"></i>Log Learning Session</h2>
+            <form th:action="@{/learning-sessions}" th:object="${learningsession}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Learning Item <span class="text-danger">*</span></label>
+                        <select class="form-select" th:field="*{learningItem}" required>
+                            <option value="">-- Select Item --</option>
+                            <option th:each="p : ${items}" th:value="${p.id}" th:text="${p.title}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Start Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" th:field="*{start}" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">End Time <span class="text-danger">*</span></label>
+                        <input type="datetime-local" th:field="*{end}" class="form-control" required />
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Break (minutes)</label>
+                        <input type="number" name="breakMinutes" class="form-control" min="0" value="0" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-semibold">Focus Rating (1-5)</label>
+                        <select th:field="*{focusRating}" class="form-select">
+                            <option value="">-- No rating --</option>
+                            <option value="5">⭐⭐⭐⭐⭐ (5 - Deep Focus)</option>
+                            <option value="4">⭐⭐⭐⭐ (4 - Focused)</option>
+                            <option value="3">⭐⭐⭐ (3 - Moderate)</option>
+                            <option value="2">⭐⭐ (2 - Distracted)</option>
+                            <option value="1">⭐ (1 - Low Retention)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Outcome / Key Takeaways</label>
+                        <input type="text" th:field="*{outcomeSummary}" class="form-control" placeholder="Understood reactive patterns and finished chapter 4" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes / Comment</label>
+                        <input type="text" th:field="*{comment}" class="form-control" placeholder="Observations, next topics..." />
+                    </div>
+
+                    <div class="col-12 text-end mt-3">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold" style="background: #6d28d9; border-color: #6d28d9;">
+                            <i class="bi bi-save me-1"></i> Save Learning Session
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Sessions Table Card -->
+        <section class="card card-custom p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-mortarboard me-2" style="color: #6d28d9;"></i>Logged Learning Sessions
+                    <span class="badge ms-2 fs-6" style="background-color: #ede9fe; color: #5b21b6;" th:text="${learningsessions != null ? learningsessions.size() : 0}">0</span>
+                </h2>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Learning Item</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th>Net Duration</th>
+                            <th>Break</th>
+                            <th>Focus</th>
+                            <th>Outcome &amp; Notes</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${learningsessions == null or learningsessions.empty}">
+                            <td colspan="8" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No learning sessions logged yet. Record your first study session above!
+                            </td>
+                        </tr>
+                        <tr th:each="e : ${learningsessions}">
+                            <td>
+                                <strong th:text="${e.learningItem != null ? e.learningItem.title : 'General'}">Item</strong>
+                            </td>
+                            <td class="small" th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 10:00</td>
+                            <td class="small" th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 11:30</td>
+                            <td>
+                                <span class="badge text-white" style="background: #6d28d9;" th:text="${e.netDuration != null ? e.netDuration : (e.duration != null ? e.duration : '-')}">1h 30m</span>
+                            </td>
+                            <td class="small text-muted" th:text="${e.breakDuration != null ? e.breakDuration : '0m'}">0m</td>
+                            <td>
+                                <span th:if="${e.focusRating != null and e.focusRating > 0}" class="star-rating">
+                                    <span th:each="i : ${#numbers.sequence(1, e.focusRating)}">★</span>
+                                </span>
+                                <span th:if="${e.focusRating == null or e.focusRating == 0}" class="text-muted small">-</span>
+                            </td>
+                            <td class="small" style="max-width: 250px;">
+                                <div th:if="${e.outcomeSummary != null and !e.outcomeSummary.empty}" class="fw-semibold text-truncate" th:text="${e.outcomeSummary}">Outcome</div>
+                                <div th:if="${e.comment != null and !e.comment.empty}" class="text-muted text-truncate" th:text="${e.comment}">Comment</div>
+                            </td>
+                            <td class="text-end">
+                                <form th:action="@{'/sessions/delete/' + ${e.id} + '?returnType=LEARNING'}" method="post" class="d-inline"
+                                      onsubmit="return confirm('Delete this learning session?');">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Delete session">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center text-muted py-4">
+        <small>&copy; 2026 Simon's Life Manager (SLM) &bull; Lifelong Learning</small>
+    </footer>
 </body>
-
 </html>

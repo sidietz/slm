@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sessions Hub | Simon's Life Manager</title>
+    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}" defer></script>
+    <style>
+        :root {
+            --slm-primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --slm-success-gradient: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            --slm-warning-gradient: linear-gradient(135deg, #d97706 0%, #f59e0b 100%);
+            --slm-info-gradient: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+        }
+        body {
+            background-color: #f8fafc;
+            color: #1e293b;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        }
+        .header-section {
+            background: var(--slm-primary-gradient);
+            color: white;
+            padding: 2.5rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 1.5rem 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.3);
+        }
+        .metric-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08);
+        }
+        .badge-coding { background-color: #3b82f6; color: white; }
+        .badge-working { background-color: #4f46e5; color: white; }
+        .badge-learning { background-color: #8b5cf6; color: white; }
+        .badge-gaming { background-color: #f59e0b; color: white; }
+        .badge-reading { background-color: #06b6d4; color: white; }
+        .badge-meditation { background-color: #10b981; color: white; }
+        .badge-sport { background-color: #ef4444; color: white; }
+        
+        .nav-pills .nav-link {
+            border-radius: 2rem;
+            padding: 0.5rem 1.25rem;
+            font-weight: 500;
+            color: #64748b;
+        }
+        .nav-pills .nav-link.active {
+            background: var(--slm-primary-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
+        }
+        .table-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+        .star-rating { color: #f59e0b; font-size: 0.95rem; }
+    </style>
+</head>
+
+<body>
+    <!-- Top Header -->
+    <header class="header-section">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="h2 fw-bold mb-1">Sessions Hub</h1>
+                    <p class="mb-0 text-white-50">Unified time tracking across Coding, Working, Learning, Gaming &amp; Life</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-light fw-semibold shadow-sm" data-bs-toggle="modal" data-bs-target="#newSessionModal">
+                        <i class="bi bi-plus-circle-fill text-primary me-1"></i> Log Session
+                    </button>
+                    <a href="/activity-management" class="btn btn-outline-light">
+                        <i class="bi bi-grid-fill me-1"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mb-5">
+        <!-- KPI Metrics Row -->
+        <section class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <div class="card metric-card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-3 bg-primary-subtle text-primary me-3">
+                            <i class="bi bi-clock-history fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium text-uppercase">Net Focused Time</span>
+                            <h3 class="fw-bold mb-0 text-primary" th:text="${totalNetDuration}">0m</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card metric-card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-3 bg-warning-subtle text-warning me-3">
+                            <i class="bi bi-cup-hot-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium text-uppercase">Total Breaks</span>
+                            <h3 class="fw-bold mb-0 text-warning" th:text="${totalBreakDuration}">0m</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card metric-card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-3 bg-info-subtle text-info me-3">
+                            <i class="bi bi-stars fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium text-uppercase">Avg Focus Rating</span>
+                            <h3 class="fw-bold mb-0 text-info">
+                                <span th:text="${avgFocusRating}">0.0</span> <span class="fs-6 text-muted">/ 5</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <div class="card metric-card p-3 bg-white">
+                    <div class="d-flex align-items-center">
+                        <div class="p-3 rounded-3 bg-success-subtle text-success me-3">
+                            <i class="bi bi-collection-play-fill fs-3"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small fw-medium text-uppercase">Sessions Logged</span>
+                            <h3 class="fw-bold mb-0 text-success" th:text="${totalSessionsCount}">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter Navigation Pills -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <ul class="nav nav-pills bg-white p-2 rounded-pill shadow-sm">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'ALL'} ? 'active' : ''" href="/sessions?type=ALL">
+                        All Sessions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'CODING'} ? 'active' : ''" href="/sessions?type=CODING">
+                        <i class="bi bi-code-slash me-1"></i> Coding
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'WORKING'} ? 'active' : ''" href="/sessions?type=WORKING">
+                        <i class="bi bi-briefcase-fill me-1"></i> Working
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'LEARNING'} ? 'active' : ''" href="/sessions?type=LEARNING">
+                        <i class="bi bi-book-half me-1"></i> Learning
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'GAMING'} ? 'active' : ''" href="/sessions?type=GAMING">
+                        <i class="bi bi-controller me-1"></i> Gaming
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'READING'} ? 'active' : ''" href="/sessions?type=READING">
+                        <i class="bi bi-journal-bookmark me-1"></i> Reading
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'MEDITATION'} ? 'active' : ''" href="/sessions?type=MEDITATION">
+                        <i class="bi bi-flower1 me-1"></i> Meditation
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'SPORT'} ? 'active' : ''" href="/sessions?type=SPORT">
+                        <i class="bi bi-activity me-1"></i> Sport
+                    </a>
+                </li>
+            </ul>
+
+            <div class="d-flex gap-2">
+                <a href="/coding-sessions" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-code me-1"></i> Coding View
+                </a>
+                <a href="/working-sessions" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-currency-dollar me-1"></i> Billing View
+                </a>
+            </div>
+        </div>
+
+        <!-- Sessions Data Table -->
+        <div class="card table-card bg-white">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light border-bottom">
+                        <tr>
+                            <th class="ps-4">Type</th>
+                            <th>Context &amp; Details</th>
+                            <th>Time Window</th>
+                            <th>Net / Gross Duration</th>
+                            <th>Breaks</th>
+                            <th>Focus</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${#lists.isEmpty(sessions)}">
+                            <td colspan="9" class="text-center py-5 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No sessions recorded in this category yet. Click <strong>Log Session</strong> above to start tracking!
+                            </td>
+                        </tr>
+                        <tr th:each="s : ${sessions}">
+                            <!-- Type Badge -->
+                            <td class="ps-4">
+                                <span th:class="'badge rounded-pill ' + 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Coding')} ? 'badge-coding' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Working')} ? 'badge-working' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Learning')} ? 'badge-learning' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Gaming')} ? 'badge-gaming' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Reading')} ? 'badge-reading' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Meditation')} ? 'badge-meditation' : 'badge-sport'))))))"
+                                    th:text="${#strings.replace(s.getClass().getSimpleName(), 'Session', '')}">
+                                    Session
+                                </span>
+                            </td>
+
+                            <!-- Dynamic Context Column -->
+                            <td>
+                                <!-- Coding Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Coding')}">
+                                    <strong th:text="${s.project}">Project</strong>
+                                    <span th:if="${s.ticket}" class="badge bg-secondary ms-1" th:text="${s.ticket}">TICKET</span>
+                                    <div class="small text-muted" th:text="${s.repository + (s.branch ? ' @ ' + s.branch : '')}">repo</div>
+                                </div>
+                                <!-- Working Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Working')}">
+                                    <strong th:text="${s.project}">Project</strong>
+                                    <span th:if="${s.client}" class="text-muted small" th:text="'(' + ${s.client.name} + ')'">Client</span>
+                                    <div class="small">
+                                        <span th:if="${s.billable}" class="badge bg-success-subtle text-success">Billable</span>
+                                        <span th:if="${s.hourlyRate}" class="text-muted ms-1" th:text="'$' + ${s.hourlyRate} + '/h'">$100/h</span>
+                                    </div>
+                                </div>
+                                <!-- Learning Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Learning')}">
+                                    <strong th:text="${s.learningItem != null ? s.learningItem.title : 'Self Study'}">Item</strong>
+                                    <div th:if="${s.unitsCompleted != null}" class="small text-muted" th:text="${s.unitsCompleted} + ' units done'">Units</div>
+                                </div>
+                                <!-- Gaming Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Gaming')}">
+                                    <strong th:text="${s.game != null ? s.game.title : 'Game'}">Game</strong>
+                                    <div class="small text-muted" th:text="${s.device != null ? s.device.name : ''} + (${s.gameMode} ? ' • ' + ${s.gameMode} : '')">Device</div>
+                                </div>
+                                <!-- Reading Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Reading')}">
+                                    <strong th:text="${s.book != null ? s.book.title : 'Book'}">Book</strong>
+                                    <div class="small text-muted" th:text="'Pages ' + ${s.startPageCount} + ' - ' + ${s.endPageCount}">Pages</div>
+                                </div>
+                                <!-- Meditation Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Meditation')}">
+                                    <span class="text-muted"><i class="bi bi-flower1 text-success me-1"></i> Mindfulness</span>
+                                </div>
+                                <!-- Sport Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Sport')}">
+                                    <strong th:text="${s.type != null ? s.type.name : 'Workout'}">Sport</strong>
+                                </div>
+                            </td>
+
+                            <!-- Timestamps -->
+                            <td>
+                                <div class="fw-medium" th:text="${s.start != null ? #temporals.format(s.start, 'dd.MM.yyyy HH:mm') : '-'}">Start</div>
+                                <div class="small text-muted" th:text="${s.end != null ? #temporals.format(s.end, 'HH:mm') : 'Ongoing'}">End</div>
+                            </td>
+
+                            <!-- Duration -->
+                            <td>
+                                <div class="fw-bold text-primary" th:text="${{s.netDuration != null ? s.netDuration : s.duration}}">0m</div>
+                                <div th:if="${s.breakDuration != null and s.breakDuration.seconds > 0}" class="small text-muted" th:text="'Gross: ' + ${{s.duration}}">Gross</div>
+                            </td>
+
+                            <!-- Breaks -->
+                            <td>
+                                <span th:if="${s.breakDuration != null and s.breakDuration.seconds > 0}" class="badge bg-warning-subtle text-warning" th:text="${{s.breakDuration}}">15m</span>
+                                <span th:unless="${s.breakDuration != null and s.breakDuration.seconds > 0}" class="text-muted small">-</span>
+                            </td>
+
+                            <!-- Focus Rating -->
+                            <td>
+                                <span th:if="${s.focusRating != null and s.focusRating > 0}" class="star-rating">
+                                    <span th:each="i : ${#numbers.sequence(1, s.focusRating)}">★</span>
+                                </span>
+                                <span th:unless="${s.focusRating != null and s.focusRating > 0}" class="text-muted small">-</span>
+                            </td>
+
+                            <!-- Status -->
+                            <td>
+                                <span class="badge rounded-pill bg-success-subtle text-success" th:text="${s.status}">COMPLETED</span>
+                            </td>
+
+                            <!-- Notes -->
+                            <td>
+                                <span th:if="${s.outcomeSummary}" class="d-inline-block text-truncate" style="max-width: 140px;" th:title="${s.outcomeSummary}" th:text="${s.outcomeSummary}">Outcome</span>
+                                <span th:if="${s.outcomeSummary == null and s.comment != null}" class="d-inline-block text-truncate" style="max-width: 140px;" th:title="${s.comment}" th:text="${s.comment}">Comment</span>
+                                <span th:if="${s.outcomeSummary == null and s.comment == null}" class="text-muted small">-</span>
+                            </td>
+
+                            <!-- Delete Action -->
+                            <td class="text-end pe-4">
+                                <form th:action="@{/sessions/delete/{id}(id=${s.id})}" method="post" onsubmit="return confirm('Delete this session?');">
+                                    <input type="hidden" name="returnType" th:value="${activeType}" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal for Logging Sessions -->
+    <div class="modal fade" id="newSessionModal" tabindex="-1" aria-labelledby="newSessionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold" id="newSessionModalLabel"><i class="bi bi-stopwatch-fill me-2"></i> Log New Session</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- Session Type Pill Selector in Modal -->
+                    <div class="mb-4 text-center">
+                        <label class="form-label fw-bold text-muted small text-uppercase d-block">Choose Session Category</label>
+                        <div class="btn-group flex-wrap" role="group" id="sessionTypeBtnGroup">
+                            <input type="radio" class="btn-check" name="modalType" id="typeCoding" value="coding" checked onchange="switchModalForm('coding')">
+                            <label class="btn btn-outline-primary" for="typeCoding"><i class="bi bi-code-slash me-1"></i> Coding</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeWorking" value="working" onchange="switchModalForm('working')">
+                            <label class="btn btn-outline-primary" for="typeWorking"><i class="bi bi-briefcase me-1"></i> Working</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeLearning" value="learning" onchange="switchModalForm('learning')">
+                            <label class="btn btn-outline-primary" for="typeLearning"><i class="bi bi-book me-1"></i> Learning</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeGaming" value="gaming" onchange="switchModalForm('gaming')">
+                            <label class="btn btn-outline-primary" for="typeGaming"><i class="bi bi-controller me-1"></i> Gaming</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeReading" value="reading" onchange="switchModalForm('reading')">
+                            <label class="btn btn-outline-primary" for="typeReading"><i class="bi bi-journal me-1"></i> Reading</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeMeditation" value="meditation" onchange="switchModalForm('meditation')">
+                            <label class="btn btn-outline-primary" for="typeMeditation"><i class="bi bi-flower1 me-1"></i> Meditation</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeSport" value="sport" onchange="switchModalForm('sport')">
+                            <label class="btn btn-outline-primary" for="typeSport"><i class="bi bi-activity me-1"></i> Sport</label>
+                        </div>
+                    </div>
+
+                    <!-- CODING FORM -->
+                    <form id="form-coding" th:action="@{/sessions/coding}" th:object="${codingSession}" method="post">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Project Name</label>
+                                <input type="text" th:field="*{project}" class="form-control" placeholder="e.g. slm" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Repository</label>
+                                <input type="text" th:field="*{repository}" class="form-control" placeholder="e.g. github.com/user/slm">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Branch</label>
+                                <input type="text" th:field="*{branch}" class="form-control" placeholder="main, feature/x">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Ticket / Issue</label>
+                                <input type="text" th:field="*{ticket}" class="form-control" placeholder="SLM-101">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Language / Tech</label>
+                                <input type="text" th:field="*{language}" class="form-control" placeholder="Java 27, Spring">
+                            </div>
+                            <!-- Common Fields Fragment -->
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Focus Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5 - Deep Flow)</option>
+                                    <option value="4">★★★★☆ (4 - Good Focus)</option>
+                                    <option value="3" selected>★★★☆☆ (3 - Moderate)</option>
+                                    <option value="2">★★☆☆☆ (2 - Distracted)</option>
+                                    <option value="1">★☆☆☆☆ (1 - Very Distracted)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Outcome / Accomplished</label>
+                                <input type="text" th:field="*{outcomeSummary}" class="form-control" placeholder="What did you get done?">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes &amp; Comments</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2" placeholder="Any obstacles or observations"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Coding Session</button>
+                        </div>
+                    </form>
+
+                    <!-- WORKING FORM -->
+                    <form id="form-working" th:action="@{/sessions/working}" th:object="${workingSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Client / Contractor</label>
+                                <select th:field="*{client}" class="form-select">
+                                    <option value="">-- Internal / No Client --</option>
+                                    <option th:each="c : ${contractors}" th:value="${c.id}" th:text="${c.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Project Name</label>
+                                <input type="text" th:field="*{project}" class="form-control" placeholder="Client project" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Hourly Rate ($/€)</label>
+                                <input type="number" step="0.5" th:field="*{hourlyRate}" class="form-control" placeholder="100.00">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Task Category</label>
+                                <input type="text" th:field="*{taskCategory}" class="form-control" placeholder="Consulting, Dev">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-center pt-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" th:field="*{billable}" id="billableSwitch" checked>
+                                    <label class="form-check-label fw-semibold" for="billableSwitch">Billable Session</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Focus Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5 - Deep Flow)</option>
+                                    <option value="4">★★★★☆ (4 - Good Focus)</option>
+                                    <option value="3" selected>★★★☆☆ (3 - Moderate)</option>
+                                    <option value="2">★★☆☆☆ (2 - Distracted)</option>
+                                    <option value="1">★☆☆☆☆ (1 - Very Distracted)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Outcome / Accomplished</label>
+                                <input type="text" th:field="*{outcomeSummary}" class="form-control" placeholder="Deliverables accomplished">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes &amp; Comments</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Working Session</button>
+                        </div>
+                    </form>
+
+                    <!-- LEARNING FORM -->
+                    <form id="form-learning" th:action="@{/sessions/learning}" th:object="${learningSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Learning Item</label>
+                                <select th:field="*{learningItem}" class="form-select" required>
+                                    <option th:each="item : ${learningItems}" th:value="${item.id}" th:text="${item.title}">Item</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Units / Pages Done</label>
+                                <input type="number" th:field="*{unitsCompleted}" class="form-control" placeholder="e.g. 3">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Focus Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5 - Deep Flow)</option>
+                                    <option value="4">★★★★☆ (4 - Good Focus)</option>
+                                    <option value="3" selected>★★★☆☆ (3 - Moderate)</option>
+                                    <option value="2">★★☆☆☆ (2 - Distracted)</option>
+                                    <option value="1">★☆☆☆☆ (1 - Very Distracted)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Key Takeaway / Outcome</label>
+                                <input type="text" th:field="*{outcomeSummary}" class="form-control" placeholder="Summary of what was learned">
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Learning Session</button>
+                        </div>
+                    </form>
+
+                    <!-- GAMING FORM -->
+                    <form id="form-gaming" th:action="@{/sessions/gaming}" th:object="${gamingSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Game</label>
+                                <select th:field="*{game}" class="form-select" required>
+                                    <option th:each="g : ${games}" th:value="${g.id}" th:text="${g.title}">Game</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Device / Platform</label>
+                                <select th:field="*{device}" class="form-select" required>
+                                    <option th:each="d : ${devices}" th:value="${d.id}" th:text="${d.name}">Device</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Game Mode / Campaign</label>
+                                <input type="text" th:field="*{gameMode}" class="form-control" placeholder="Ranked, Story Mode">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Comments / Achievements</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Gaming Session</button>
+                        </div>
+                    </form>
+
+                    <!-- READING FORM -->
+                    <form id="form-reading" th:action="@{/sessions/reading}" th:object="${readingSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Book</label>
+                                <select th:field="*{book}" class="form-select" required>
+                                    <option th:each="b : ${books}" th:value="${b.id}" th:text="${b.title}">Book</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Page</label>
+                                <input type="number" th:field="*{startPageCount}" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">End Page</label>
+                                <input type="number" th:field="*{endPageCount}" class="form-control" min="0" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Focus Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5)</option>
+                                    <option value="4">★★★★☆ (4)</option>
+                                    <option value="3" selected>★★★☆☆ (3)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Reading Session</button>
+                        </div>
+                    </form>
+
+                    <!-- MEDITATION FORM -->
+                    <form id="form-meditation" th:action="@{/sessions/meditation}" th:object="${meditationSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Focus / Mindfulness Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (Deep Presence)</option>
+                                    <option value="4">★★★★☆ (Calm)</option>
+                                    <option value="3" selected>★★★☆☆ (Normal)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Reflection / Comment</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2" placeholder="Sensations, mantras, thoughts"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Meditation</button>
+                        </div>
+                    </form>
+
+                    <!-- SPORT FORM -->
+                    <form id="form-sport" th:action="@{/sessions/sport}" th:object="${sportSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-12">
+                                <label class="form-label fw-semibold">Sport Type</label>
+                                <select th:field="*{type}" class="form-select" required>
+                                    <option th:each="st : ${sportTypes}" th:value="${st.id}" th:text="${st.name}">Sport</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Break Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Intensity / Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (Peak)</option>
+                                    <option value="4">★★★★☆ (Strong)</option>
+                                    <option value="3" selected>★★★☆☆ (Moderate)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Workout Details</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2" placeholder="Sets, reps, distance"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Sport Session</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function switchModalForm(type) {
+            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport'];
+            forms.forEach(f => {
+                const formEl = document.getElementById('form-' + f);
+                if (formEl) {
+                    formEl.style.display = (f === type) ? 'block' : 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

@@ -86,17 +86,29 @@ public class BookController {
 		return "reading-sessions";
 	}
 	
+	public String submitReadingSessions(ReadingSession rs, Model model) {
+		return submitReadingSessions(rs, 0L, model);
+	}
+
 	@PostMapping("/reading-sessions")
-	public String submitReadingSessions(@ModelAttribute ReadingSession rs, Model model) {
+	public String submitReadingSessions(@ModelAttribute ReadingSession rs,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			Model model) {
 		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
 		model.addAttribute("books", repo.findAll());
-		Duration dur = Duration.between(rs.getStart(), rs.getEnd());
-		long mins = dur.toMinutes();
-		long pages = rs.getEndPageCount() - rs.getStartPageCount();
-		float readingSpeed = ((float) pages / (float) mins) * 60.0F;
-		rs.setReadingSpeed(readingSpeed);
+		if (breakMinutes != null && breakMinutes > 0) {
+			rs.setBreakDuration(Duration.ofMinutes(breakMinutes));
+		}
+		if (rs.getStart() != null && rs.getEnd() != null) {
+			Duration dur = Duration.between(rs.getStart(), rs.getEnd());
+			long netMins = Math.max(1, dur.toMinutes() - (breakMinutes != null ? breakMinutes : 0));
+			long pages = rs.getEndPageCount() - rs.getStartPageCount();
+			if (pages > 0) {
+				float readingSpeed = ((float) pages / (float) netMins) * 60.0F;
+				rs.setReadingSpeed(readingSpeed);
+			}
+		}
 		readingSessionRepo.save(rs);
-		model.addAttribute("book", rs);
 		model.addAttribute("readingsession", new ReadingSession());
 		return "redirect:/reading-sessions";
 	}

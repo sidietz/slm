@@ -82,6 +82,7 @@ public class SecurityConfig {
 						.requestMatchers("/train-trips", "/train-stations", "/train-lines").permitAll()
 						.requestMatchers("/purchases", "/contracts", "/contractors").permitAll()
 						.requestMatchers("/learning-sessions", "/habits", "/meditations", "/gratitudes").permitAll()
+						.requestMatchers("/sessions", "/sessions/**", "/coding-sessions", "/working-sessions").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()
 						.requestMatchers("/points", "/routes", "/car-trips", "/cars").permitAll()
 						.requestMatchers("/api/**")

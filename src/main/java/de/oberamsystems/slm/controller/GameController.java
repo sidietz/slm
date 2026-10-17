@@ -64,11 +64,20 @@ public class GameController {
 		return "gaming-sessions";
 	}
 	
+	public String submitGamingSessions(GamingSession gs, Model model) {
+		return submitGamingSessions(gs, 0L, model);
+	}
+
 	@PostMapping("/gaming-sessions")
-	public String submitGamingSessions(@ModelAttribute GamingSession gs, Model model) {
+	public String submitGamingSessions(@ModelAttribute GamingSession gs,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			Model model) {
 		model.addAttribute("gamingsessions", sessionRepo.findAll());
 		model.addAttribute("devices", deviceRepo.findAll());
 		model.addAttribute("games", repo.findAll());
+		if (breakMinutes != null && breakMinutes > 0) {
+			gs.setBreakDuration(java.time.Duration.ofMinutes(breakMinutes));
+		}
 		sessionRepo.save(gs);
 		model.addAttribute("gamingsession", gs);
 		return "redirect:/gaming-sessions";
