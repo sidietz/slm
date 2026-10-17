@@ -1,116 +1,159 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>SLM - Home</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-	    <style>
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease;
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Home')}"></head>
 
-<body class="container mt-5">
-    <div class="text-center mb-5">
-        <h1 class="display-4 mb-3">Welcome to SLM</h1>
-        <p class="lead text-muted">Select a management module to proceed.</p>
-    </div>
+<body>
+    <!-- Header Hero Banner -->
+    <header class="slm-header theme-sessions">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="h2 fw-bold mb-1"><i class="bi bi-compass me-2"></i>Simon's Life Manager</h1>
+                    <p class="mb-0 text-white-50">Unified personal operating system for productivity, health, library &amp; finances</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/sessions}" class="btn btn-light fw-semibold text-primary shadow-sm">
+                        <i class="bi bi-clock-history me-1"></i> Sessions Hub
+                    </a>
+                    <a th:href="@{/imprint}" class="btn btn-outline-light">
+                        <i class="bi bi-info-circle me-1"></i> Imprint
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
 
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="card card-hover shadow-sm border-0 text-white" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border-radius: 1rem;">
-                <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
-                    <div>
-                        <h4 class="fw-bold mb-1">⏱️ Sessions Hub</h4>
-                        <p class="mb-0 text-white-50">Unified time tracking across Coding, Working, Learning, Gaming, Reading &amp; Sports.</p>
+    <main class="container mb-5">
+        <!-- Sessions Hub Spotlight Banner -->
+        <div class="card slm-card-hover shadow-sm border-0 text-white mb-4" style="background: var(--slm-grad-sessions);">
+            <div class="card-body p-4 d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <span class="badge bg-white text-primary mb-2 px-2.5 py-1.5 fw-bold">FEATURED SYSTEM</span>
+                    <h3 class="fw-bold mb-1"><i class="bi bi-stopwatch me-2"></i>Sessions Hub &amp; Time Tracking</h3>
+                    <p class="mb-0 text-white-50">Unified focus tracking across Coding, Working, Learning, Gaming, Reading, Sports &amp; Meditations.</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/sessions}" class="btn btn-light fw-semibold text-primary px-3 py-2 shadow-sm">
+                        <i class="bi bi-layers-fill me-1"></i> Open Hub
+                    </a>
+                    <a th:href="@{/coding-sessions}" class="btn btn-outline-light px-3 py-2">
+                        <i class="bi bi-code-slash me-1"></i> Coding
+                    </a>
+                    <a th:href="@{/working-sessions}" class="btn btn-outline-light px-3 py-2">
+                        <i class="bi bi-briefcase me-1"></i> Working
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Management Modules Grid -->
+        <div class="row g-4 justify-content-center">
+            <!-- Book Management -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-info">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-info fs-1">
+                            <i class="bi bi-book"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Book Management</h4>
+                        <p class="text-muted small mb-4">Manage personal library, reading progress, speeds, authors, and presses.</p>
+                        <a th:href="@{/book-management}" class="btn btn-outline-info w-100 fw-semibold stretched-link">
+                            Open Books &rarr;
+                        </a>
                     </div>
-                    <div class="d-flex gap-2">
-                        <a href="/sessions" class="btn btn-light fw-semibold text-primary">Open Sessions Hub</a>
-                        <a href="/coding-sessions" class="btn btn-outline-light">Coding</a>
-                        <a href="/working-sessions" class="btn btn-outline-light">Working</a>
+                </div>
+            </div>
+
+            <!-- Human Management -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-success">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-success fs-1">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Human Management</h4>
+                        <p class="text-muted small mb-4">Manage contacts, friends, relationships, categories, and photo selfies.</p>
+                        <a th:href="@{/human-management}" class="btn btn-outline-success w-100 fw-semibold stretched-link">
+                            Open Contacts &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Management -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-danger">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-danger fs-1">
+                            <i class="bi bi-activity"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Activity Management</h4>
+                        <p class="text-muted small mb-4">Log daily activities, physical sports, sleep quality, and gaming sessions.</p>
+                        <a th:href="@{/activity-management}" class="btn btn-outline-danger w-100 fw-semibold stretched-link">
+                            Open Activities &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Habit Management -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-primary">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-primary fs-1">
+                            <i class="bi bi-check2-circle"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Habit Management</h4>
+                        <p class="text-muted small mb-4">Track recurring habits, learning items, meditation, moods, gratitude, and diary.</p>
+                        <a th:href="@{/habit-management}" class="btn btn-outline-primary w-100 fw-semibold stretched-link">
+                            Open Habits &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Spend Management -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-warning">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-warning fs-1">
+                            <i class="bi bi-wallet2"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Spend Management</h4>
+                        <p class="text-muted small mb-4">Track daily purchases, subscriptions, recurring contracts, and contractors.</p>
+                        <a th:href="@{/spend-management}" class="btn btn-outline-warning w-100 fw-semibold stretched-link">
+                            Open Spend &rarr;
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Misc Management -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-secondary">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-secondary fs-1">
+                            <i class="bi bi-train-front"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Misc Management</h4>
+                        <p class="text-muted small mb-4">Track train trips, stations, lines, cars, driving trips, and medical appointments.</p>
+                        <a th:href="@{/misc-management}" class="btn btn-outline-secondary w-100 fw-semibold stretched-link">
+                            Open Misc &rarr;
+                        </a>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="row g-4 justify-content-center">
-        <div class="col-md-4">
-            <div class="card h-100 card-hover border-primary">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-primary mb-3">Book Management</h5>
-                    <p class="card-text">Manage your personal library, authors, and reading sessions.</p>
-                    <a href="/book-management" class="btn btn-primary stretched-link">Go to Book Management</a>
-                </div>
+        <!-- System Messages / Alerts -->
+        <div class="mt-4" th:if="${msgs != null and !msgs.empty}">
+            <div class="alert alert-info shadow-sm" th:each="msg : ${msgs}">
+                <i class="bi bi-info-circle me-2"></i><span th:text="${msg}">Notification</span>
             </div>
         </div>
+    </main>
 
-        <div class="col-md-4">
-            <div class="card h-100 card-hover border-success">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-success mb-3">Human Management</h5>
-                    <p class="card-text">Manage humans and their categories.</p>
-                    <a href="/human-management" class="btn btn-success text-white stretched-link">Go to Human
-                        Management</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card h-100 card-hover border-danger">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-danger mb-3">Activity Management</h5>
-                    <p class="card-text">Track sleep, activities, sports, and gaming.</p>
-                    <a href="/activity-management" class="btn btn-danger text-white stretched-link">Go to Activity
-                        Management</a>
-                </div>
-            </div>
-        </div>
-		<div class="col-md-4">
-            <div class="card h-100 card-hover border-warning">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-warning mb-3">Habit Management</h5>
-                    <p class="card-text">Track learning items, habits...</p>
-                    <a href="/habit-management" class="btn btn-warning text-white stretched-link">Go to Habit
-                        Management</a>
-                </div>
-            </div>
-        </div>
-		<div class="col-md-4">
-            <div class="card h-100 card-hover border-info">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-info mb-3">Spend Management</h5>
-                    <p class="card-text">Track purchases and contracts.</p>
-                    <a href="/spend-management" class="btn btn-info text-white stretched-link">Go to Spend
-                        Management</a>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card h-100 card-hover border-secondary">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-secondary mb-3">Misc Management</h5>
-                    <p class="card-text">Track traintrips & appointments.</p>
-                    <a href="/misc-management" class="btn btn-secondary text-white stretched-link">Go to Misc
-                        Management</a>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    
-    <div class="mt-3" th:each="e: ${msgs}">
-		<p th:text="${e}"></p>
-	</div>
-
-    <footer class="mt-5 text-center text-muted">
-        <p>&copy; 2026 SLM</p>
-    </footer>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

@@ -1,118 +1,154 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-<title>Books</title>
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Books Collection')}"></head>
 
-<body class="container mt-5">
-	<h1 class="mb-4">Books</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Books Collection', 'Catalog and manage your physical and digital book library', 'bi bi-book', 'theme-books', '/book-management', 'Book Dashboard')}"></header>
 
-	<table class="table table-striped table-hover">
-		<thead class="table-dark">
-			<tr>
-				<td>ID</td>
-				<td>isbn</td>
-				<td>title</td>
-				<td>series</td>
-				<td>page count</td>
-				<td>price</td>
-				<td>buy date</td>
-				<td>last read</td>
-				<td>author</td>
-				<td>press</td>
-				<td>type</td>
-				<td>genre</td>
-			</tr>
-		</thead>
-		<tbody>
-			<tr th:each="e : ${books}">
-				<td th:text="${e.id}"></td>
-				<td th:text="${e.isbn}"></td>
-				<td th:text="${e.title}"></td>
-				<td th:text="${e.series}"></td>
-				<td th:text="${e.pageCount}"></td>
-				<td th:text="${e.price}"></td>
-				<td th:text="${#temporals.format(e.buyDate, 'dd.MM.yyyy')}"></td>
-				<td th:text="${#temporals.format(e.lastRead, 'dd.MM.yyyy')}"></td>
-				<td th:text="${e.author.firstname + ' ' + e.author.lastname}"></td>
-				<td th:text="${e.press.name}"></td>
-				<td th:text="${e.bookType}"></td>
-				<td th:text="${e.bookGenre}"></td>
-			</tr>
-		</tbody>
-	</table>
+    <main class="container mb-5">
+        <!-- Add Book Form Card -->
+        <section class="card slm-form-card mb-4">
+            <h2 class="text-info"><i class="bi bi-plus-circle me-2"></i>Add New Book</h2>
+            <form th:action="@{/books}" th:object="${book}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{title}" class="form-control" placeholder="Book Title" required />
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Author <span class="text-danger">*</span></label>
+                        <select class="form-select" th:field="*{author}" required>
+                            <option value="">-- Select Author --</option>
+                            <option th:each="a : ${authors}" th:value="${a.id}" th:text="${a.firstname + ' ' + a.lastname}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Press / Imprint <span class="text-danger">*</span></label>
+                        <select class="form-select" th:field="*{press}" required>
+                            <option value="">-- Select Press --</option>
+                            <option th:each="p : ${presses}" th:value="${p.id}" th:text="${p.name}"></option>
+                        </select>
+                    </div>
 
-	<h2 class="mt-5">Add Book</h2>
-	<form action="#" th:action="@{/books}" th:object="${book}" method="post" class="mb-5">
-		<div class="mb-3">
-			<label for="authorId" class="form-label">Author:</label>
-			<select class="form-select" name="selectAuthor"
-				onchange="updateAuthor(event)" th:field="*{author}">
-				<option th:each="a : ${authors}" th:value="${a.id}"
-					th:text="${a.firstname + ' ' + a.lastname}"></option>
-			</select>
-		</div>
-		<div class="mb-3">
-			<label for="authorId" class="form-label">Press:</label>
-			<select class="form-select" name="selectPress"
-				onchange="updatePress(event)" th:field="*{press}">
-				<option th:each="p : ${presses}" th:value="${p.id}"
-					th:text="${p.name}"></option>
-			</select>
-		</div>
-		<div class="mb-3">
-			<label for="ISBN" class="form-label">ISBN:</label> <input type="text"
-				th:field="*{isbn}" class="form-control" required>
-		</div>
-		<div class="mb-3">
-			<label for="title" class="form-label">Title:</label> <input
-				type="text" th:field="*{title}" class="form-control" required>
-		</div>
-		<div class="mb-3">
-			<label for="title" class="form-label">Series:</label> <input
-				type="text" th:field="*{series}" class="form-control" required>
-		</div>
-		<div class="mb-3">
-			<label for="authorId" class="form-label">Book Type:</label> <select
-				class="form-select" name="selectType" onchange="updateAuthor(event)"
-				th:field="*{bookType}">
-				<option th:each="a : ${types}" th:value="${a}" th:text="${a}"></option>
-			</select>
-		</div>
-		<div class="mb-3">
-			<label for="authorId" class="form-label">Book Genre:</label>
-			<select class="form-select" name="selectGenre"
-				onchange="updateGenre(event)" th:field="*{bookGenre}">
-				<option th:each="p : ${genres}" th:value="${p}"
-					th:text="${p}"></option>
-			</select>
-		</div>
-		<div class="mb-3">
-			<label for="title" class="form-label">Page Count::</label>
-			<input type="number" th:field="*{pageCount}" class="form-control" required>
-		</div>
-		<div class="mb-3">
-			<label for="title" class="form-label">Price:</label>
-			<input type="number" step="0.01" th:field="*{price}" class="form-control" required>
-		</div>
-		<div class="mb-3">
-			<label for="title" class="form-label">Buy Date:</label>
-			<input type="date" th:field="*{buyDate}" class="form-control" required>
-		</div>
-		<div class="mb-3">
-			<label for="title" class="form-label">Last Read:</label>
-			<input type="date" th:field="*{lastRead}" class="form-control" required>
-		</div>
-		<button type="submit" class="btn btn-primary">Add Book</button>
-	</form>
-	<a href="/reading-sessions" class="btn btn-secondary">View Reading Sessions</a>
-	<a href="/authors" class="btn btn-secondary">View Authors</a>
-	<a href="/book-management" class="btn btn-secondary">Back to Dashboard</a>
+                    <div class="col-md-3">
+                        <label class="form-label">ISBN <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{isbn}" class="form-control" placeholder="978-..." required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Series</label>
+                        <input type="text" th:field="*{series}" class="form-control" placeholder="Series name..." />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Format / Type</label>
+                        <select class="form-select" th:field="*{bookType}">
+                            <option value="">-- Format --</option>
+                            <option th:each="a : ${types}" th:value="${a}" th:text="${a}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Genre</label>
+                        <select class="form-select" th:field="*{bookGenre}">
+                            <option value="">-- Genre --</option>
+                            <option th:each="p : ${genres}" th:value="${p}" th:text="${p}"></option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Page Count <span class="text-danger">*</span></label>
+                        <input type="number" min="1" th:field="*{pageCount}" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Price (&euro;) <span class="text-danger">*</span></label>
+                        <input type="number" step="0.01" min="0" th:field="*{price}" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Buy Date <span class="text-danger">*</span></label>
+                        <input type="date" th:field="*{buyDate}" class="form-control" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Last Read <span class="text-danger">*</span></label>
+                        <input type="date" th:field="*{lastRead}" class="form-control" required />
+                    </div>
+
+                    <div class="col-12 text-end mt-3">
+                        <button type="submit" class="btn btn-info text-white px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i> Add Book
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Books Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-book me-2 text-info"></i>Library Catalog
+                    <span class="badge bg-info-subtle text-info ms-2 fs-6" th:text="${books != null ? books.size() : 0}">0</span>
+                </h2>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/reading-sessions}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-book-half me-1"></i> Reading Sessions
+                    </a>
+                    <a th:href="@{/authors}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-person-lines-fill me-1"></i> Authors
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Title &amp; Series</th>
+                            <th>Author</th>
+                            <th>Press / ISBN</th>
+                            <th>Format &amp; Genre</th>
+                            <th>Pages</th>
+                            <th>Price</th>
+                            <th>Dates (Buy / Read)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${books == null or books.empty}">
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                No books in library yet. Add your first title above!
+                            </td>
+                        </tr>
+                        <tr th:each="e : ${books}">
+                            <td>
+                                <strong th:text="${e.title}">Title</strong>
+                                <div class="text-muted small" th:if="${e.series != null and !e.series.empty}">
+                                    <i class="bi bi-layers me-1"></i><span th:text="${e.series}">Series</span>
+                                </div>
+                            </td>
+                            <td>
+                                <span th:if="${e.author != null}" th:text="${e.author.firstname + ' ' + e.author.lastname}">Author</span>
+                                <span th:if="${e.author == null}" class="text-muted small">-</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${e.press != null ? e.press.name : '-'}">Press</span>
+                                <div class="text-muted small font-monospace" th:text="${e.isbn}">ISBN</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info-emphasis me-1" th:text="${e.bookType}">Hardcover</span>
+                                <span class="badge bg-secondary-subtle text-secondary" th:text="${e.bookGenre}">Sci-Fi</span>
+                            </td>
+                            <td th:text="${e.pageCount} + ' pp'">350 pp</td>
+                            <td class="fw-semibold" th:text="${'&euro;' + #numbers.formatDecimal(e.price, 1, 2)}">&euro;19.99</td>
+                            <td class="small text-muted">
+                                <div>Buy: <span th:text="${#temporals.format(e.buyDate, 'dd.MM.yyyy')}">01.01.2026</span></div>
+                                <div>Read: <span th:text="${#temporals.format(e.lastRead, 'dd.MM.yyyy')}">15.01.2026</span></div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>

@@ -1,69 +1,110 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Moods</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Mood Tracker')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-4">Moods</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Mood Tracker', 'Log daily emotional states, energy impetus, and stress levels', 'bi bi-emoji-smile', 'theme-habit', '/habit-management', 'Habit Dashboard')}"></header>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Date</th>
-                    <th>Happiness</th>
-                    <th>Impetus</th>
-                    <th>Stress</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="e : ${moods}">
-					<td th:text="${e.id}"></td>
-					<td th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}"></td>
-					<td th:text="${e.happiness}"></td>
-					<td th:text="${e.impetus}"></td>
-					<td th:text="${e.stress}"></td>
-				</tr>
-            </tbody>
-        </table>
-    </div>
+    <main class="container mb-5">
+        <!-- Add Mood Card -->
+        <section class="card slm-form-card mb-4">
+            <h2 class="text-primary"><i class="bi bi-plus-circle me-2"></i>Log Daily Mood</h2>
+            <form th:action="@{/moods}" th:object="${mood}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-12">
+                        <label class="form-label">Date <span class="text-danger">*</span></label>
+                        <input type="date" th:field="*{date}" class="form-control" style="max-width: 250px;" required />
+                    </div>
 
-    <h2 class="mt-5">Add Mood</h2>
-    <form action="#" th:action="@{/moods}" th:object="${mood}" class="mb-5" method="post">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="title" class="form-label">Date:</label>
-                <input type="date" th:field="*{date}" class="form-control" required>
+                    <div class="col-md-4">
+                        <label class="form-label">Happiness (1 - 10): <span id="happinessVal" class="fw-bold text-success fs-5">5</span></label>
+                        <input id="happiness" class="form-range" type="range" min="1" max="10" th:field="*{happiness}"
+                               oninput="document.getElementById('happinessVal').innerText = this.value" />
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>1 (Low)</span>
+                            <span>10 (Ecstatic)</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Impetus / Energy (1 - 10): <span id="impetusVal" class="fw-bold text-primary fs-5">5</span></label>
+                        <input id="impetus" class="form-range" type="range" min="1" max="10" th:field="*{impetus}"
+                               oninput="document.getElementById('impetusVal').innerText = this.value" />
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>1 (Lethargic)</span>
+                            <span>10 (Energetic)</span>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <label class="form-label">Stress Level (1 - 10): <span id="stressVal" class="fw-bold text-danger fs-5">5</span></label>
+                        <input id="stress" class="form-range" type="range" min="1" max="10" th:field="*{stress}"
+                               oninput="document.getElementById('stressVal').innerText = this.value" />
+                        <div class="d-flex justify-content-between text-muted small">
+                            <span>1 (Relaxed)</span>
+                            <span>10 (High Stress)</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12 text-end mt-4">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i> Save Mood Entry
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Moods Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-emoji-smile me-2 text-primary"></i>Recorded Moods
+                    <span class="badge bg-primary-subtle text-primary ms-2 fs-6" th:text="${moods != null ? moods.size() : 0}">0</span>
+                </h2>
+                <a th:href="@{/mood-bb}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-graph-up me-1"></i> View Mood Trends Chart
+                </a>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="activityType" class="form-label">Happiness:</label>
-                <input id="happiness" class="form-control" type="range" min="1" max="10" th:field="*{happiness}" oninput="happinessOutput.value = happiness.value"/>
-			<output id="happinessOutput">1</output>
+
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Happiness</th>
+                            <th>Impetus (Energy)</th>
+                            <th>Stress</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${moods == null or moods.empty}">
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                No mood entries recorded yet. Record your first day above!
+                            </td>
+                        </tr>
+                        <tr th:each="e : ${moods}">
+                            <td>
+                                <strong th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}">01.01.2026</strong>
+                            </td>
+                            <td>
+                                <span class="badge bg-success-subtle text-success fs-6" th:text="${e.happiness} + ' / 10'">8 / 10</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-primary-subtle text-primary fs-6" th:text="${e.impetus} + ' / 10'">7 / 10</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger-subtle text-danger fs-6" th:text="${e.stress} + ' / 10'">3 / 10</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Impetus:</label>
-                <input id="impetus" class="form-control" type="range" min="1" max="10" th:field="*{impetus}" oninput="impetusOutput.value = impetus.value"/>
-			<output id="impetusOutput">1</output>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="start" class="form-label">Stress:</label>
-                <input id="stress" class="form-control" type="range" min="1" max="10" th:field="*{stress}" oninput="stressOutput.value = stress.value"/>            
-                <output id="stressOutput">1</output>
-            </div>    
-        </div>
-        <button type="submit" class="btn btn-primary">Add Activity</button>
-    </form>
-    <a href="/habit-management" class="btn btn-secondary">Back to Dashboard</a>
-<script>
-	document.getElementById('date').valueAsDate = new Date();
-</script>
+        </section>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>

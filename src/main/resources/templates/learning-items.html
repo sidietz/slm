@@ -1,98 +1,131 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Learning Items</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Learning Items')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-4">Learning Items</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Learning Items', 'Catalog courses, topics, books, technologies, and mastery progress', 'bi bi-journal-bookmark', 'theme-habit', '/habit-management', 'Habit Dashboard')}"></header>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>Description</th>
-                    <th>Author</th>
-                    <th>Source</th>
-                    <th>Status</th>
-                    <th>Progress</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Last Updated</th>
-                </tr>
-            </thead>
-            <tbody>
-				<tr th:each="e : ${items}">
-					<td th:text="${e.id}"></td>
-					<td th:text="${e.title}"></td>
-					<td th:text="${e.description}"></td>
-					<td th:text="${e.author}"></td>
-					<td th:text="${{e.source}}"></td>
-					<td th:text="${{e.status}}"></td>
-					<td th:text="${e.progress}"></td>
-					<td th:text="${#temporals.format(e.start, 'dd.MM.yyyy')}"></td>
-					<td th:text="${#temporals.format(e.end, 'dd.MM.yyyy')}"></td>
-					<td th:text="${#temporals.format(e.lastUpdated, 'dd.MM.yyyy HH:mm')}"></td>
-				</tr>
-            </tbody>
-        </table>
-    </div>
+    <main class="container mb-5">
+        <!-- Add Learning Item Card -->
+        <section class="card slm-form-card mb-4">
+            <h2 class="text-primary"><i class="bi bi-plus-circle me-2"></i>Add Learning Item</h2>
+            <form th:action="@{/learning-items}" th:object="${learningitem}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Title <span class="text-danger">*</span></label>
+                        <input type="text" th:field="*{title}" class="form-control" placeholder="e.g. Distributed Systems in Go, RFC 9562" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Author / Creator</label>
+                        <input type="text" th:field="*{author}" class="form-control" placeholder="Author name, instructor, or organization..." />
+                    </div>
 
-    <h2 class="mt-5">Add Learning Item</h2>
-    <form action="#" th:action="@{/learning-items}" th:object="${learningitem}" class="mb-5" method="post">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="title" class="form-label">Title:</label>
-                <input type="text" th:field="*{title}" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="description" class="form-label">Description:</label>
-                <input class="form-control" type="text" th:field="*{description}" />
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Author:</label>
-                <input class="form-control" type="text" th:field="*{author}"/>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Source:</label>
-                <select class="form-select" name="selectSource"
-				onchange="updateAuthor(event)" th:field="*{source}">
-				<option th:each="a : ${sources}" th:value="${a}"
-					th:text="${a}"></option>
-			</select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Status:</label>
-                <select class="form-select" name="selectState"
-				onchange="updateGenre(event)" th:field="*{status}">
-					<option th:each="p : ${statuss}" th:value="${p}"
-					th:text="${p}"></option>
-				</select>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Start Date:</label>
-                <input class="form-control" type="date" th:field="*{start}"/>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">End Date:</label>
-                <input class="form-control" type="date" th:field="*{end}"/>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="place" class="form-label">Last Updated:</label>
-                <input class="form-control" type="datetime-local" th:field="*{lastUpdated}"/>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Activity</button>
-    </form>
-    <a href="/habit-management" class="btn btn-secondary">Back to Dashboard</a>
+                    <div class="col-md-4">
+                        <label class="form-label">Source</label>
+                        <select class="form-select" th:field="*{source}">
+                            <option value="">-- Select Source --</option>
+                            <option th:each="s : ${sources}" th:value="${s}" th:text="${s}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Status</label>
+                        <select class="form-select" th:field="*{status}">
+                            <option value="">-- Select Status --</option>
+                            <option th:each="st : ${statuss}" th:value="${st}" th:text="${st}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Progress (%)</label>
+                        <input type="number" step="1" min="0" max="100" th:field="*{progress}" class="form-control" placeholder="0 - 100" />
+                    </div>
 
+                    <div class="col-md-6">
+                        <label class="form-label">Start Date</label>
+                        <input type="date" th:field="*{start}" class="form-control" />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Target / End Date</label>
+                        <input type="date" th:field="*{end}" class="form-control" />
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label">Description / Summary</label>
+                        <input type="text" th:field="*{description}" class="form-control" placeholder="Key objectives, syllabus, or links..." />
+                    </div>
+
+                    <div class="col-12 text-end mt-3">
+                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i> Save Learning Item
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Learning Items Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-journal-bookmark me-2 text-primary"></i>Learning Library
+                    <span class="badge bg-primary-subtle text-primary ms-2 fs-6" th:text="${items != null ? items.size() : 0}">0</span>
+                </h2>
+                <a th:href="@{/learning-sessions}" class="btn btn-outline-primary btn-sm">
+                    <i class="bi bi-mortarboard me-1"></i> Log Study Session
+                </a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Title &amp; Author</th>
+                            <th>Source</th>
+                            <th>Status</th>
+                            <th>Progress</th>
+                            <th>Timeframe</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${items == null or items.empty}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No learning items recorded yet. Create your first learning item above!
+                            </td>
+                        </tr>
+                        <tr th:each="e : ${items}">
+                            <td>
+                                <strong th:text="${e.title}">Title</strong>
+                                <div class="text-muted small" th:if="${e.author != null and !e.author.empty}" th:text="${e.author}">Author</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${e.source != null ? e.source : '-'}">Book</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info-emphasis" th:text="${e.status != null ? e.status : '-'}">In Progress</span>
+                            </td>
+                            <td>
+                                <div class="progress" style="height: 16px; min-width: 80px;" th:if="${e.progress != null}">
+                                    <div class="progress-bar bg-primary" role="progressbar"
+                                         th:style="'width: ' + ${e.progress} + '%;'"
+                                         th:text="${#numbers.formatDecimal(e.progress, 1, 0) + '%'}">50%</div>
+                                </div>
+                                <span th:if="${e.progress == null}" class="text-muted small">-</span>
+                            </td>
+                            <td class="small text-muted">
+                                <span th:text="${e.start != null ? #temporals.format(e.start, 'dd.MM.yyyy') : '-'}">01.01.2026</span>
+                                &rarr;
+                                <span th:text="${e.end != null ? #temporals.format(e.end, 'dd.MM.yyyy') : '-'}">01.06.2026</span>
+                            </td>
+                            <td class="small text-muted" th:text="${e.lastUpdated != null ? #temporals.format(e.lastUpdated, 'dd.MM.yyyy HH:mm') : '-'}">01.01.2026 12:00</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>

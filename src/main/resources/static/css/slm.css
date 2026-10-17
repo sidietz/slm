@@ -1,0 +1,247 @@
+/**
+ * Simon's Life Manager (SLM) - Unified Design System Stylesheet
+ */
+
+:root {
+  /* Neutral Palette Tokens */
+  --slm-bg: #f8fafc;
+  --slm-surface: #ffffff;
+  --slm-surface-subtle: #f1f5f9;
+  --slm-text-main: #0f172a;
+  --slm-text-muted: #64748b;
+  --slm-text-light: #94a3b8;
+  --slm-border: #e2e8f0;
+  --slm-border-subtle: #edf2f7;
+
+  /* Semantic Module Gradient Themes */
+  --slm-grad-sessions: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  --slm-grad-coding: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  --slm-grad-work: linear-gradient(135deg, #1e1b4b 0%, #4338ca 100%);
+  --slm-grad-activity: linear-gradient(135deg, #991b1b 0%, #ef4444 100%);
+  --slm-grad-habit: linear-gradient(135deg, #5b21b6 0%, #8b5cf6 100%);
+  --slm-grad-wellness: linear-gradient(135deg, #065f46 0%, #10b981 100%);
+  --slm-grad-books: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%);
+  --slm-grad-gaming: linear-gradient(135deg, #b45309 0%, #f59e0b 100%);
+  --slm-grad-transit: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+  --slm-grad-medical: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+  --slm-grad-humans: linear-gradient(135deg, #831843 0%, #ec4899 100%);
+  --slm-grad-social: linear-gradient(135deg, #831843 0%, #be185d 50%, #ec4899 100%);
+  --slm-grad-finance: linear-gradient(135deg, #065f46 0%, #047857 50%, #10b981 100%);
+  --slm-grad-cars: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #38bdf8 100%);
+  --slm-grad-misc: linear-gradient(135deg, #334155 0%, #64748b 100%);
+
+  /* Shadows */
+  --slm-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --slm-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --slm-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --slm-shadow-hover: 0 12px 24px -4px rgba(0, 0, 0, 0.12);
+
+  /* Radius */
+  --slm-radius-sm: 0.5rem;
+  --slm-radius-md: 0.75rem;
+  --slm-radius-lg: 1rem;
+  --slm-radius-xl: 1.25rem;
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--slm-bg);
+  color: var(--slm-text-main);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex: 1 0 auto;
+}
+
+/* Modern Header Hero Banner */
+.slm-header {
+  color: #ffffff;
+  padding: 2.25rem 0;
+  margin-bottom: 2rem;
+  border-radius: 0 0 var(--slm-radius-xl) var(--slm-radius-xl);
+  box-shadow: var(--slm-shadow-md);
+  transition: all 0.3s ease;
+}
+
+/* Theme Classes for Headers */
+.theme-sessions { background: var(--slm-grad-sessions); box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.25); }
+.theme-coding   { background: var(--slm-grad-coding);   box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.25); }
+.theme-work     { background: var(--slm-grad-work);     box-shadow: 0 10px 25px -5px rgba(67, 56, 202, 0.25); }
+.theme-activity { background: var(--slm-grad-activity); box-shadow: 0 10px 25px -5px rgba(239, 68, 68, 0.25); }
+.theme-habit    { background: var(--slm-grad-habit);    box-shadow: 0 10px 25px -5px rgba(139, 92, 246, 0.25); }
+.theme-wellness { background: var(--slm-grad-wellness); box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.25); }
+.theme-books    { background: var(--slm-grad-books);    box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.25); }
+.theme-gaming   { background: var(--slm-grad-gaming);   box-shadow: 0 10px 25px -5px rgba(245, 158, 11, 0.25); }
+.theme-transit  { background: var(--slm-grad-transit);  box-shadow: 0 10px 25px -5px rgba(71, 85, 105, 0.25); }
+.theme-medical  { background: var(--slm-grad-medical);  box-shadow: 0 10px 25px -5px rgba(20, 184, 166, 0.25); }
+.theme-humans   { background: var(--slm-grad-humans);   box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.25); }
+.theme-social   { background: var(--slm-grad-social);   box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.25); }
+.theme-finance  { background: var(--slm-grad-finance);  box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.25); }
+.theme-cars     { background: var(--slm-grad-cars);     box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.25); }
+.theme-misc     { background: var(--slm-grad-misc);     box-shadow: 0 10px 25px -5px rgba(100, 116, 139, 0.25); }
+
+.slm-header h1 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.slm-header p {
+  color: rgba(255, 255, 255, 0.85);
+  margin-bottom: 0;
+  font-size: 1rem;
+}
+
+/* Modern Cards */
+.slm-card {
+  background: var(--slm-surface);
+  border: 1px solid var(--slm-border);
+  border-radius: var(--slm-radius-lg);
+  box-shadow: var(--slm-shadow-sm);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.slm-card-hover {
+  background: var(--slm-surface);
+  border: 1px solid var(--slm-border);
+  border-radius: var(--slm-radius-lg);
+  box-shadow: var(--slm-shadow-sm);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.slm-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--slm-shadow-hover);
+  border-color: #cbd5e1;
+}
+
+/* Metric / KPI Cards */
+.metric-card {
+  border: none;
+  border-radius: var(--slm-radius-lg);
+  background: var(--slm-surface);
+  box-shadow: var(--slm-shadow-sm);
+  padding: 1.25rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--slm-shadow-md);
+}
+
+/* Table Styling */
+.slm-table-card {
+  background: var(--slm-surface);
+  border: 1px solid var(--slm-border);
+  border-radius: var(--slm-radius-lg);
+  box-shadow: var(--slm-shadow-sm);
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.slm-table {
+  margin-bottom: 0;
+}
+
+.slm-table thead th {
+  background-color: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.825rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--slm-border);
+}
+
+.slm-table tbody td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 0.925rem;
+}
+
+.slm-table tbody tr:hover td {
+  background-color: #f8fafc;
+}
+
+/* Form Cards */
+.slm-form-card {
+  background: var(--slm-surface);
+  border: 1px solid var(--slm-border);
+  border-radius: var(--slm-radius-lg);
+  box-shadow: var(--slm-shadow-sm);
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.slm-form-card h2,
+.slm-form-card h3 {
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  font-size: 1.25rem;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #334155;
+  margin-bottom: 0.4rem;
+}
+
+.form-control,
+.form-select {
+  border: 1px solid var(--slm-border);
+  border-radius: var(--slm-radius-sm);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.95rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}
+
+/* Badges & Accents */
+.star-rating {
+  color: #f59e0b;
+}
+
+.code-pill {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-family: monospace;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.85rem;
+}
+
+/* Modern Footer */
+.slm-footer {
+  text-align: center;
+  padding: 2rem 0 1.5rem;
+  color: var(--slm-text-muted);
+  font-size: 0.875rem;
+  border-top: 1px solid var(--slm-border);
+  margin-top: 3rem;
+  background-color: var(--slm-surface);
+}
+
+.slm-footer a {
+  color: var(--slm-text-muted);
+  text-decoration: none;
+}
+
+.slm-footer a:hover {
+  color: var(--slm-text-main);
+  text-decoration: underline;
+}

@@ -1,56 +1,84 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Authors</title>
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Authors Directory')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-4">Authors</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Authors Directory', 'Maintain book authors, biographical details, and ages', 'bi bi-person-lines-fill', 'theme-books', '/books', 'Books Library')}"></header>
 
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>firstname</th>
-                <th>lastname</th>
-                <th>birthday</th>
-                <th>age<th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="e : ${authors}">
-                <td th:text="${e.id}"></td>
-				<td th:text="${e.firstname}"></td>
-				<td th:text="${e.lastname}"></td>
-				<td th:text="${#temporals.format(e.birthday, 'dd.MM.yyyy')}"></td>
-				<td th:text="${{e.age}}"></td>
-            </tr>
-        </tbody>
-    </table>
+    <main class="container mb-5">
+        <div class="row g-4">
+            <!-- Add Author Card -->
+            <div class="col-md-5">
+                <section class="card slm-form-card">
+                    <h2 class="text-info"><i class="bi bi-person-plus me-2"></i>Add Author</h2>
+                    <form th:action="@{/authors}" th:object="${author}" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">First Name <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{firstname}" class="form-control" placeholder="First name" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                            <input type="text" th:field="*{lastname}" class="form-control" placeholder="Last name" required />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Birthday <span class="text-danger">*</span></label>
+                            <input type="date" th:field="*{birthday}" class="form-control" required />
+                        </div>
+                        <div class="text-end">
+                            <button type="submit" class="btn btn-info text-white px-4 fw-semibold">
+                                <i class="bi bi-save me-1"></i> Add Author
+                            </button>
+                        </div>
+                    </form>
+                </section>
+            </div>
 
-    <h2 class="mt-5">Add Author</h2>
-    <form action="#" th:action="@{/authors}" th:object="${author}" method="post" class="mb-5">
-        <div class="mb-3">
-            <label for="name" class="form-label">First Name:</label>
-            <input type="text" th:field="*{firstname}" class="form-control" required>
+            <!-- Authors Table Card -->
+            <div class="col-md-7">
+                <section class="card slm-table-card">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="h4 fw-bold mb-0 text-dark">
+                            <i class="bi bi-person-lines-fill me-2 text-info"></i>Authors
+                            <span class="badge bg-info-subtle text-info ms-2 fs-6" th:text="${authors != null ? authors.size() : 0}">0</span>
+                        </h2>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table slm-table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width: 80px;">ID</th>
+                                    <th>Name</th>
+                                    <th>Birthday</th>
+                                    <th>Age</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:if="${authors == null or authors.empty}">
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        No authors defined yet.
+                                    </td>
+                                </tr>
+                                <tr th:each="e : ${authors}">
+                                    <td class="text-muted small" th:text="${e.id}">1</td>
+                                    <td>
+                                        <strong th:text="${e.firstname + ' ' + e.lastname}">Author Name</strong>
+                                    </td>
+                                    <td class="small" th:text="${#temporals.format(e.birthday, 'dd.MM.yyyy')}">01.01.1980</td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border" th:text="${{e.age}} + ' yrs'">45 yrs</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="name" class="form-label">Last Name:</label>
-            <input type="text" th:field="*{lastname}" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="name" class="form-label">Birthday:</label>
-            <input type="date" th:field="*{birthday}" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Author</button>
-    </form>
-    <a href="/books" class="btn btn-secondary">View Books</a>
-    <a href="/book-management" class="btn btn-secondary">Back to Dashboard</a>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>

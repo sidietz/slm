@@ -1,103 +1,120 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Train Trips Management</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-	<style>
-        .card-hover:hover {
-            transform: scale(1.05);
-            transition: transform 0.2s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Transit & Health Management')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-5 text-center">Train Trips Management</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Transit & Medical Management', 'Track public transport journeys, driving logs, routes, and healthcare appointments', 'bi bi-compass', 'theme-transit', '/', 'Home')}"></header>
 
-    <div class="row g-4">
-        <!-- Train Trip Management -->
-        <div class="col-md-3">
-            <div class="card h-100 card-hover border-primary">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-primary mb-3">Train Trips</h5>
-                    <p class="card-text">Track your train trips.</p>
-                    <a href="/train-trips" class="btn btn-primary stretched-link">Manage Train Trips</a>
+    <main class="container mb-5">
+        <!-- Main Activity Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Train Trips -->
+            <div class="col-md-3">
+                <div class="card h-100 slm-card-hover border-top border-4 border-primary">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-primary fs-1">
+                            <i class="bi bi-train-front"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Train Trips</h4>
+                        <p class="text-muted small mb-3">Log rail journeys, departure times, delays, and ticket costs.</p>
+                        <a th:href="@{/train-trips}" class="btn btn-outline-primary w-100 fw-semibold stretched-link">Manage Trains</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Car Trips -->
+            <div class="col-md-3">
+                <div class="card h-100 slm-card-hover border-top border-4 border-info">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-info fs-1">
+                            <i class="bi bi-car-front"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Car Trips</h4>
+                        <p class="text-muted small mb-3">Track driven mileage, routes, vehicles, and fuel consumption.</p>
+                        <a th:href="@{/car-trips}" class="btn btn-outline-info w-100 fw-semibold stretched-link">Manage Car Trips</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Appointments -->
+            <div class="col-md-3">
+                <div class="card h-100 slm-card-hover border-top border-4 border-danger">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-danger fs-1">
+                            <i class="bi bi-calendar2-heart"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Appointments</h4>
+                        <p class="text-muted small mb-3">Schedule and track doctor visits, checkups, and consultations.</p>
+                        <a th:href="@{/appointments}" class="btn btn-outline-danger w-100 fw-semibold stretched-link">Appointments</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Selfies -->
+            <div class="col-md-3">
+                <div class="card h-100 slm-card-hover border-top border-4 border-success">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-success fs-1">
+                            <i class="bi bi-camera"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Selfies</h4>
+                        <p class="text-muted small mb-3">Browse photo journal, tagged humans, and memory snapshots.</p>
+                        <a th:href="@{/selfies}" class="btn btn-outline-success w-100 fw-semibold stretched-link">Manage Selfies</a>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-md-3">
-            <div class="card h-100 card-hover border-success">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-success mb-3">Appointments</h5>
-                    <p class="card-text">Track your appointments.</p>
-                    <a href="/appointments" class="btn btn-success stretched-link">Manage Appointments</a>
-                </div>
-            </div>
-        </div>
 
-        <!-- Routes Management -->
-        <div class="col-md-3">
-            <div class="card h-100 card-hover border-info">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-info mb-3">Car Trips</h5>
-                    <p class="card-text">Manage your driven Car Trips.</p>
-                    <a href="/car-trips" class="btn btn-info stretched-link">Manage Car Trips</a>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Selfie Management -->
-        <div class="col-md-3">
-            <div class="card h-100 card-hover border-info">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-info mb-3">Selfies</h5>
-                    <p class="card-text">Manage your uploaded selfies.</p>
-                    <a href="/selfies" class="btn btn-info stretched-link">Manage Selfies</a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Configuration Section -->
-        <div class="col-12 mt-4">
-            <h3 class="mb-3">Configuration</h3>
+        <!-- Configuration & Master Data Section -->
+        <div class="card slm-card p-4">
+            <h3 class="h5 fw-bold text-dark mb-3"><i class="bi bi-sliders me-2 text-secondary"></i>Transit &amp; Healthcare Master Data</h3>
             <div class="row g-3">
-                <div class="col-md-3">
-                    <a href="/train-stations" class="btn btn-outline-secondary w-100">Train Stations</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/train-stations}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-signpost me-1"></i> Train Stations
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/train-lines" class="btn btn-outline-secondary w-100">Train Lines</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/train-lines}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-bezier2 me-1"></i> Train Lines
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/doctors" class="btn btn-outline-secondary w-100">Doctors</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/cars}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-car-front-fill me-1"></i> Vehicles / Cars
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/specialities" class="btn btn-outline-secondary w-100">Specialities</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/routes}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-map me-1"></i> Routes
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/points" class="btn btn-outline-secondary w-100">Points</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/points}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-geo-alt me-1"></i> Geographic Points
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/routes" class="btn btn-outline-secondary w-100">Routes</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/doctors}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-person-badge me-1"></i> Doctors Directory
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/cars" class="btn btn-outline-secondary w-100">Cars</a>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/specialities}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-hospital me-1"></i> Medical Specialties
+                    </a>
+                </div>
+                <div class="col-md-3 col-sm-6">
+                    <a th:href="@{/imprint}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-info-circle me-1"></i> System Imprint
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="text-center mt-5">
-        <a href="/" class="btn btn-secondary">Back to Home</a>
-    </div>
-
-    <footer class="mt-5 text-center text-muted">
-        <p>&copy; 2026 SLM</p>
-    </footer>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

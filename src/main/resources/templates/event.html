@@ -1,99 +1,115 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
-<meta charset="UTF-8">
-<link href="../static/css/table.css" th:href="@{/css/table.css}"
-	rel="stylesheet" />
-
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css">
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-<script
-	src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
-<script
-	src="https://cdn.jsdelivr.net/npm/luxon@3.7.1/build/global/luxon.min.js"></script>
-<title>SLM</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendar Events - SLM</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}">
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css">
+    <link rel="stylesheet" th:href="@{/css/slm.css}">
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.7.1/build/global/luxon.min.js"></script>
 </head>
-<body>
-	<h2>event</h2>
-	<form method="get" action="/event" id="filterForm" class="mb-3">
-		<div class="col-auto flex-grow-1">
-			<div id="date-slider"></div>
-		</div>
-		<input type="hidden" name="fromDate" id="fromDate"
-			th:value="${fromDate}"> <input type="hidden" name="toDate"
-			id="toDate" th:value="${toDate}">
-		<div class="col-auto">
-			<button type="submit" class="btn btn-primary">Apply</button>
-			<a href="/event" class="btn btn-secondary">Reset</a>
-		</div>
-	</form>
-	<div class="list" th:unless="${#lists.isEmpty(events)}">
-		<table class="table table-striped table-bordered">
-			<thead>
-				<tr>
-					<td>ID</td>
-					<td>title</td>
-					<td>description</td>
-					<td>start</td>
-					<td>end</td>
-					<td>duration</td>
-				</tr>
-			</thead>
-			<tbody>
-				<tr th:each="e : ${events}">
-					<td th:text="${e.id}"></td>
-					<td th:text="${e.title}"></td>
-					<td th:text="${e.description}"></td>
-					<td th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${{e.duration}}"></td>
-				</tr>
-			</tbody>
-		</table>
-	</div>
-	<script>
-	const DateTime = luxon.DateTime;
+<body class="bg-light">
+
+    <header th:replace="~{fragments/layout :: header('Calendar Events', 'Timeline filter and upcoming scheduled calendar items', 'bi bi-calendar-event', 'theme-misc', '/misc-management', 'Misc Dashboard')}"></header>
+
+    <main class="container my-5">
+        <!-- Date Slider Filter -->
+        <div class="card slm-card border-0 shadow-sm p-4 mb-4 bg-white">
+            <h5 class="fw-semibold text-dark mb-3"><i class="bi bi-calendar-range me-2 text-primary"></i>Timeline Window</h5>
+            <form method="get" action="/event" id="filterForm">
+                <div class="my-4 px-2">
+                    <div id="date-slider"></div>
+                </div>
+                <input type="hidden" name="fromDate" id="fromDate" th:value="${fromDate}">
+                <input type="hidden" name="toDate" id="toDate" th:value="${toDate}">
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4"><i class="bi bi-funnel me-1"></i> Apply Filter</button>
+                    <a href="/event" class="btn btn-outline-secondary px-4">Reset</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Events Table -->
+        <div class="card slm-table-card shadow-sm">
+            <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-calendar-check me-2 text-primary"></i>Upcoming Events</h5>
+                <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(events)} + ' events'">0 events</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table slm-table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-3" style="width: 60px;">ID</th>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Start</th>
+                            <th>End</th>
+                            <th class="pe-3">Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="e : ${events}">
+                            <td class="ps-3 text-secondary font-monospace small" th:text="${e.id}"></td>
+                            <td class="fw-semibold text-dark" th:text="${e.title}"></td>
+                            <td class="text-muted small" th:text="${e.description}"></td>
+                            <td class="text-muted small" th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td class="text-muted small" th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
+                            <td class="pe-3"><span class="code-pill" th:text="${{e.duration}}"></span></td>
+                        </tr>
+                        <tr th:if="${#lists.isEmpty(events)}">
+                            <td colspan="6" class="text-center py-4 text-muted">No calendar events found in this date window.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script th:inline="javascript">
+    const DateTime = luxon.DateTime;
     const slider = document.getElementById('date-slider');
     
-    function timestamp(str){
-    	const tmp = new Date(str).getTime();
-    	return tmp;
+    function timestamp(str) {
+        return new Date(str).getTime();
     }
     
-    const defaultMinDate = timestamp("[[${minDate}]]");
-    const defaultMaxDate = timestamp("[[${maxDate}]]");
-    //(DateTime.fromISO("/*[[${maxDate}]]*/")).toMillis(); //DateTime.now().toISO()).toMillis();
-    minDate = document.getElementById('fromDate').value;
-    maxDate = document.getElementById('toDate').value;
-    
-    console.log(minDate);
-		
-    noUiSlider.create(slider, {
-        start: [minDate, maxDate],
-        connect: true,
-        range: {
-            min: timestamp(defaultMinDate),
-            max: timestamp(defaultMaxDate)
-        },
-        step: 24 * 60 * 60 * 1000, // 1 day in ms
-        tooltips: [true, true],
-        format: {
-            to: value => DateTime.fromMillis(value).toFormat("yyyy-MM-dd"),
-            from: value => DateTime.fromISO(value).toMillis()
-        }
-    });
+    /*<![CDATA[*/
+    const defaultMinDate = timestamp(/*[[${minDate}]]*/ new Date().toISOString());
+    const defaultMaxDate = timestamp(/*[[${maxDate}]]*/ new Date().toISOString());
+    let minDateVal = document.getElementById('fromDate').value || /*[[${minDate}]]*/;
+    let maxDateVal = document.getElementById('toDate').value || /*[[${maxDate}]]*/;
+    /*]]>*/
 
-    slider.noUiSlider.on('update', function(values, handle) {
-        const fromISO = DateTime.fromFormat(values[0], "yyyy-MM-dd").toISO();
-        const toISO = DateTime.fromFormat(values[1], "yyyy-MM-dd").toISO();
-        
-        document.getElementById('fromDate').value = fromISO;
-        document.getElementById('toDate').value = toISO;
-    });
-	</script>
+    if (slider && !isNaN(defaultMinDate) && !isNaN(defaultMaxDate) && defaultMinDate < defaultMaxDate) {
+        noUiSlider.create(slider, {
+            start: [timestamp(minDateVal), timestamp(maxDateVal)],
+            connect: true,
+            range: {
+                min: defaultMinDate,
+                max: defaultMaxDate
+            },
+            step: 24 * 60 * 60 * 1000,
+            tooltips: [true, true],
+            format: {
+                to: value => DateTime.fromMillis(value).toFormat("yyyy-MM-dd"),
+                from: value => DateTime.fromISO(value).toMillis()
+            }
+        });
+
+        slider.noUiSlider.on('update', function(values, handle) {
+            const fromISO = DateTime.fromFormat(values[0], "yyyy-MM-dd").toISO();
+            const toISO = DateTime.fromFormat(values[1], "yyyy-MM-dd").toISO();
+            
+            document.getElementById('fromDate').value = fromISO;
+            document.getElementById('toDate').value = toISO;
+        });
+    }
+    </script>
 </body>
 </html>

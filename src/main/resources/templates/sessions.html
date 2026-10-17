@@ -7,6 +7,7 @@
     <title>Sessions Hub | Simon's Life Manager</title>
     <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link th:href="@{/css/slm.css}" rel="stylesheet" />
     <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}" defer></script>
     <style>
         :root {
@@ -246,13 +247,13 @@
                                 <!-- Coding Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Coding')}">
                                     <strong th:text="${s.project}">Project</strong>
-                                    <span th:if="${s.ticket}" class="badge bg-secondary ms-1" th:text="${s.ticket}">TICKET</span>
-                                    <div class="small text-muted" th:text="${s.repository + (s.branch ? ' @ ' + s.branch : '')}">repo</div>
+                                    <span th:if="${s.ticket != null and !s.ticket.empty}" class="badge bg-secondary ms-1" th:text="${s.ticket}">TICKET</span>
+                                    <div class="small text-muted" th:text="${(s.repository != null ? s.repository : '') + (s.branch != null and !s.branch.empty ? ' @ ' + s.branch : '')}">repo</div>
                                 </div>
                                 <!-- Working Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Working')}">
                                     <strong th:text="${s.project}">Project</strong>
-                                    <span th:if="${s.client}" class="text-muted small" th:text="'(' + ${s.client.name} + ')'">Client</span>
+                                    <span th:if="${s.client != null}" class="text-muted small" th:text="'(' + ${s.client.name} + ')'">Client</span>
                                     <div class="small">
                                         <span th:if="${s.billable}" class="badge bg-success-subtle text-success">Billable</span>
                                         <span th:if="${s.hourlyRate}" class="text-muted ms-1" th:text="'$' + ${s.hourlyRate} + '/h'">$100/h</span>
@@ -266,7 +267,7 @@
                                 <!-- Gaming Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Gaming')}">
                                     <strong th:text="${s.game != null ? s.game.title : 'Game'}">Game</strong>
-                                    <div class="small text-muted" th:text="${s.device != null ? s.device.name : ''} + (${s.gameMode} ? ' • ' + ${s.gameMode} : '')">Device</div>
+                                    <div class="small text-muted" th:text="${(s.device != null ? s.device.name : '') + (s.gameMode != null and !s.gameMode.empty ? ' • ' + s.gameMode : '')}">Device</div>
                                 </div>
                                 <!-- Reading Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Reading')}">
@@ -720,5 +721,6 @@
             });
         }
     </script>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

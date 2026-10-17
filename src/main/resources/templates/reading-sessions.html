@@ -1,65 +1,11 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reading Sessions | SLM</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}" defer></script>
-    <style>
-        :root {
-            --slm-reading-gradient: linear-gradient(135deg, #0e7490 0%, #06b6d4 100%);
-        }
-        body {
-            background-color: #f8fafc;
-            color: #1e293b;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-        }
-        .header-reading {
-            background: var(--slm-reading-gradient);
-            color: white;
-            padding: 2.25rem 0;
-            margin-bottom: 2rem;
-            border-radius: 0 0 1.25rem 1.25rem;
-            box-shadow: 0 10px 25px -5px rgba(6, 182, 212, 0.3);
-        }
-        .card-custom {
-            border: none;
-            border-radius: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            background: #ffffff;
-        }
-        .star-rating {
-            color: #f59e0b;
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Reading Sessions')}"></head>
 
 <body>
-    <!-- Header -->
-    <header class="header-reading">
-        <div class="container">
-            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-                <div>
-                    <h1 class="h2 fw-bold mb-1"><i class="bi bi-book-half me-2"></i>Reading Sessions</h1>
-                    <p class="mb-0 text-white-50">Track reading time, page counts, and speed (pages/hr)</p>
-                </div>
-                <div class="d-flex gap-2">
-                    <a href="/sessions?type=READING" class="btn btn-light fw-semibold shadow-sm">
-                        <i class="bi bi-layers-fill text-info me-1"></i> Sessions Hub
-                    </a>
-                    <a href="/books" class="btn btn-outline-light">
-                        <i class="bi bi-journal me-1"></i> Books
-                    </a>
-                    <a href="/book-management" class="btn btn-outline-light">
-                        <i class="bi bi-arrow-left me-1"></i> Book Dashboard
-                    </a>
-                </div>
-            </div>
-        </div>
-    </header>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Reading Sessions', 'Track reading time, page counts, and speed (pages/hr)', 'bi bi-book-half', 'theme-books', '/sessions?type=READING', 'Sessions Hub')}"></header>
 
     <main class="container mb-5">
         <!-- Add Reading Session Form Card -->
@@ -204,8 +150,6 @@
         </section>
     </main>
 
-    <footer class="text-center text-muted py-4">
-        <small>&copy; 2026 Simon's Life Manager (SLM) &bull; Reading &amp; Books</small>
-    </footer>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

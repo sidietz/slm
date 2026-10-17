@@ -1,52 +1,77 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Sleep Times</title>
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Sleep Times')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-4">Sleep Times</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Sleep Times', 'Track sleep schedules, circadian rhythms, and rest duration', 'bi bi-moon-stars', 'theme-wellness', '/activity-management', 'Dashboard')}"></header>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Go To Bed</th>
-                    <th>Get Up</th>
-                    <th>Duration</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="sleepTime : ${sleeptimes}">
-                    <td th:text="${sleepTime.gotobed}">2023-01-01T22:00</td>
-                    <td th:text="${sleepTime.getup}">2023-01-02T07:00</td>
-                    <td th:text="${{sleepTime.sleeptime}}">540</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <main class="container mb-5">
+        <!-- Add Sleep Time Form Card -->
+        <section class="card slm-form-card mb-4">
+            <h2 class="text-success"><i class="bi bi-plus-circle me-2"></i>Log Sleep Period</h2>
+            <form th:action="@{/sleep-times}" th:object="${sleeptime}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Bedtime (Go to bed) <span class="text-danger">*</span></label>
+                        <input type="datetime-local" th:field="*{gotobed}" class="form-control" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Wake Up (Get up) <span class="text-danger">*</span></label>
+                        <input type="datetime-local" th:field="*{getup}" class="form-control" required />
+                    </div>
 
-    <h2 class="mt-5">Add Sleep Time</h2>
-    <form action="#" th:action="@{/sleep-times}" th:object="${sleeptime}" method="post" class="mb-5">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="gotobed" class="form-label">Go To Bed:</label>
-                <input type="datetime-local" th:field="*{gotobed}" class="form-control" required>
+                    <div class="col-12 text-end mt-3">
+                        <button type="submit" class="btn btn-success px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i> Save Sleep Time
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Sleep Times Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-moon-stars me-2 text-success"></i>Logged Sleep Times
+                    <span class="badge bg-success-subtle text-success ms-2 fs-6" th:text="${sleeptimes != null ? sleeptimes.size() : 0}">0</span>
+                </h2>
+                <a th:href="@{/sleeptime-bb}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-graph-up me-1"></i> View Sleep Chart
+                </a>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="getup" class="form-label">Get Up:</label>
-                <input type="datetime-local" th:field="*{getup}" class="form-control" required>
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Sleep Time</button>
-    </form>
-    <a href="/activity-management" class="btn btn-secondary">Back to Dashboard</a>
 
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Go To Bed</th>
+                            <th>Get Up</th>
+                            <th>Duration (min)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${sleeptimes == null or sleeptimes.empty}">
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>
+                                No sleep times logged yet. Record your sleep above!
+                            </td>
+                        </tr>
+                        <tr th:each="sleepTime : ${sleeptimes}">
+                            <td class="small" th:text="${#temporals.format(sleepTime.gotobed, 'dd.MM.yyyy HH:mm')}">01.01.2026 23:00</td>
+                            <td class="small" th:text="${#temporals.format(sleepTime.getup, 'dd.MM.yyyy HH:mm')}">02.01.2026 07:30</td>
+                            <td>
+                                <span class="badge bg-success text-white" th:text="${{sleepTime.sleeptime}}">510 min</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>
