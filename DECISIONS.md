@@ -263,4 +263,19 @@ Model entities in `de.oberamsystems.slm.model` must **not** be converted to Java
 
 Java records remain reserved for read-only DTOs, query projections, or `@Embeddable` value objects.
 
+---
+
+### Separation of Employer (Work/Income) and Contractor (Contracts/Expenses)
+
+#### Context:
+Previously, `WorkingSession` referenced `Contractor` (as `client`) via `contractor_id`. However, in the SLM domain:
+- `Contractor` models third-party recurring service providers, telecommunications, insurance carriers, and utilities (e.g. *Vodafone*, *Telekom*, *Allianz*, *Netflix*) associated with outgoing expenses and `Contract` entries.
+- `WorkingSession` models billable and salaried professional work performed for employers and consulting clients.
+
+#### Decision:
+1. Disentangle work tracking from expense contracts by introducing a dedicated `Employer` (`employer`) entity and table (`employer_id` in `working_session`).
+2. Add a dedicated `EmployerController` and UI (`/employers`) accessible via the Spend Management dashboard alongside *Store & Service Vendors* and *Service Contractors*.
+3. Versionize database migrations using date-stamped SQL scripts (`migration_YYYY-MM-DD.sql`) while leaving `migrations.sql` untouched as a historical baseline.
+
+
 

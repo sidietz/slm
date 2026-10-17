@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Dedicated `Employer` entity, repository, and table (`employer`) for professional working sessions and client billing.
+- Versioned database migration file `src/main/resources/migration_2026-10-17.sql` migrating `working_session.contractor_id` to `employer_id`.
+- `EmployerController` and `employers.html` directory and management view.
+- Added **Employers & Clients** action button to the Spend Management dashboard (`/spend-management`).
+
+### Changed
+- Refactored `WorkingSession` to reference `Employer employer` (`employer_id`) instead of `Contractor`.
+- Disentangled `Contractor` to strictly model commercial service contracts, utilities, and insurers.
+- Updated `working-sessions.html` and Sessions Hub modal to select and display employers.
+
 ## [0.0.2-SNAPSHOT] - 2026-10-17
 
 ### Added
