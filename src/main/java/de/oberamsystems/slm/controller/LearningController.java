@@ -37,16 +37,25 @@ public class LearningController {
 		return "learning-sessions";
 	}
 	
+	public String submitLearningSessions(LearningSession rs, Model model) {
+		return submitLearningSessions(rs, 0L, model);
+	}
+
 	@PostMapping("/learning-sessions")
-	public String submitLearningSessions(@ModelAttribute LearningSession rs, Model model) {
+	public String submitLearningSessions(@ModelAttribute LearningSession rs,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			Model model) {
 		model.addAttribute("learningsessions", learningSessionRepo.findAll());
 		LearningItem li = rs.getLearningItem();
-		li.setLastUpdated(LocalDateTime.now());
+		if (li != null) {
+			li.setLastUpdated(LocalDateTime.now());
+			repo.save(li);
+		}
 		model.addAttribute("items", repo.findAll());
-		Duration dur = Duration.between(rs.getStart(), rs.getEnd());
-		rs.setDuration(dur);
+		if (breakMinutes != null && breakMinutes > 0) {
+			rs.setBreakDuration(Duration.ofMinutes(breakMinutes));
+		}
 		learningSessionRepo.save(rs);
-		repo.save(li);
 		model.addAttribute("learningsession", rs);
 		return "redirect:/learning-sessions";
 	}

@@ -1,95 +1,131 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Devices</title>
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Devices Inventory')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-4">Devices</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Devices & Hardware', 'Manage computers, consoles, mobile devices, serial numbers, and equipment', 'bi bi-laptop', 'theme-activity', '/activity-management', 'Activity Dashboard')}"></header>
 
-    <div class="table-responsive">
-        <table class="table table-striped table-hover">
-            <thead class="table-dark">
-                <tr>
-                    <th>Name</th>
-                    <th>Category</th>
-                    <th>Vendor</th>
-                    <th>Manufacturer</th>
-                    <th>Model</th>
-                    <th>Serial Number</th>
-                    <th>Price</th>
-                    <th>Purchase Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr th:each="device : ${devices}">
-                    <td th:text="${device.name}">Name</td>
-                    <td th:text="${device.deviceType.name}">Category</td>
-                    <td th:text="${device.vendor.name}">Vendor</td>
-                    <td th:text="${device.manufacturer.name}">Manufacturer</td>
-                    <td th:text="${device.modelName}">Model</td>
-                    <td th:text="${device.serialNumber}">Serial</td>
-                    <td th:text="${device.price}">0.00</td>
-                    <td th:text="${device.purchaseDate}">2023-01-01</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+    <main class="container mb-5">
+        <!-- Add Device Card -->
+        <section class="card slm-form-card mb-4">
+            <h2 class="text-danger"><i class="bi bi-plus-circle me-2"></i>Add Hardware Device</h2>
+            <form th:action="@{/devices}" th:object="${device}" method="post">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Device Name <span class="text-danger">*</span></label>
+                        <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="e.g. Work MacBook Pro, Gaming Rig, PS5" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Device Type <span class="text-danger">*</span></label>
+                        <select class="form-select" th:field="*{deviceType}">
+                            <option value="">-- Select Type --</option>
+                            <option th:each="e : ${deviceTypes}" th:value="${e.id}" th:text="${e.name}"></option>
+                        </select>
+                    </div>
 
-    <h2 class="mt-5">Add Device</h2>
-    <form action="#" th:action="@{/devices}" th:object="${device}" method="post" class="mb-5">
-        <div class="row">
-            <div class="col-md-6 mb-3">
-                <label for="name" class="form-label">Name:</label>
-                <input type="text" id="name" name="name" class="form-control" required>
+                    <div class="col-md-6">
+                        <label class="form-label">Vendor</label>
+                        <select class="form-select" th:field="*{vendor}">
+                            <option value="">-- Select Vendor --</option>
+                            <option th:each="e : ${vendors}" th:value="${e.id}" th:text="${e.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Manufacturer</label>
+                        <select class="form-select" th:field="*{manufacturer}">
+                            <option value="">-- Select Manufacturer --</option>
+                            <option th:each="e : ${manufacturers}" th:value="${e.id}" th:text="${e.name}"></option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label">Model Name</label>
+                        <input type="text" th:field="*{modelName}" class="form-control" placeholder="M3 Max 16-inch" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Serial Number</label>
+                        <input type="text" th:field="*{serialNumber}" class="form-control" placeholder="SN-..." />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Price (&euro;)</label>
+                        <input type="number" step="0.01" min="0" th:field="*{price}" class="form-control" placeholder="0.00" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Purchase Date</label>
+                        <input type="date" th:field="*{purchaseDate}" class="form-control" />
+                    </div>
+
+                    <div class="col-12 text-end mt-3">
+                        <button type="submit" class="btn btn-danger px-4 fw-semibold">
+                            <i class="bi bi-save me-1"></i> Save Device
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </section>
+
+        <!-- Devices Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-cpu me-2 text-danger"></i>Device Inventory
+                    <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${devices != null ? devices.size() : 0}">0</span>
+                </h2>
+                <div class="d-flex gap-2">
+                    <a th:href="@{/vendors}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-shop me-1"></i> Vendors
+                    </a>
+                    <a th:href="@{/manufacturers}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-building me-1"></i> Manufacturers
+                    </a>
+                </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="deviceType" class="form-label">Type:</label>
-                <select class="form-select" name="selectDeviceType"
-				onchange="updateDeviceType(event)" th:field="*{deviceType}">
-				<option th:each="e : ${deviceTypes}" th:value="${e.id}"
-					th:text="${e.name}"></option>
-			</select>            </div>
-            <div class="col-md-6 mb-3">
-                <label for="vendor" class="form-label">Vendor:</label>
-                <select class="form-select" name="selectVendor"
-				onchange="updateVendor(event)" th:field="*{vendor}">
-				<option th:each="e : ${vendors}" th:value="${e.id}"
-					th:text="${e.name}"></option>
-			</select>
+
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Device Name &amp; Model</th>
+                            <th>Category</th>
+                            <th>Manufacturer &amp; Vendor</th>
+                            <th>Serial Number</th>
+                            <th>Price</th>
+                            <th>Purchase Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${devices == null or devices.empty}">
+                            <td colspan="6" class="text-center py-4 text-muted">
+                                No devices registered yet. Add your hardware above!
+                            </td>
+                        </tr>
+                        <tr th:each="device : ${devices}">
+                            <td>
+                                <strong th:text="${device.name}">Device Name</strong>
+                                <div class="text-muted small" th:if="${device.modelName != null and !device.modelName.empty}" th:text="${device.modelName}">Model</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border" th:text="${device.deviceType != null ? device.deviceType.name : '-'}">Type</span>
+                            </td>
+                            <td>
+                                <div th:if="${device.manufacturer != null}" th:text="${device.manufacturer.name}">Manufacturer</div>
+                                <div class="text-muted small" th:if="${device.vendor != null}">via <span th:text="${device.vendor.name}">Vendor</span></div>
+                            </td>
+                            <td>
+                                <code th:if="${device.serialNumber != null and !device.serialNumber.empty}" class="code-pill" th:text="${device.serialNumber}">SN</code>
+                                <span th:if="${device.serialNumber == null or device.serialNumber.empty}" class="text-muted small">-</span>
+                            </td>
+                            <td class="fw-semibold" th:text="${device.price != null ? ('&euro;' + #numbers.formatDecimal(device.price, 1, 2)) : '-'}">&euro;0.00</td>
+                            <td class="small text-muted" th:text="${device.purchaseDate != null ? device.purchaseDate : '-'}">2026-01-01</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="manufacturer" class="form-label">Manufacturer:</label>
-                <select class="form-select" name="selectManufacturer"
-				onchange="updateManufacturer(event)" th:field="*{manufacturer}">
-				<option th:each="e : ${manufacturers}" th:value="${e.id}"
-					th:text="${e.name}"></option>
-			</select>            </div>
-            <div class="col-md-6 mb-3">
-                <label for="modelName" class="form-label">Model Name:</label>
-                <input type="text" th:field="*{modelName}" class="form-control">
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="serialNumber" class="form-label">Serial Number:</label>
-                <input type="text" th:field="*{serialNumber}" class="form-control">
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="price" class="form-label">Price:</label>
-                <input type="number" step="0.01" th:field="*{price}" class="form-control">
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="purchaseDate" class="form-label">Purchase Date:</label>
-                <input type="date" th:field="*{purchaseDate}" class="form-control">
-            </div>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Device</button>
-    </form>
-    <a href="/activity-management" class="btn btn-secondary">Back to Dashboard</a>
+        </section>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>

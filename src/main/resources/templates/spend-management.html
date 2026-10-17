@@ -1,67 +1,76 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<head>
-    <title>Activity Management</title>
-    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-	<style>
-        .card-hover:hover {
-            transform: scale(1.05);
-            transition: transform 0.2s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-    </style>
-</head>
+<head th:replace="~{fragments/layout :: standard-head('Spend Management')}"></head>
 
-<body class="container mt-5">
-    <h1 class="mb-5 text-center">Spend Management</h1>
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Spend Management', 'Track personal expenses, purchases, recurring contracts, clients, and billable work', 'bi bi-wallet2', 'theme-work', '/', 'Home')}"></header>
 
-    <div class="row g-4">
-        <!-- Purchases Management -->
-        <div class="col-md-3">
-            <div class="card h-100 card-hover border-primary">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-primary mb-3">Purchases</h5>
-                    <p class="card-text">Track your purchases.</p>
-                    <a href="/purchases" class="btn btn-primary stretched-link">Manage Purchases</a>
+    <main class="container mb-5">
+        <!-- Main Spend Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Purchases -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-warning">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-warning fs-1">
+                            <i class="bi bi-cart3"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Purchases</h4>
+                        <p class="text-muted small mb-3">Record expenditures, item prices, purchase dates, and vendors.</p>
+                        <a th:href="@{/purchases}" class="btn btn-outline-warning w-100 fw-semibold stretched-link">Manage Purchases</a>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Contracts Management -->
-        <div class="col-md-3">
-            <div class="card h-100 card-hover border-success">
-                <div class="card-body text-center">
-                    <h5 class="card-title text-success mb-3">Contracts</h5>
-                    <p class="card-text">Log contracts.</p>
-                    <a href="/contracts" class="btn btn-success stretched-link">Manage Contracts</a>
+            <!-- Contracts -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-success">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-success fs-1">
+                            <i class="bi bi-file-earmark-text"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Contracts</h4>
+                        <p class="text-muted small mb-3">Track recurring subscriptions, terms, monthly fees, and termination dates.</p>
+                        <a th:href="@{/contracts}" class="btn btn-outline-success w-100 fw-semibold stretched-link">Manage Contracts</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billable Working Sessions -->
+            <div class="col-md-4">
+                <div class="card h-100 slm-card-hover border-top border-4 border-primary">
+                    <div class="card-body text-center p-4">
+                        <div class="mb-3 text-primary fs-1">
+                            <i class="bi bi-briefcase"></i>
+                        </div>
+                        <h4 class="card-title fw-bold text-dark mb-2">Working Sessions</h4>
+                        <p class="text-muted small mb-3">Log consulting hours, client billing rates, deliverables, and earnings.</p>
+                        <a th:href="@{/working-sessions}" class="btn btn-outline-primary w-100 fw-semibold stretched-link">Manage Working</a>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Configuration Section -->
-        <div class="col-12 mt-4">
-            <h3 class="mb-3">Configuration</h3>
+        <div class="card slm-card p-4">
+            <h3 class="h5 fw-bold text-dark mb-3"><i class="bi bi-sliders me-2 text-warning"></i>Commercial Partners &amp; Vendors</h3>
             <div class="row g-3">
-                <div class="col-md-3">
-                    <a href="/vendors" class="btn btn-outline-secondary w-100">Vendors</a>
+                <div class="col-md-6">
+                    <a th:href="@{/vendors}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-shop me-1"></i> Store &amp; Service Vendors
+                    </a>
                 </div>
-                <div class="col-md-3">
-                    <a href="/contractors" class="btn btn-outline-secondary w-100">Contractors</a>
+                <div class="col-md-6">
+                    <a th:href="@{/contractors}" class="btn btn-outline-secondary w-100 py-2">
+                        <i class="bi bi-building me-1"></i> Clients &amp; Contractors
+                    </a>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <div class="text-center mt-5">
-        <a href="/" class="btn btn-secondary">Back to Home</a>
-    </div>
-
-    <footer class="mt-5 text-center text-muted">
-        <p>&copy; 2025 SLM</p>
-    </footer>
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

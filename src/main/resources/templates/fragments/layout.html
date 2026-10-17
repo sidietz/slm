@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<!-- Standard Head Fragment -->
+<head th:fragment="standard-head(title)">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${title != null ? title + ' | SLM' : 'Simons Life Manager'}">SLM</title>
+    <link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link th:href="@{/css/slm.css}" rel="stylesheet" />
+    <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}" defer></script>
+</head>
+
+<body>
+    <!-- Standard Header Hero Banner Fragment -->
+    <header th:fragment="header(title, subtitle, icon, themeClass, backUrl, backLabel)"
+            class="slm-header"
+            th:classappend="${themeClass != null ? themeClass : 'theme-sessions'}">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="h2 fw-bold mb-1">
+                        <i th:if="${icon != null and !icon.empty}" th:class="${icon} + ' me-2'"></i>
+                        <span th:text="${title}">Page Title</span>
+                    </h1>
+                    <p class="mb-0 text-white-50" th:if="${subtitle != null and !subtitle.empty}" th:text="${subtitle}">Page description</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a th:if="${backUrl != null and !backUrl.empty}"
+                       th:href="@{${backUrl}}"
+                       class="btn btn-outline-light">
+                        <i class="bi bi-arrow-left me-1"></i>
+                        <span th:text="${backLabel != null ? backLabel : 'Back'}">Back</span>
+                    </a>
+                    <a th:href="@{/}" class="btn btn-outline-light" title="Home">
+                        <i class="bi bi-house-door-fill"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Standard Footer Fragment -->
+    <footer th:fragment="footer" class="slm-footer">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <strong>Simon's Life Manager (SLM)</strong> &bull; &copy; 2026
+                </div>
+                <div class="d-flex gap-3">
+                    <a th:href="@{/}">Home</a>
+                    <a th:href="@{/sessions}">Sessions</a>
+                    <a th:href="@{/imprint}">Imprint</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

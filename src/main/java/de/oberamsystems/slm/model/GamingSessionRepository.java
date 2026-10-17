@@ -2,5 +2,5 @@ package de.oberamsystems.slm.model;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface GamingSessionRepository extends JpaRepository<GamingSession, Long> {
+public interface GamingSessionRepository extends JpaRepository<GamingSession, String> {
 }

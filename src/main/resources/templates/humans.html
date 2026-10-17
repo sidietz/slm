@@ -1,63 +1,85 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-
-<head>
+<head th:replace="~{fragments/layout :: standard-head('Humans')}">
     <title>Humans</title>
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
 </head>
+<body class="bg-light">
 
-<body class="container mt-5">
-    <h1 class="mb-4">Humans</h1>
+    <header th:replace="~{fragments/layout :: header('Contacts & Humans', 'Directory of colleagues, friends, and family connections', 'bi bi-people', 'theme-social', '/human-management', 'Social Dashboard')}"></header>
 
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>First Name</th>
-                <th>Last Name</th>
-                <th>Birthday</th>
-                <th>Category</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="human : ${humans}">
-                <td th:text="${human.id}">1</td>
-                <td th:text="${human.firstname}">First</td>
-                <td th:text="${human.lastname}">Last</td>
-                <td th:text="${human.birthday}">2000-01-01</td>
-                <td th:text="${human.category}">Category</td>
-            </tr>
-        </tbody>
-    </table>
+    <main class="container my-5">
+        <div class="row g-4 mb-5">
+            <div class="col-lg-8">
+                <div class="card slm-table-card shadow-sm h-100">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contact Directory</h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(humans)} + ' contacts'">0 contacts</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table slm-table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3" style="width: 60px;">ID</th>
+                                    <th>First Name</th>
+                                    <th>Last Name</th>
+                                    <th>Birthday</th>
+                                    <th class="pe-3">Category</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="human : ${humans}">
+                                    <td class="ps-3 text-secondary font-monospace small" th:text="${human.id}"></td>
+                                    <td class="fw-semibold text-dark" th:text="${human.firstname}"></td>
+                                    <td class="fw-semibold text-dark" th:text="${human.lastname}"></td>
+                                    <td class="text-muted small" th:text="${human.birthday}"></td>
+                                    <td class="pe-3">
+                                        <span class="badge bg-light text-dark border px-2 py-1" th:text="${human.category}"></span>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(humans)}">
+                                    <td colspan="5" class="text-center py-4 text-muted">No contacts registered yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
 
-    <h2 class="mt-5">Add Human</h2>
-    <form action="#" th:action="@{/humans}" th:object="${human}" method="post" class="mb-5">
-        <div class="mb-3">
-            <label for="categoryId" class="form-label">Category:</label>
-            <select class="form-select" name="selectCategory"
-				onchange="updateCategory(event)" th:field="*{category}">
-				<option th:each="p : ${categories}" th:value="${p}"
-					th:text="${p}"></option>
-			</select>
+            <div class="col-lg-4">
+                <div class="card slm-form-card shadow-sm">
+                    <div class="card-header py-3 border-0">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-plus me-2 text-primary"></i>Add Contact</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="#" th:action="@{/humans}" th:object="${human}" method="post">
+                            <div class="mb-3">
+                                <label for="categorySelect" class="form-label">Category</label>
+                                <select id="categorySelect" class="form-select" th:field="*{category}">
+                                    <option th:each="p : ${categories}" th:value="${p}" th:text="${p}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input type="text" id="firstName" th:field="*{firstname}" class="form-control" placeholder="e.g. John" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" id="lastName" th:field="*{lastname}" class="form-control" placeholder="e.g. Doe" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="birthday" class="form-label">Birthday <span class="text-danger">*</span></label>
+                                <input type="date" id="birthday" th:field="*{birthday}" class="form-control" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="bi bi-person-plus me-1"></i> Add Contact
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="firstName" class="form-label">First Name:</label>
-            <input type="text" th:field="*{firstname}" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="lastName" class="form-label">Last Name:</label>
-            <input type="text" th:field="*{lastname}" class="form-control" required>
-        </div>
-        <div class="mb-3">
-            <label for="birthday" class="form-label">Birthday:</label>
-            <input type="date" th:field="*{birthday}" class="form-control" required>
-        </div>
-        <button type="submit" class="btn btn-primary">Add Human</button>
-    </form>
-    <a href="/human-management" class="btn btn-secondary">Back to Dashboard</a>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
-
 </html>

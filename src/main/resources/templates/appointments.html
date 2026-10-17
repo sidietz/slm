@@ -1,106 +1,122 @@
 <!DOCTYPE html>
-<html xmlns:th="https://www.thymeleaf.org">
-<head>
-<meta charset="UTF-8">
-<link href="../static/css/table.css" th:href="@{/css/table.css}"
-	rel="stylesheet" />
-
-<link th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}"
-	rel="stylesheet" />
-<link rel="stylesheet"
-	href="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.css">
-<script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"
-	defer></script>
-<script
-	src="https://cdn.jsdelivr.net/npm/nouislider@15.8.1/dist/nouislider.min.js"></script>
-<script
-	src="https://cdn.jsdelivr.net/npm/luxon@3.7.1/build/global/luxon.min.js"></script>
-<title>Appointments</title>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: standard-head('Appointments')}">
+    <title>Appointments</title>
 </head>
-<body class="container mt-5">
-	<h1 class="mb-4">Appointments</h1>
-	<form method="get" action="/appointments" id="filterForm" class="mb-3">
-		<div class="col-auto flex-grow-1">
-			<div id="date-slider"></div>
-		</div>
-		<input type="hidden" name="fromDate" id="fromDate"
-			th:value="${fromDate}"> <input type="hidden" name="toDate"
-			id="toDate" th:value="${toDate}">
-		<div class="col-auto">
-			<button type="submit" class="btn btn-primary">Apply</button>
-			<a href="/appointments" class="btn btn-secondary">Reset</a>
-		</div>
-	</form>
-    
-    <table class="table table-striped table-hover">
-        <thead class="table-dark">
-            <tr>
-                <th>ID</th>
-                <th>Doctor</th>
-                <th>Comment</th>
-                <th>Departure</th>
-                <th>Arrival</th>
-                <th>Start</th>
-                <th>End</th>
-                <th>Arrival Home</th>
-                <th>Duration Appointment</th>
-                <th>Duration end-to-end</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="e : ${appointments}">
-					<td th:text="${e.id}"></td>
-					<td th:text="${e.doctor.lastname} + ${e.doctor.speciality.title}"></td>
-					<td th:text="${e.comment}"></td>
-					<td th:text="${#temporals.format(e.departure, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${#temporals.format(e.arrival, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${#temporals.format(e.arrivalHome, 'dd.MM.yyyy HH:mm')}"></td>
-					<td th:text="${{e.duration}}"></td>
-					<td th:text="${{e.completeDuration}}"></td>
-				</tr>
-        </tbody>
-    </table>
-    <h2 class="mt-5">Add Appointment</h2>
-    <form action="#" th:action="@{/appointments}" th:object="${appointment}" method="post" class="mb-5">
-        <div class="row">
-        	<div class="col-md-6 mb-3">
-            	<label for="doctorId" class="form-label">Doctor:</label>
-            	<select class="form-select" name="selectBook"
-				onchange="updatePress(event)" th:field="*{doctor}">
-					<option th:each="p : ${doctors}" th:value="${p.id}"
-					th:text="${p.lastname} + ${p.speciality.title}"></option>
-				</select>
-       		</div>
-        	<div class="col-md-6 mb-3">
-                <label for="comment" class="form-label">Comment</label>
-                <input type="text" th:field="*{comment}" class="form-control" required>
+<body class="bg-light">
+
+    <header th:replace="~{fragments/layout :: header('Medical Appointments', 'Track doctor consultations, appointments, and travel time', 'bi bi-hospital', 'theme-medical', '/misc-management', 'Misc Dashboard')}"></header>
+
+    <main class="container my-5">
+        <!-- Quick Nav -->
+        <div class="d-flex gap-2 mb-4">
+            <a href="/appointments" class="btn btn-outline-primary btn-sm active"><i class="bi bi-calendar2-check me-1"></i> Appointments</a>
+            <a href="/appointment" class="btn btn-outline-secondary btn-sm"><i class="bi bi-sliders me-1"></i> Date Filter</a>
+            <a href="/doctors" class="btn btn-outline-secondary btn-sm"><i class="bi bi-person-badge me-1"></i> Doctors</a>
+            <a href="/specialities" class="btn btn-outline-secondary btn-sm"><i class="bi bi-mortarboard me-1"></i> Specialities</a>
+        </div>
+
+        <div class="row g-4 mb-5">
+            <div class="col-12">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-clipboard2-pulse me-2 text-primary"></i>Appointment Log</h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(appointments)} + ' appointments'">0 appointments</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table slm-table table-hover align-middle mb-0 text-nowrap">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3" style="width: 60px;">ID</th>
+                                    <th>Doctor</th>
+                                    <th>Speciality</th>
+                                    <th>Comment</th>
+                                    <th>Departure</th>
+                                    <th>Arrival</th>
+                                    <th>Start</th>
+                                    <th>End</th>
+                                    <th>Home</th>
+                                    <th>Consult Duration</th>
+                                    <th class="pe-3">Total Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="e : ${appointments}">
+                                    <td class="ps-3 text-secondary font-monospace small" th:text="${e.id}"></td>
+                                    <td class="fw-semibold text-dark" th:text="${e.doctor != null ? e.doctor.lastname : '—'}"></td>
+                                    <td>
+                                        <span class="badge bg-light text-dark border px-2 py-1" th:text="${e.doctor != null and e.doctor.speciality != null ? e.doctor.speciality.title : '—'}"></span>
+                                    </td>
+                                    <td class="text-muted small" th:text="${e.comment}"></td>
+                                    <td class="text-muted small" th:text="${#temporals.format(e.departure, 'dd.MM.yyyy HH:mm')}"></td>
+                                    <td class="text-muted small" th:text="${#temporals.format(e.arrival, 'dd.MM.yyyy HH:mm')}"></td>
+                                    <td class="text-muted small" th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
+                                    <td class="text-muted small" th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
+                                    <td class="text-muted small" th:text="${#temporals.format(e.arrivalHome, 'dd.MM.yyyy HH:mm')}"></td>
+                                    <td><span class="code-pill" th:text="${{e.duration}}"></span></td>
+                                    <td class="pe-3"><span class="code-pill" th:text="${{e.completeDuration}}"></span></td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(appointments)}">
+                                    <td colspan="11" class="text-center py-4 text-muted">No appointments recorded yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <label for="departure" class="form-label">Departure:</label>
-                <input type="datetime-local" th:field="*{departure}" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="arrival" class="form-label">Arrival:</label>
-                <input type="datetime-local" th:field="*{arrival}" class="form-control" required>
-            </div>
-			<div class="col-md-6 mb-3">
-                <label for="start" class="form-label">Start:</label>
-                <input type="datetime-local" th:field="*{start}" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="end" class="form-label">End:</label>
-                <input type="datetime-local" th:field="*{end}" class="form-control" required>
-            </div>
-            <div class="col-md-6 mb-3">
-                <label for="arrivalHome" class="form-label">Arrival Home:</label>
-                <input type="datetime-local" th:field="*{arrivalHome}" class="form-control" required>
+
+            <div class="col-12">
+                <div class="card slm-form-card shadow-sm">
+                    <div class="card-header py-3 border-0">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Schedule / Log Appointment</h5>
+                    </div>
+                    <div class="card-body">
+                        <form action="#" th:action="@{/appointments}" th:object="${appointment}" method="post">
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label for="doctorId" class="form-label">Doctor <span class="text-danger">*</span></label>
+                                    <select id="doctorId" class="form-select" th:field="*{doctor}">
+                                        <option th:each="p : ${doctors}" th:value="${p.id}"
+                                                th:text="${p.lastname + (p.speciality != null ? ' (' + p.speciality.title + ')' : '')}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="comment" class="form-label">Comment / Purpose <span class="text-danger">*</span></label>
+                                    <input type="text" id="comment" th:field="*{comment}" class="form-control" placeholder="e.g. Annual Checkup, Dental Cleaning" required>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label for="departure" class="form-label">Departure from Home <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" id="departure" th:field="*{departure}" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="arrival" class="form-label">Arrival at Practice <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" id="arrival" th:field="*{arrival}" class="form-control" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="arrivalHome" class="form-label">Arrival Back Home <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" id="arrivalHome" th:field="*{arrivalHome}" class="form-control" required>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label for="start" class="form-label">Consultation Start <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" id="start" th:field="*{start}" class="form-control" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="end" class="form-label">Consultation End <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" id="end" th:field="*{end}" class="form-control" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary px-4 py-2">
+                                <i class="bi bi-plus-circle me-1"></i> Save Appointment
+                            </button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
-        <button type="submit" class="btn btn-primary">Add Doctor</button>
-    </form>
-    <a href="/misc-management" class="btn btn-secondary">Back to Dashboard</a>
-    <a href="/" class="btn btn-secondary">Back to Home</a>
+    </main>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
 </html>

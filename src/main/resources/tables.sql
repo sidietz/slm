@@ -1,8 +1,10 @@
 CREATE TABLE sporttype(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 
-CREATE TABLE sportsession(id BIGSERIAL PRIMARY KEY, type BIGINT NOT NULL REFERENCES sporttype(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
+CREATE TABLE session(id TEXT PRIMARY KEY, session_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'COMPLETED', starttime TIMESTAMP NOT NULL, endtime TIMESTAMP, break_duration INTERVAL NOT NULL DEFAULT '0 seconds', duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, net_duration INTERVAL GENERATED ALWAYS AS (endtime - starttime - break_duration) STORED, focus_rating SMALLINT CHECK (focus_rating BETWEEN 1 AND 5), comment TEXT, outcome_summary TEXT);
 
-CREATE TABLE meditationsession(id BIGSERIAL PRIMARY KEY, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE sport_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, type BIGINT REFERENCES sporttype(id));
+
+CREATE TABLE meditation_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE);
 
 CREATE TABLE human(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birthday DATE);
 CREATE TABLE address(id BIGSERIAL PRIMARY KEY, human_id BIGSERIAL NOT NULL REFERENCES human(id), street TEXT, streetnumber INTEGER, plz CHAR(5), place TEXT, country TEXT);
@@ -48,10 +50,10 @@ CREATE TABLE car(id BIGSERIAL PRIMARY KEY, vin TEXT, name TEXT, model_name TEXT,
 CREATE TABLE car_trip(id BIGSERIAL PRIMARY KEY, car_id BIGSERIAL NOT NULL REFERENCES car(id), route_id BIGSERIAL NOT NULL REFERENCES route(id), is_way_back BOOLEAN, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 
-CREATE TABLE readingsession(id BIGSERIAL PRIMARY KEY, book_id BIGSERIAL REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE reading_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, book_id BIGINT REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL);
 
 CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
-CREATE TABLE learning_session(id BIGSERIAL PRIMARY KEY, learning_item_id BIGINT REFERENCES learning_item(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
+CREATE TABLE learning_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, learning_item_id BIGINT REFERENCES learning_item(id), units_completed INTEGER);
 
 CREATE TABLE platform(id BIGSERIAL PRIMARY KEY, name TEXT);
 CREATE TABLE manufacturer(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
@@ -66,7 +68,9 @@ CREATE TABLE publisher(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_da
 CREATE TABLE studio(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
 
 CREATE TABLE game(id BIGSERIAL PRIMARY KEY, title TEXT, series TEXT, publisher_id BIGINT NOT NULL REFERENCES publisher(id), studio_id BIGINT NOT NULL REFERENCES studio(id), price REAL, release_date DATE, last_played DATE);
-CREATE TABLE gaming_session(id BIGSERIAL PRIMARY KEY, game_id BIGINT NOT NULL REFERENCES game(id), device_id BIGINT NOT NULL REFERENCES device(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, comment TEXT);
+CREATE TABLE gaming_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, game_id BIGINT NOT NULL REFERENCES game(id), device_id BIGINT REFERENCES device(id), game_mode TEXT);
+CREATE TABLE coding_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, project TEXT, repository TEXT, branch TEXT, ticket TEXT, language TEXT);
+CREATE TABLE working_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, contractor_id BIGINT REFERENCES contractor(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
 
 CREATE TABLE contractor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, end_date DATE, active BOOL);
