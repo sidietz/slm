@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'de.oberamsystems'
-version = '0.0.1a-SNAPSHOT'
+version = '0.0.2-SNAPSHOT'
 description = "simon's life manager"
 
 java {
