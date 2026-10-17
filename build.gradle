@@ -10,6 +10,10 @@ group = 'de.oberamsystems'
 version = '0.0.2-SNAPSHOT'
 description = "simon's life manager"
 
+springBoot {
+	buildInfo()
+}
+
 java {
 	toolchain {
 		languageVersion = JavaLanguageVersion.of(27)
