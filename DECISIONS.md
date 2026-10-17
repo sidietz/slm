@@ -249,3 +249,18 @@ Use the standard Spring Boot approach (`springBoot { buildInfo() }` and `org.spr
 4. **Configuration Cleanup:**
    Removed hardcoded `version=...` from `application.properties` to prevent version drift.
 
+---
+
+### Rejection of Java Records for JPA Model Entities
+
+#### Decision:
+Model entities in `de.oberamsystems.slm.model` must **not** be converted to Java `record`s.
+
+#### Rationale:
+1. **JPA / Hibernate 7 Specification Mandates:** Jakarta Persistence requires entity classes to have a non-private no-arg constructor and be non-final to allow runtime proxy generation (CGLIB/ByteBuddy) for lazy loading and dirty checking. Java `record`s are implicitly `final` and lack parameterless constructors; annotating a record with `@Entity` throws `AnnotationException: An entity cannot be a record`.
+2. **Polymorphic Class Hierarchies:** Java records implicitly extend `java.lang.Record` and cannot extend classes. The `Session` hierarchy (`CodingSession`, `GamingSession`, `SportSession`, `ReadingSession`, `MeditationSession`, etc.) depends on `@Inheritance(strategy = InheritanceType.JOINED)`, which is fundamentally incompatible with records.
+3. **Spring MVC & Thymeleaf Form Binding:** Web forms and `WebDataBinder` require mutable JavaBean property conventions (`get*` / `set*`) for `@ModelAttribute` binding.
+
+Java records remain reserved for read-only DTOs, query projections, or `@Embeddable` value objects.
+
+
