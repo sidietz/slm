@@ -213,22 +213,15 @@ public void prePersist() {
 To generate UUIDv7 directly in PostgreSQL (e.g. during migration of legacy records without Java intervention):
 ```sql
 CREATE OR REPLACE FUNCTION generate_uuid_v7() RETURNS uuid AS $$
-DECLARE
-    v_time timestamp with time zone := clock_timestamp();
-    v_secs bigint := EXTRACT(EPOCH FROM v_time);
-    v_usec bigint := EXTRACT(MICROSECONDS FROM v_time) - (v_secs * 1000000);
-    v_msec bigint := (v_secs * 1000) + (v_usec / 1000);
-    v_rand bytea := gen_random_bytes(10);
 BEGIN
-    RETURN encode(
-        set_byte(
-            set_byte(
-                substring(int8send(v_msec) from 3 for 6) || v_rand,
-                6, (get_byte(substring(int8send(v_msec) from 3 for 6) || v_rand, 6) & 15) | 112
-            ),
-            8, (get_byte(substring(int8send(v_msec) from 3 for 6) || v_rand, 8) & 63) | 128
-        ),
-        'hex'
+    RETURN uuidv7(); -- Native in PostgreSQL 18+
+EXCEPTION WHEN undefined_function THEN
+    -- Fallback for PostgreSQL 13-17 using core gen_random_uuid()
+    RETURN (
+        lpad(to_hex((EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
+        '-7' || substring(replace(gen_random_uuid()::text, '-', '') from 14 for 3) ||
+        '-8' || substring(replace(gen_random_uuid()::text, '-', '') from 18 for 3) ||
+        '-' || substring(replace(gen_random_uuid()::text, '-', '') from 21 for 12)
     )::uuid;
 END;
 $$ LANGUAGE plpgsql;

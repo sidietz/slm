@@ -9,36 +9,45 @@
 BEGIN;
 
 -- 0. Helper function to generate time-ordered UUIDv7 in PostgreSQL (RFC 9562)
+-- Uses native uuidv7() in PostgreSQL 18+ with zero-dependency fallback for earlier versions
 CREATE OR REPLACE FUNCTION generate_uuid_v7() RETURNS uuid AS $$
-DECLARE
-    v_time timestamp with time zone := clock_timestamp();
-    v_secs bigint := EXTRACT(EPOCH FROM v_time);
-    v_usec bigint := EXTRACT(MICROSECONDS FROM v_time) - (v_secs * 1000000);
-    v_msec bigint := (v_secs * 1000) + (v_usec / 1000);
-    v_rand bytea := gen_random_bytes(10);
 BEGIN
-    RETURN encode(
-        set_byte(
-            set_byte(
-                substring(int8send(v_msec) from 3 for 6) || v_rand,
-                6, (get_byte(substring(int8send(v_msec) from 3 for 6) || v_rand, 6) & 15) | 112 -- version 7
-            ),
-            8, (get_byte(substring(int8send(v_msec) from 3 for 6) || v_rand, 8) & 63) | 128 -- variant RFC 4122/9562
-        ),
-        'hex'
+    RETURN uuidv7();
+EXCEPTION WHEN undefined_function THEN
+    RETURN (
+        lpad(to_hex((EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
+        '-7' || substring(replace(gen_random_uuid()::text, '-', '') from 14 for 3) ||
+        '-8' || substring(replace(gen_random_uuid()::text, '-', '') from 18 for 3) ||
+        '-' || substring(replace(gen_random_uuid()::text, '-', '') from 21 for 12)
     )::uuid;
 END;
 $$ LANGUAGE plpgsql;
 
--- 1. Rename existing legacy tables to hold data during migration
-ALTER TABLE IF EXISTS learning_session RENAME TO old_learning_session;
-ALTER TABLE IF EXISTS gaming_session RENAME TO old_gaming_session;
-ALTER TABLE IF EXISTS readingsession RENAME TO old_readingsession;
-ALTER TABLE IF EXISTS reading_session RENAME TO old_readingsession;
-ALTER TABLE IF EXISTS meditationsession RENAME TO old_meditationsession;
-ALTER TABLE IF EXISTS meditation_session RENAME TO old_meditationsession;
-ALTER TABLE IF EXISTS sportsession RENAME TO old_sportsession;
-ALTER TABLE IF EXISTS sport_session RENAME TO old_sportsession;
+-- 1. Rename existing legacy tables to hold data during migration (guarded to avoid notices)
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'learning_session') THEN
+        ALTER TABLE learning_session RENAME TO old_learning_session;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'gaming_session') THEN
+        ALTER TABLE gaming_session RENAME TO old_gaming_session;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'readingsession') THEN
+        ALTER TABLE readingsession RENAME TO old_readingsession;
+    ELSIF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'reading_session') THEN
+        ALTER TABLE reading_session RENAME TO old_readingsession;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'meditationsession') THEN
+        ALTER TABLE meditationsession RENAME TO old_meditationsession;
+    ELSIF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'meditation_session') THEN
+        ALTER TABLE meditation_session RENAME TO old_meditationsession;
+    END IF;
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'sportsession') THEN
+        ALTER TABLE sportsession RENAME TO old_sportsession;
+    ELSIF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'sport_session') THEN
+        ALTER TABLE sport_session RENAME TO old_sportsession;
+    END IF;
+END $$;
 
 -- 2. Create the unified base session table
 CREATE TABLE session (
