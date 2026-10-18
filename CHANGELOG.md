@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded Jackson to Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`) with `jackson-annotations:2.22`.
 
 ### Changed
+- Overhauled and updated [`DECISIONS.md`](DECISIONS.md) into a comprehensive Architecture Decision Record suite containing 14 formalized ADRs (ADR 001 through ADR 014) synthesized from git history, architectural evaluations, and [`doc/plans/`](doc/plans/).
 - Fixed `docker-compose.yml` database service to use `postgis/postgis:18-3.6` image instead of standard `postgres`, ensuring PostGIS 3.6 spatial support for routes and doctor distances.
 - Added container healthcheck to `db` service (`pg_isready`) and configured `app` to wait for healthy database readiness before launching.
 - Updated root `init.sql` database initialization script to include `CREATE EXTENSION IF NOT EXISTS postgis;`, `this_years_birthday()` helper function, modern session hierarchy tables, and geospatial distance calculation triggers.
