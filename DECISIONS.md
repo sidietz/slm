@@ -1,22 +1,42 @@
 # Architectural Decision Records (ADR)
 
-## ADR 001: Session Hierarchy and Duration Calculation Strategy
+This document records the architectural and design decisions made for **Simon's Life Manager (SLM)**, capturing context, rationale, trade-offs, and implementation details.
+
+---
+
+## Table of Contents
+
+- [ADR 001: Session Hierarchy, Duration Calculation & Identifier Strategy](#adr-001-session-hierarchy-duration-calculation--identifier-strategy)
+- [ADR 002: Rejection of Java Records for JPA Model Entities](#adr-002-rejection-of-java-records-for-jpa-model-entities)
+- [ADR 003: Application Version Synchronization via Spring Boot BuildInfo](#adr-003-application-version-synchronization-via-spring-boot-buildinfo)
+- [ADR 004: Domain Separation of Employer (Income/Work) and Contractor (Expenses/Contracts)](#adr-004-domain-separation-of-employer-incomework-and-contractor-expensescontracts)
+- [ADR 005: PostGIS Spatial Geometry & Automated Route Air Distance Calculation](#adr-005-postgis-spatial-geometry--automated-route-air-distance-calculation)
+- [ADR 006: Integration of Healthcare Providers (Doctor) into Spatial Point Architecture](#adr-006-integration-of-healthcare-providers-doctor-into-spatial-point-architecture)
+- [ADR 007: Defensive Path Traversal Architecture (CWE-22) & Native Media Preservation for Selfies](#adr-007-defensive-path-traversal-architecture-cwe-22--native-media-preservation-for-selfies)
+- [ADR 008: Shared Singleton PostGIS Testcontainers Pattern for Integration Testing](#adr-008-shared-singleton-postgis-testcontainers-pattern-for-integration-testing)
+- [ADR 009: Container Cleanup Strategy: Ryuk Watchdog vs. JVM Shutdown Hooks](#adr-009-container-cleanup-strategy-ryuk-watchdog-vs-jvm-shutdown-hooks)
+- [ADR 010: Modernization to Jackson 3 BOM Platform (`tools.jackson`)](#adr-010-modernization-to-jackson-3-bom-platform-toolsjackson)
+- [ADR 011: Sleep Tracking Unification into Session Architecture & Four Pillars Life Balance Model](#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model)
+- [ADR 012: Decoupling Biological Rest from Net Focused Time & Context-Adaptive KPIs](#adr-012-decoupling-biological-rest-from-net-focused-time--context-adaptive-kpis)
+- [ADR 013: Migration to JUnit 6 Testing Platform](#adr-013-migration-to-junit-6-testing-platform)
+- [ADR 014: Containerized Production Deployment with PostGIS 18-3.6 & Healthcheck Orchestration](#adr-014-containerized-production-deployment-with-postgis-18-36--healthcheck-orchestration)
+
+---
+
+## ADR 001: Session Hierarchy, Duration Calculation & Identifier Strategy
 
 ### Status
 Accepted
 
 ### Context
-In the SLM codebase, multiple time-tracking sessions existed independently (e.g., `LearningSession`, `GamingSession`, `ReadingSession`, `SportSession`, `MeditationSession`). Each had duplicated fields (`start`, `end`, `duration`, `comment`), redundant repository interfaces, duplicated controller endpoints, and copy-pasted Thymeleaf templates.
+In the early SLM codebase, multiple time-tracking activities existed independently (`LearningSession`, `GamingSession`, `ReadingSession`, `SportSession`, `MeditationSession`). Each duplicated core fields (`start`, `end`, `duration`, `comment`), redundant repository interfaces, copy-pasted controller endpoints, and disjoint templates.
 
-We are generalizing `LearningSession` and the session model into an extensible hierarchy supporting at least:
-- **Gaming** (`GamingSession`)
-- **Coding** (`CodingSession`)
-- **Learning** (`LearningSession`)
-- **Working** (`WorkingSession`)
+We generalized all time-tracking activities into an extensible polymorphic hierarchy supporting work, study, leisure, sport, wellness, and sleep.
 
-Two major architectural decisions needed to be made:
+Three major architectural decisions were established:
 1. **Inheritance Mapping Strategy** in JPA (`InheritanceType.JOINED` vs `@MappedSuperclass` vs `SINGLE_TABLE`).
 2. **Duration Calculation Strategy** (Database-computed generated column vs Application-computed domain logic).
+3. **Primary Key Identifier Strategy** (UUIDv7 vs UUIDv4 vs BIGSERIAL).
 
 ---
 
@@ -31,10 +51,13 @@ classDiagram
         +String id
         +LocalDateTime start
         +LocalDateTime end
+        +Duration breakDuration
         +Duration duration
+        +Duration netDuration
         +String status
         +Integer focusRating
         +String comment
+        +String outcomeSummary
     }
     class LearningSession {
         +LearningItem learningItem
@@ -53,7 +76,7 @@ classDiagram
         +String language
     }
     class WorkingSession {
-        +Contractor client
+        +Employer employer
         +String project
         +Boolean billable
         +BigDecimal hourlyRate
@@ -70,6 +93,12 @@ classDiagram
     class SportSession {
         +SportType type
     }
+    class SleepSession {
+        +Boolean isNap
+        +Duration deepSleepDuration
+        +Duration remSleepDuration
+        +Integer awakeCount
+    }
 
     Session <|-- LearningSession
     Session <|-- GamingSession
@@ -78,18 +107,19 @@ classDiagram
     Session <|-- ReadingSession
     Session <|-- MeditationSession
     Session <|-- SportSession
+    Session <|-- SleepSession
 ```
 
 #### Rationale & Evaluation
-- **Unified Base Table:** All sessions in the SLM codebase (`LearningSession`, `GamingSession`, `CodingSession`, `WorkingSession`, `ReadingSession`, `MeditationSession`, and `SportSession`) inherit from `Session`, sharing `id`, timestamps, `breakDuration`, `duration`, `netDuration`, and notes.
-- **Polymorphic Queries:** Allows holistic queries across all activity types (e.g., `SELECT s FROM Session s WHERE s.start BETWEEN :from AND :to`). This makes aggregated dashboards, daily time distributions, and unified timelines straightforward across sport, work, study, and leisure.
-- **Normalized Relational Schema:** Each session type maintains its own specific foreign keys and attributes in separate tables (`reading_session`, `learning_session`, `coding_session`, etc.) without polluting the base table with dozens of nullable columns.
+- **Unified Base Table:** All sessions inherit from `Session`, sharing `id`, timestamps, `breakDuration`, `duration`, `netDuration`, status, and focus ratings.
+- **Polymorphic Queries:** Allows holistic queries across all life activities (e.g. `SELECT s FROM Session s WHERE s.start BETWEEN :from AND :to`). This makes aggregated dashboards, daily time distributions, and unified timelines straightforward.
+- **Normalized Relational Schema:** Each session type maintains its own foreign keys and attributes in separate tables (`reading_session`, `learning_session`, `coding_session`, `sleep_session`, etc.) without polluting the base table with dozens of nullable columns.
 
 ---
 
-### Decision 2: Duration Calculation Strategy — Strategy 1 (Database Calculation)
+### Decision 2: Duration Calculation Strategy — Database Generated Columns
 
-We adopt **Strategy 1: Database-computed generated column** for storing and calculating duration.
+We adopt **Database-computed generated columns** for storing and calculating duration.
 
 #### Database Definition (PostgreSQL)
 ```sql
@@ -121,81 +151,41 @@ private Duration duration;
 private Duration netDuration;
 ```
 
-#### Detailed Discussion: Database-Only vs. Application-Side
+#### Trade-offs: Database-Only vs. Application-Side
 
 | Strategy | Pros | Cons |
 | :--- | :--- | :--- |
-| **Strategy 1: Database-Only Calculation**<br>*(PostgreSQL `GENERATED ALWAYS AS`)* | • **Single source of truth at storage level:** Guarantees interval consistency regardless of entry point (direct SQL inserts, migrations, external scripts, batch imports).<br>• **Zero application CPU overhead:** Interval arithmetic is delegated to the database engine.<br>• **Consistent with existing schema:** Matches existing tables in SLM (`sportsession`, `readingsession`, `appointment`, `car_trip`). | • **Hibernate post-insert state:** Without `@Generated(event = ...)`, Hibernate does not automatically populate the generated column into memory on `INSERT`.<br>• **Strictly linear interval:** Cannot dynamically subtract discrete pause intervals without procedural triggers.<br>• **Dialect specificity:** Requires PostgreSQL `INTERVAL` and generated column support. |
-| **Strategy 2: Application / Java-Side Calculation**<br>*(JPA Lifecycle Hooks & Domain Methods)* | • **Immediate in-memory consistency:** `session.getDuration()` is immediately populated in memory.<br>• **Pause/break logic:** Can calculate net focus time (`(end - start) - breaks`).<br>• **Database agnostic:** Works identically in H2 or SQLite mock environments. | • **Integrity risk on direct SQL:** Raw SQL updates or external tools could write mismatched start/end and duration values unless accompanied by DB check constraints. |
+| **Strategy 1: Database Generated Columns**<br>*(PostgreSQL `GENERATED ALWAYS AS`)* | • **Single source of truth at storage level:** Guarantees interval consistency regardless of entry point (direct SQL, migrations, batch imports).<br>• **Zero application CPU overhead:** Interval arithmetic is handled by the database engine.<br>• **Consistent with existing schema:** Matches existing tables in SLM (`appointment`, `car_trip`). | • **Hibernate post-insert state:** Without `@Generated(event = ...)`, Hibernate does not automatically populate the column into memory on `INSERT`.<br>• **Dialect specificity:** Requires PostgreSQL `INTERVAL` and generated column support. |
+| **Strategy 2: Application-Side Calculation**<br>*(JPA Lifecycle Hooks)* | • Immediate in-memory consistency without re-fetching. | • Integrity risk on direct SQL or external updates unless paired with DB check constraints. |
 
-#### Mitigating Strategy 1's Limitations in JPA
-To prevent the common "stale entity in memory" issue where `session.getDuration()` is `null` immediately following `save()`, we:
-1. Annotate the field with Hibernate's `@Generated(event = {EventType.INSERT, EventType.UPDATE})` so Hibernate refreshes the column value from the database upon flush/commit.
-2. Mark `@Column(insertable = false, updatable = false)` to prevent Hibernate from emitting `duration` in `INSERT` or `UPDATE` DML.
+**Mitigation:** We annotate generated fields with Hibernate's `@Generated(event = {EventType.INSERT, EventType.UPDATE})` and `@Column(insertable = false, updatable = false)` so Hibernate refreshes the column value upon flush/commit.
 
 ---
 
 ### Decision 3: Type Standards in PostgreSQL Schema
 
-Following PostgreSQL best practices and repository standards:
 - All variable-length textual fields use PostgreSQL **`TEXT`** rather than arbitrary `VARCHAR(n)`.
-- Primary keys for the session hierarchy use PostgreSQL **`TEXT`** (storing UUIDs as canonical 36-character hexadecimal strings), preventing sequence collisions across joined tables and enabling client-side / offline ID generation.
+- Primary keys for the session hierarchy use PostgreSQL **`TEXT`** (storing UUIDs as canonical 36-character strings), preventing sequence collisions across joined tables and enabling client-side / offline ID generation.
 
 ---
 
 ### Decision 4: Primary Key Identifier Strategy — Adopting UUIDv7 (RFC 9562)
 
-#### Context: How UUIDs Are Used in the Joined Hierarchy
-In `InheritanceType.JOINED`:
-- The root `session` table defines `id TEXT PRIMARY KEY`.
-- Every child table (`learning_session`, `gaming_session`, `coding_session`, `working_session`) defines:
-  ```sql
-  id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE
-  ```
-- When a new subclass instance (e.g. `CodingSession`) is persisted, a single UUID is created. It is inserted into `session.id` and simultaneously used as `coding_session.id`.
+In `InheritanceType.JOINED`, the root `session` table defines `id TEXT PRIMARY KEY`, and every child table defines:
+```sql
+id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE
+```
 
-#### Is it possible to use UUIDv7?
-**Yes, absolutely.** Not only is it possible, it is **substantially superior** to standard random UUIDv4 for database primary keys.
-
-#### Comparison: UUIDv7 vs. UUIDv4 vs. BIGSERIAL
+We adopt **UUIDv7** (RFC 9562) over UUIDv4 and BIGSERIAL:
 
 | Characteristic | BIGSERIAL (Integer) | UUIDv4 (Random) | UUIDv7 (Time-Ordered, RFC 9562) |
 | :--- | :--- | :--- | :--- |
-| **B-Tree Index Locality** | Optimal (strictly sequential append) | **Poor (random writes scatter across index pages, causing frequent page splits & cache misses)** | **Optimal (monotonically increasing time prefix appends sequentially)** |
-| **Collision Resistance** | N/A (single sequence) | Globally unique | Globally unique (48-bit millisecond timestamp + 74 bits of entropy) |
-| **Distributed / Client Generation** | No (requires DB roundtrip) | Yes | Yes (can be generated before insert without database roundtrip) |
+| **B-Tree Index Locality** | Optimal (strictly sequential append) | Poor (random writes cause page splits & cache misses) | **Optimal (monotonically increasing time prefix appends sequentially)** |
+| **Collision Resistance** | Single sequence | Globally unique | **Globally unique (48-bit timestamp + 74 bits of entropy)** |
+| **Distributed / Offline Generation** | No (requires DB roundtrip) | Yes | **Yes (generated client-side without DB roundtrip)** |
 | **Sorting** | Numeric | Unordered | **Naturally chronological (`ORDER BY id` == `ORDER BY created_at`)** |
-| **Opaque / Security** | Predictable (enumeration risk) | Opaque | Opaque (unguessable random payload) |
 
-#### Structure of UUIDv7 (RFC 9562)
-```
- 0                   1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                           unix_ts_ms                          |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|          unix_ts_ms           |  ver  |       rand_a          |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|var|                        rand_b                             |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                            rand_b                             |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-```
-- **Bits 0–47 (`unix_ts_ms`):** Big-endian 48-bit unsigned integer holding Unix epoch timestamp in milliseconds.
-- **Bits 48–51 (`ver`):** UUID version `0111` (version 7).
-- **Bits 52–63 (`rand_a`):** 12 bits of pseudo-random data or monotonic sequence counter.
-- **Bits 64–65 (`var`):** Variant `10` (RFC 4122/9562 variant).
-- **Bits 66–127 (`rand_b`):** 62 bits of cryptographically strong pseudo-random data.
-
-#### Native Java 26+ Implementation for UUIDv7
-Java 26 introduced native support for UUIDv7 directly in `java.util.UUID` via:
-```java
-UUID.ofEpochMillis(long epochMilli)
-```
-Invoking `java.util.UUID.ofEpochMillis(System.currentTimeMillis())` generates a standard RFC 9562 Version 7 UUID (`version() == 7`) using the system clock and cryptographically secure random bits, completely eliminating the need for third-party libraries or custom generators.
-
-#### Entity Integration:
-In the base `Session` entity:
+In Java:
 ```java
 @Id
 @Column(name = "id", columnDefinition = "TEXT")
@@ -209,73 +199,326 @@ public void prePersist() {
 }
 ```
 
-#### PostgreSQL Database Generation Function (for Migrations/Raw SQL)
-To generate UUIDv7 directly in PostgreSQL (e.g. during migration of legacy records without Java intervention):
-```sql
-CREATE OR REPLACE FUNCTION generate_uuid_v7() RETURNS uuid AS $$
-BEGIN
-    RETURN uuidv7(); -- Native in PostgreSQL 18+
-EXCEPTION WHEN undefined_function THEN
-    -- Fallback for PostgreSQL 13-17 using core gen_random_uuid()
-    RETURN (
-        lpad(to_hex((EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::bigint), 12, '0') ||
-        '-7' || substring(replace(gen_random_uuid()::text, '-', '') from 14 for 3) ||
-        '-8' || substring(replace(gen_random_uuid()::text, '-', '') from 18 for 3) ||
-        '-' || substring(replace(gen_random_uuid()::text, '-', '') from 21 for 12)
-    )::uuid;
-END;
-$$ LANGUAGE plpgsql;
-```
+---
+
+## ADR 002: Rejection of Java Records for JPA Model Entities
+
+### Status
+Accepted
+
+### Context
+Java records provide concise immutable data carriers. An architectural evaluation was conducted to determine if JPA entity classes in `de.oberamsystems.slm.model` should be refactored into Java records.
+
+### Decision
+Model entities in `de.oberamsystems.slm.model` must **not** be converted to Java `record`s.
+
+### Rationale
+1. **Jakarta Persistence Specification Constraints:** JPA and Hibernate require entity classes to have a non-private no-arg constructor and to be non-final to allow runtime proxy generation (ByteBuddy) for lazy loading, dirty checking, and relationship hydration. Java records are implicitly `final` and cannot declare parameterless constructors; annotating a record with `@Entity` throws `AnnotationException: An entity cannot be a record`.
+2. **Polymorphic Class Hierarchies:** Java records implicitly extend `java.lang.Record` and cannot extend classes. The `Session` hierarchy (`CodingSession`, `GamingSession`, `SportSession`, `ReadingSession`, `MeditationSession`, `SleepSession`) relies fundamentally on `@Inheritance(strategy = InheritanceType.JOINED)`.
+3. **Web Form Binding:** Spring MVC and Thymeleaf require mutable JavaBean property conventions (`get*` / `set*`) for `@ModelAttribute` binding with `WebDataBinder`.
+
+Java records remain reserved for read-only DTOs, query projections, or immutable `@Embeddable` value objects.
 
 ---
 
-### Application Version Synchronization
+## ADR 003: Application Version Synchronization via Spring Boot BuildInfo
 
-#### Decision:
-Use the standard Spring Boot approach (`springBoot { buildInfo() }` and `org.springframework.boot.info.BuildProperties`) to make `build.gradle` the single source of truth for the application version.
+### Status
+Accepted
 
-#### Implementation:
-1. **Gradle Build Info (`build.gradle`):**
+### Context
+Previously, version strings were duplicated across `build.gradle`, `application.properties`, and hardcoded controller logic, leading to version drift and manual maintenance overhead.
+
+### Decision
+Make `build.gradle` the single source of truth for the application version using Spring Boot's `buildInfo()` task and `BuildProperties`.
+
+### Implementation
+1. **Gradle Build Info Configuration (`build.gradle`):**
    ```groovy
    springBoot {
        buildInfo()
    }
    ```
-   Gradle automatically generates `META-INF/build-info.properties` during the build lifecycle (`bootBuildInfo`), populating `build.version`, `build.name`, `build.group`, and `build.time`.
+   Gradle automatically generates `META-INF/build-info.properties` during `bootBuildInfo`, capturing `build.version`, `build.name`, `build.group`, and `build.time`.
 2. **Spring Context Auto-Configuration:**
-   Spring Boot automatically creates an instance of `BuildProperties` if `META-INF/build-info.properties` is present on the classpath.
-3. **Controller Integration (`ImprintController.java`):**
-   Injected via `@Autowired(required = false) BuildProperties buildProperties`, retrieving `buildProperties.getVersion()` dynamically.
+   Spring Boot automatically registers a `BuildProperties` bean when `build-info.properties` is present.
+3. **Controller Access:**
+   Injected into controllers (e.g. [`ImprintController.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/ImprintController.java)) via `@Autowired(required = false) BuildProperties buildProperties`.
 4. **Configuration Cleanup:**
-   Removed hardcoded `version=...` from `application.properties` to prevent version drift.
+   Removed hardcoded `version=...` from `application.properties`.
 
 ---
 
-### Rejection of Java Records for JPA Model Entities
+## ADR 004: Domain Separation of Employer (Income/Work) and Contractor (Expenses/Contracts)
 
-#### Decision:
-Model entities in `de.oberamsystems.slm.model` must **not** be converted to Java `record`s.
+### Status
+Accepted
 
-#### Rationale:
-1. **JPA / Hibernate 7 Specification Mandates:** Jakarta Persistence requires entity classes to have a non-private no-arg constructor and be non-final to allow runtime proxy generation (CGLIB/ByteBuddy) for lazy loading and dirty checking. Java `record`s are implicitly `final` and lack parameterless constructors; annotating a record with `@Entity` throws `AnnotationException: An entity cannot be a record`.
-2. **Polymorphic Class Hierarchies:** Java records implicitly extend `java.lang.Record` and cannot extend classes. The `Session` hierarchy (`CodingSession`, `GamingSession`, `SportSession`, `ReadingSession`, `MeditationSession`, etc.) depends on `@Inheritance(strategy = InheritanceType.JOINED)`, which is fundamentally incompatible with records.
-3. **Spring MVC & Thymeleaf Form Binding:** Web forms and `WebDataBinder` require mutable JavaBean property conventions (`get*` / `set*`) for `@ModelAttribute` binding.
-
-Java records remain reserved for read-only DTOs, query projections, or `@Embeddable` value objects.
-
----
-
-### Separation of Employer (Work/Income) and Contractor (Contracts/Expenses)
-
-#### Context:
-Previously, `WorkingSession` referenced `Contractor` (as `client`) via `contractor_id`. However, in the SLM domain:
-- `Contractor` models third-party recurring service providers, telecommunications, insurance carriers, and utilities (e.g. *Vodafone*, *Telekom*, *Allianz*, *Netflix*) associated with outgoing expenses and `Contract` entries.
+### Context
+Previously, `WorkingSession` referenced `Contractor` as `client` via `contractor_id`. However, in the SLM domain:
+- `Contractor` models third-party service providers, utilities, telecommunications, and insurers (e.g. *Vodafone*, *Telekom*, *Allianz*, *Netflix*) associated with outgoing recurring expenses and `Contract` entries.
 - `WorkingSession` models billable and salaried professional work performed for employers and consulting clients.
 
-#### Decision:
-1. Disentangle work tracking from expense contracts by introducing a dedicated `Employer` (`employer`) entity and table (`employer_id` in `working_session`).
-2. Add a dedicated `EmployerController` and UI (`/employers`) accessible via the Spend Management dashboard alongside *Store & Service Vendors* and *Service Contractors*.
-3. Versionize database migrations using date-stamped SQL scripts (`migration_YYYY-MM-DD.sql`) while leaving `migrations.sql` untouched as a historical baseline.
+### Decision
+1. Introduce a dedicated `Employer` (`employer`) entity and table (`employer_id` in `working_session`).
+2. Add a dedicated `EmployerController` and view (`/employers`) accessible via the Spend Management dashboard alongside *Vendors* and *Contractors*.
+3. Versionize database migrations using date-stamped scripts (`migration_YYYY-MM-DD.sql`).
 
+---
 
+## ADR 005: PostGIS Spatial Geometry & Automated Route Air Distance Calculation
 
+### Status
+Accepted (v0.0.2b)
+
+### Context
+The `point` table previously stored coordinates as raw `TEXT` strings (often in Degrees-Minutes-Seconds DMS format, e.g. `49°17'04.49"N`, `10°40'53.20"E`). On the `route` table, `air_distance` was manually entered by the user upon route creation. This resulted in manual guesswork, entry errors, and inability to perform spatial queries.
+
+### Decision
+1. Enable native **PostGIS 3.6** spatial extensions in PostgreSQL (`CREATE EXTENSION IF NOT EXISTS postgis;`).
+2. Store coordinates as standard IEEE double-precision floats (`latitude`, `longitude`) in WGS 84 (`SRID 4326`).
+3. Add a computed, stored PostGIS geography column and spatial index:
+   ```sql
+   geom geography(Point, 4326) GENERATED ALWAYS AS (
+       ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography
+   ) STORED
+   CREATE INDEX IF NOT EXISTS idx_point_geom ON point USING GIST (geom);
+   ```
+4. Implement database triggers (`trg_route_air_distance`, `trg_point_update_route_air_distance`) using PostGIS geodesic distance calculation:
+   ```sql
+   ST_Distance(start_geom, end_geom) / 1000.0
+   ```
+   Air distance is automatically computed in kilometers on insert or update of routes and points, completely eliminating manual entry.
+
+---
+
+## ADR 006: Integration of Healthcare Providers (Doctor) into Spatial Point Architecture
+
+### Status
+Accepted (v0.0.2b)
+
+### Context
+`Doctor` previously stored arbitrary text addresses and a manual `air_distance REAL` field that had to be manually entered in `doctors.html`. Analysis revealed that these distances represented the geodesic distance from the user's primary residence (`Haus Mama`) to the doctor's practice.
+
+### Decision
+1. Unify healthcare provider locations with the spatial `point` architecture by adding `point_id BIGINT REFERENCES point(id)` (practice clinic) and optional `base_point_id BIGINT REFERENCES point(id)` (defaulting to the user's home point with `is_home = TRUE`).
+2. Automate doctor air distance calculation using database triggers:
+   ```sql
+   ST_Distance(origin_geom, practice_geom) / 1000.0
+   ```
+3. Remove manual distance inputs from the UI while retaining auto-calculated mileage for medical appointment travel duration records.
+
+---
+
+## ADR 007: Defensive Path Traversal Architecture (CWE-22) & Native Media Preservation for Selfies
+
+### Status
+Accepted (v0.0.2d)
+
+### Context
+The daily selfie upload endpoint (`SelfieController`) allowed users to upload image files. Vulnerability assessment identified risks of directory traversal (CWE-22) via manipulated multipart filenames (e.g., `../../../../etc/passwd`). Furthermore, the form only allowed `.jpg` files, rejecting modern mobile formats like `.heic`.
+
+### Decision
+1. Extract file storage and validation into a dedicated, thoroughly tested `SelfieStorageService`.
+2. Enforce strict canonical path boundary checks:
+   ```java
+   Path destination = this.baseDir.resolve(safeFilename).normalize().toAbsolutePath();
+   if (!destination.startsWith(this.baseDir)) {
+       throw new SecurityException("Directory traversal attempt detected");
+   }
+   ```
+3. Support both `.jpg` (and `.jpeg`) and `.heic` natively without transcoding: raw bytes are preserved exactly on disk.
+4. Automatically clean up stale files with different extensions (e.g. replacing `2026-10-18.jpg` when re-uploading `2026-10-18.heic`).
+
+---
+
+## ADR 008: Shared Singleton PostGIS Testcontainers Pattern for Integration Testing
+
+### Status
+Accepted (v0.0.2e)
+
+### Context
+Unit tests mocked repositories or ran against in-memory schemas, which failed to validate PostgreSQL-specific dialect features, PostGIS spatial triggers, JPA joined inheritance polymorphism, and generated stored columns. Running separate containers per test class caused excessive Docker overhead and slow build times.
+
+### Decision
+1. Standardize on Spring Boot Testcontainers with `@ServiceConnection` running the official `postgis/postgis:18-3.6` container image.
+2. Implement a **shared singleton container pattern** via an abstract base class:
+   ```java
+   public abstract class AbstractIntegrationTest {
+       @ServiceConnection
+       static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgis/postgis:18-3.6")
+               .withDatabaseName("slm_test")
+               .withUsername("test")
+               .withPassword("test")
+               .withInitScript("schema-init.sql");
+       static {
+           postgres.start();
+       }
+   }
+   ```
+3. Maintain an authoritative test initialization schema in [`src/test/resources/schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql) consolidating enums, tables, PostGIS extensions, and spatial triggers.
+4. Configure Gradle's `test` task to execute both unit tests (`*Test.class`) and integration tests (`*IT.class`).
+
+---
+
+## ADR 009: Container Cleanup Strategy: Ryuk Watchdog vs. JVM Shutdown Hooks
+
+### Status
+Accepted (v0.0.2e)
+
+### Context
+In Testcontainers, **Ryuk** (`testcontainers/ryuk`) runs as an auxiliary watchdog container attached to `/var/run/docker.sock` to terminate test containers when the JVM exits. Architectural evaluation weighed whether to disable Ryuk in favor of JVM shutdown hooks or keep it active.
+
+### Decision
+1. **Retain Ryuk active by default** for local developer workflows. JVM shutdown hooks fail to execute if an IDE terminates a test abruptly (`SIGKILL` / red stop button) or on JVM crash, which would leak running PostgreSQL 18 containers and consume host ports.
+2. **Support zero-Ryuk execution** via environment property `TESTCONTAINERS_RYUK_DISABLED=true` or `ryuk.disabled=true` for restricted corporate CI/CD or rootless Podman/Kubernetes environments where socket mounting is restricted.
+
+---
+
+## ADR 010: Modernization to Jackson 3 BOM Platform (`tools.jackson`)
+
+### Status
+Accepted (v0.0.2f)
+
+### Context
+Jackson 2 (`com.fasterxml.jackson`) reached end-of-life for major architectural innovations. Jackson 3 introduced modular namespace changes (`tools.jackson.core`) with improved record support, stricter typing, and higher performance.
+
+### Decision
+1. Adopt the official Jackson 3 BOM platform:
+   ```groovy
+   implementation enforcedPlatform('tools.jackson:jackson-bom:3.2.3')
+   implementation 'tools.jackson.core:jackson-databind'
+   implementation 'tools.jackson.core:jackson-core'
+   ```
+2. Bridge annotations using `com.fasterxml.jackson.core:jackson-annotations:2.22` for full compatibility with Spring Boot 4 and existing serialization rules.
+
+---
+
+## ADR 011: Sleep Tracking Unification into Session Architecture & Four Pillars Life Balance Model
+
+### Status
+Accepted (v0.0.2f)
+
+### Context
+Sleep was tracked through a legacy, standalone `SleepTime` entity (`sleeptime` table) separate from the polymorphic `Session` hierarchy. This prevented unified queries across the 24-hour day and resulted in disconnected reporting.
+
+### Decision
+1. Convert `SleepTime` into joined inheritance:
+   ```java
+   @Entity
+   @Table(name = "sleep_session")
+   public class SleepSession extends Session
+   ```
+2. Establish a **Four Pillars Life Balance Model**:
+   - **Productivity**: Coding, Working, Learning, Reading sessions.
+   - **Sport**: Dedicated physical training, running, and workouts (distinct from wellness).
+   - **Wellness**: Biological restoration, meditation, and sleep sessions.
+   - **Leisure**: Recreational gaming sessions.
+3. Preserve full backward compatibility for legacy endpoints (`/sleep-times`, `/sleeptime-bb`, `/api/sleeptimes`) via transient compatibility getters/setters (`gotobed`, `getup`, `sleeptime`).
+
+---
+
+## ADR 012: Decoupling Biological Rest from Net Focused Time & Context-Adaptive KPIs
+
+### Status
+Accepted (v0.0.2f)
+
+### Context
+When viewing "All Sessions" (`type=ALL`) on `/sessions`, all logged durations were summed into `totalNetDuration`. Because sleep accounts for 7–8 hours daily (257h+ in sample datasets), "Net Focused Time" was inflated to 280h+, destroying its meaning as a metric for intentional cognitive deep work.
+
+### Decision
+1. Strictly decouple Sleep and Meditation from "Net Focused Time" and "Avg Focus Rating" on `/sessions`:
+   - When viewing `ALL` or `PRODUCTIVITY`, `totalNetDuration` only aggregates intentional cognitive sessions (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`).
+   - Sleep quality ratings (1–5) and meditation focus are calculated independently from cognitive focus ratings.
+2. Introduce context-adaptive KPI titles that dynamically reflect the active category filter:
+   - **All / Productivity**: `Net Focused Time` *(Cognitive focus hours)*, `Avg Focus Rating`.
+   - **Sport**: `Active Training Time`, `Avg Workout Intensity`.
+   - **Wellness / Sleep**: `Rest & Recovery Time` (or `Sleep Duration`), `Awake / Disruptions`, `Avg Sleep Quality`.
+   - **Leisure**: `Recreation Time`, `Avg Game Rating`.
+3. Provide total logged hours under `Total Life: Xh Ym` so comprehensive time tracking is preserved without distorting cognitive focus metrics.
+
+---
+
+## ADR 013: Migration to JUnit 6 Testing Platform
+
+### Status
+Accepted (v0.0.2f)
+
+### Context
+JUnit 6 unified versioning across Platform, Jupiter, and Vintage modules with a native Java 17+ baseline.
+
+### Decision
+Enforce the unified JUnit 6 BOM platform across all test configurations:
+```groovy
+dependencyManagement {
+    imports {
+        mavenBom 'org.junit:junit-bom:6.1.3'
+    }
+}
+dependencies {
+    testImplementation enforcedPlatform('org.junit:junit-bom:6.1.3')
+}
+```
+All Jupiter and Platform components resolve cleanly to version `6.1.3` (`junit-jupiter`, `junit-platform-launcher`, `junit-platform-engine`), operating seamlessly with Spring Boot 4 and Testcontainers.
+
+---
+
+## ADR 014: Containerized Production Deployment with PostGIS 18-3.6 & Healthcheck Orchestration
+
+### Status
+Accepted (v0.0.2f)
+
+### Context
+The default `docker-compose.yml` previously used standard `postgres`, which lacked PostGIS binaries, causing database initialization errors. Furthermore, the application container started before PostgreSQL was ready, causing connection failures.
+
+### Decision
+1. Upgrade database container to `postgis/postgis:18-3.6`.
+2. Add automated healthcheck testing database readiness:
+   ```yaml
+   db:
+     image: postgis/postgis:18-3.6
+     healthcheck:
+       test: ["CMD-SHELL", "pg_isready -U simon -d slm"]
+       interval: 3s
+       timeout: 3s
+       retries: 10
+   ```
+3. Configure application container dependencies:
+   ```yaml
+   app:
+     depends_on:
+       db:
+         condition: service_healthy
+   ```
+4. Update [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql) to include PostGIS extensions, modern polymorphic session tables, and spatial distance calculation triggers.
+5. Modernize [`Dockerfile`](file:///home/simon/code/eclipse/slm/Dockerfile) runtime base image to `eclipse-temurin:27-jre` matching Java 27.
+
+---
+
+## ADR 015: Unified Life Events, Anniversaries & Memorials Architecture
+
+### Status
+Accepted (v0.0.2g)
+
+### Context
+Previously, contact date management was limited to a single `birthday: DATE` field on the `Human` entity. In reality, personal relationships encompass a wide spectrum of annual recurring milestones:
+1. **Birthdays**: Age milestones for living contacts.
+2. **Memorials & Death Dates**: Remembrance days for deceased friends, relatives, and historical figures, calculating years since passing and respecting deceased status.
+3. **Wedding & Relationship Anniversaries**: Milestone celebrations (e.g. Silver or Golden Wedding) that link primary and secondary partner contacts.
+4. **Career & Custom Anniversaries**: Workplace milestones, graduations, or personal achievements.
+
+### Decision
+1. **First-Class `HumanEvent` Entity**:
+   Introduce a unified `human_event` table and entity modeling all annual life events with:
+   - `human_id` (primary contact) and optional `secondary_human_id` (partner contact for couple celebrations).
+   - `event_type` (`BIRTHDAY`, `MEMORIAL`, `WEDDING_ANNIVERSARY`, `RELATIONSHIP_ANNIVERSARY`, `WORK_ANNIVERSARY`, `CUSTOM`).
+   - `event_date` (original historic date) and `annual_recurrence`.
+2. **Deceased Contact Tracking on `Human`**:
+   Extend `human` with `death_date DATE` and formula properties `is_deceased` and `age_at_death` to distinguish active living contacts from remembered ones.
+3. **PostgreSQL Helper Functions**:
+   Introduce `next_annual_occurrence(date)` and `days_until_annual_occurrence(date)` supporting leap years (February 29 -> February 28 on non-leap years) and rolling over past events to next year with positive day countdowns.
+4. **Dedicated Events Hub (`/human-events`) & Dashboard Integration**:
+   - Provide an interactive hub with filter pills, countdown badges, and milestone labels.
+   - Aggregate top upcoming milestones into the Home Dashboard alert stream.
+5. **Seamless Backward Compatibility & Auto-Migration**:
+   Automatically migrate existing `human.birthday` values into initial `BIRTHDAY` events in `migration_2026-10-18_5.sql` and keep contact edits synchronized.

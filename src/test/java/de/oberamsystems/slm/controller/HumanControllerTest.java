@@ -14,10 +14,15 @@ public class HumanControllerTest {
         HumanController controller = new HumanController();
         
         HumanRepository repo = mock(HumanRepository.class);
+        HumanEventRepository eventRepo = mock(HumanEventRepository.class);
         
         java.lang.reflect.Field f1 = HumanController.class.getDeclaredField("repo");
         f1.setAccessible(true);
         f1.set(controller, repo);
+
+        java.lang.reflect.Field f2 = HumanController.class.getDeclaredField("eventRepo");
+        f2.setAccessible(true);
+        f2.set(controller, eventRepo);
         
         ConcurrentModel model = new ConcurrentModel();
         

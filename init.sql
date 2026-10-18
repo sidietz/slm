@@ -6,17 +6,59 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- 1. Helper Functions
 CREATE OR REPLACE FUNCTION this_years_birthday(_dut date)
   RETURNS date
-  LANGUAGE plpgsql AS
+  LANGUAGE plpgsql STABLE AS
 $func$
 DECLARE
-   ret date;
+   cur_year int := EXTRACT(YEAR FROM current_date);
+   b_month int := EXTRACT(MONTH FROM _dut);
+   b_day int := EXTRACT(DAY FROM _dut);
 BEGIN
-   ret := date_trunc('year' , current_timestamp)
-       + (date_trunc('day'  , _dut)
-        - date_trunc('year' , _dut));
-   RETURN ret;
+   IF _dut IS NULL THEN
+      RETURN NULL;
+   END IF;
+   IF b_month = 2 AND b_day = 29 THEN
+      IF (cur_year % 4 = 0 AND (cur_year % 100 != 0 OR cur_year % 400 = 0)) THEN
+         RETURN make_date(cur_year, 2, 29);
+      ELSE
+         RETURN make_date(cur_year, 2, 28);
+      END IF;
+   END IF;
+   RETURN make_date(cur_year, b_month, b_day);
+CREATE OR REPLACE FUNCTION next_annual_occurrence(_date date)
+  RETURNS date
+  LANGUAGE plpgsql STABLE AS
+$func$
+DECLARE
+   cur_date date := current_date;
+   cur_year int := EXTRACT(YEAR FROM cur_date);
+   b_month int := EXTRACT(MONTH FROM _date);
+   b_day int := EXTRACT(DAY FROM _date);
+   this_year_occ date := this_years_birthday(_date);
+   next_year int := cur_year + 1;
+BEGIN
+   IF _date IS NULL THEN
+      RETURN NULL;
+   END IF;
+   IF this_year_occ >= cur_date THEN
+      RETURN this_year_occ;
+   END IF;
+   IF b_month = 2 AND b_day = 29 THEN
+      IF (next_year % 4 = 0 AND (next_year % 100 != 0 OR next_year % 400 = 0)) THEN
+         RETURN make_date(next_year, 2, 29);
+      ELSE
+         RETURN make_date(next_year, 2, 28);
+      END IF;
+   END IF;
+   RETURN make_date(next_year, b_month, b_day);
 END
 $func$;
+
+CREATE OR REPLACE FUNCTION days_until_annual_occurrence(_date date)
+  RETURNS integer
+  LANGUAGE sql STABLE AS
+$$
+  SELECT (next_annual_occurrence(_date) - current_date);
+$$;
 
 -- 2. Enums
 CREATE TYPE book_genre AS ENUM ('ACTION', 'BIOGRAPHY', 'CHILDREN', 'CRIME', 'ESSAY', 'FANTASY',
@@ -28,6 +70,7 @@ CREATE TYPE book_type AS ENUM ('FICTION', 'NONFICTION');
 CREATE TYPE source_type AS ENUM ('BOOK', 'COURSE', 'LECTURE', 'TUTORIAL', 'YOUTUBE');
 CREATE TYPE status_type AS ENUM('PLANNED', 'IN_PROGRESS', 'COMPLETED');
 CREATE TYPE human_category AS ENUM ('FAMILY', 'CLASSMATE', 'FRIEND', 'FRIEND_OF_FRIEND', 'TEACHER', 'LECTURER', 'CELEBRITY', 'POLITICIAN', 'SPD', 'OTHER');
+CREATE TYPE event_type AS ENUM ('BIRTHDAY', 'MEMORIAL', 'WEDDING_ANNIVERSARY', 'RELATIONSHIP_ANNIVERSARY', 'WORK_ANNIVERSARY', 'CUSTOM');
 
 -- 3. Core Tables & Sessions Hierarchy
 CREATE TABLE sporttype(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
@@ -49,7 +92,20 @@ CREATE TABLE session(
 CREATE TABLE sport_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, type BIGINT REFERENCES sporttype(id));
 CREATE TABLE meditation_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE);
 
-CREATE TABLE human(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birthday DATE);
+CREATE TABLE human(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birthday DATE, category human_category, death_date DATE);
+CREATE TABLE human_event (
+    id BIGSERIAL PRIMARY KEY,
+    human_id BIGINT NOT NULL REFERENCES human(id) ON DELETE CASCADE,
+    secondary_human_id BIGINT REFERENCES human(id) ON DELETE SET NULL,
+    title TEXT NOT NULL,
+    event_type event_type NOT NULL DEFAULT 'CUSTOM',
+    event_date DATE NOT NULL,
+    annual_recurrence BOOLEAN NOT NULL DEFAULT TRUE,
+    notes TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_human_event_human ON human_event(human_id);
+CREATE INDEX IF NOT EXISTS idx_human_event_secondary_human ON human_event(secondary_human_id);
+CREATE INDEX IF NOT EXISTS idx_human_event_type ON human_event(event_type);
 CREATE TABLE address(id BIGSERIAL PRIMARY KEY, human_id BIGSERIAL NOT NULL REFERENCES human(id), street TEXT, streetnumber INTEGER, plz CHAR(5), place TEXT, country TEXT);
 
 CREATE TABLE calendar_event(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);

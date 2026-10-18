@@ -27,4 +27,14 @@ public class Utils {
 	public static String DurationToString(Duration dur) {
 		return String.format("%s day(s) %s hour(s) and %s minute(s)",dur.toDaysPart(), dur.toHoursPart(), dur.toMinutesPart());
 	}
+
+	public static LocalDate dateToLocalDate(Date date) {
+		if (date == null) {
+			return null;
+		}
+		if (date instanceof java.sql.Date sqlDate) {
+			return sqlDate.toLocalDate();
+		}
+		return date.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
+	}
 }

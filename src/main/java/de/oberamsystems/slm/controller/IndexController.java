@@ -13,6 +13,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 
 import de.oberamsystems.slm.model.Human;
+import de.oberamsystems.slm.model.HumanEvent;
+import de.oberamsystems.slm.model.HumanEventRepository;
 import de.oberamsystems.slm.model.HumanRepository;
 import de.oberamsystems.slm.model.MeditationSession;
 import de.oberamsystems.slm.model.MeditationSessionRepository;
@@ -35,6 +37,9 @@ public class IndexController {
 
 	@Autowired
 	private HumanRepository humanRepo;
+
+	@Autowired
+	private HumanEventRepository eventRepo;
 	
 	@Autowired
 	private ReadingSessionRepository readingsessionRepo;
@@ -45,10 +50,22 @@ public class IndexController {
 		Human h = humanRepo.findFirstByOrderByDaysUntilBirthdayAsc();
 		MeditationSession m = meditationRepo.findFirstByOrderByStartDesc();
 		ReadingSession rs = readingsessionRepo.findFirstByOrderByStartDesc();
+		HumanEvent nextEvent = eventRepo.findFirstByOrderByDaysUntilNextAsc();
+		List<HumanEvent> upcomingEvents = eventRepo.findUpcomingEventsWithinDays(30);
 
 		List<String> msgs = new ArrayList<String>();
 
-		if (h != null) {
+		if (nextEvent != null) {
+			String daysText = nextEvent.getDaysUntilNext() != null ? String.valueOf(nextEvent.getDaysUntilNext()) : "0";
+			String milestoneText = nextEvent.getYearsElapsed() != null && nextEvent.getYearsElapsed() > 0 
+				? String.format(" (%d. %s)", nextEvent.getYearsElapsed(), nextEvent.getEventType().getDisplayName())
+				: "";
+			msgs.add(String.format("Next milestone is %s on %s in %s days%s.",
+					nextEvent.getTitle(),
+					nextEvent.getNextOccurrence() != null ? nextEvent.getNextOccurrence().toString() : nextEvent.getEventDate().toString(),
+					daysText,
+					milestoneText));
+		} else if (h != null) {
 			msgs.add(String.format("Next birthday is %s's on %s in %s days.", h.getFirstname() + " " + h.getLastname(), Utils.LocalDateTimeToString(h.getBirthday()), String.format("%d", h.getDaysUntilBirthday())));
 		}
 
@@ -70,6 +87,7 @@ public class IndexController {
 		}
 
 		model.addAttribute("msgs", msgs);
+		model.addAttribute("upcomingEvents", upcomingEvents);
 		return "index";
 	}
 }

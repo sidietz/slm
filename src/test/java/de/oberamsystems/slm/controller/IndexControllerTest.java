@@ -20,6 +20,7 @@ public class IndexControllerTest {
         MeditationSessionRepository meditationRepo = mock(MeditationSessionRepository.class);
         HumanRepository humanRepo = mock(HumanRepository.class);
         ReadingSessionRepository readingRepo = mock(ReadingSessionRepository.class);
+        HumanEventRepository eventRepo = mock(HumanEventRepository.class);
         
         java.lang.reflect.Field f1 = IndexController.class.getDeclaredField("sportRepo");
         f1.setAccessible(true);
@@ -36,6 +37,10 @@ public class IndexControllerTest {
         java.lang.reflect.Field f4 = IndexController.class.getDeclaredField("readingsessionRepo");
         f4.setAccessible(true);
         f4.set(controller, readingRepo);
+
+        java.lang.reflect.Field f5 = IndexController.class.getDeclaredField("eventRepo");
+        f5.setAccessible(true);
+        f5.set(controller, eventRepo);
         
         // Setup mocks
         SportSession ss = new SportSession();
