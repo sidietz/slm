@@ -16,10 +16,13 @@ public class Point {
 	private String description;
 	private Double latitude;
 	private Double longitude;
+	private Boolean isHome = false;
 	@OneToMany(mappedBy="start")
 	private List<Route> starts = new ArrayList<Route>();
 	@OneToMany(mappedBy="end")
 	private List<Route> ends = new ArrayList<Route>();
+	@OneToMany(mappedBy="point")
+	private List<Doctor> doctors = new ArrayList<Doctor>();
 
 	public Point() {
 	}
@@ -30,6 +33,16 @@ public class Point {
 		this.description = description;
 		this.latitude = latitude;
 		this.longitude = longitude;
+		this.isHome = false;
+	}
+
+	public Point(Long id, String name, String description, Double latitude, Double longitude, Boolean isHome) {
+		this.id = id;
+		this.name = name;
+		this.description = description;
+		this.latitude = latitude;
+		this.longitude = longitude;
+		this.isHome = isHome;
 	}
 
 	public String getName() {
@@ -78,6 +91,22 @@ public class Point {
 
 	public void setEnds(List<Route> ends) {
 		this.ends = ends;
+	}
+
+	public Boolean getIsHome() {
+		return isHome;
+	}
+
+	public void setIsHome(Boolean isHome) {
+		this.isHome = isHome;
+	}
+
+	public List<Doctor> getDoctors() {
+		return doctors;
+	}
+
+	public void setDoctors(List<Doctor> doctors) {
+		this.doctors = doctors;
 	}
 
 	public Long getId() {

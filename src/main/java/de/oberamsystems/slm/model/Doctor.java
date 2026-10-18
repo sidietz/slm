@@ -16,13 +16,19 @@ public class Doctor {
 	private String place;
 	private String city;
 	private String plz;
-	private float airDistance;
+	@ManyToOne
+	@JoinColumn(name = "point_id", referencedColumnName = "id")
+	private Point point;
+	@ManyToOne
+	@JoinColumn(name = "base_point_id", referencedColumnName = "id")
+	private Point basePoint;
+	private Double airDistance;
 	
 	public Doctor() {
 	}
 	
 	public Doctor(Long id, String firstname, String lastname, Speciality speciality, String place, String city,
-			String plz, float airDistance) {
+			String plz, Double airDistance) {
 		super();
 		this.id = id;
 		this.firstname = firstname;
@@ -31,6 +37,21 @@ public class Doctor {
 		this.place = place;
 		this.city = city;
 		this.plz = plz;
+		this.airDistance = airDistance;
+	}
+
+	public Doctor(Long id, String firstname, String lastname, Speciality speciality, String place, String city,
+			String plz, Point point, Point basePoint, Double airDistance) {
+		super();
+		this.id = id;
+		this.firstname = firstname;
+		this.lastname = lastname;
+		this.speciality = speciality;
+		this.place = place;
+		this.city = city;
+		this.plz = plz;
+		this.point = point;
+		this.basePoint = basePoint;
 		this.airDistance = airDistance;
 	}
 
@@ -82,11 +103,27 @@ public class Doctor {
 		this.plz = plz;
 	}
 
-	public float getAirDistance() {
+	public Point getPoint() {
+		return point;
+	}
+
+	public void setPoint(Point point) {
+		this.point = point;
+	}
+
+	public Point getBasePoint() {
+		return basePoint;
+	}
+
+	public void setBasePoint(Point basePoint) {
+		this.basePoint = basePoint;
+	}
+
+	public Double getAirDistance() {
 		return airDistance;
 	}
 
-	public void setAirDistance(float airDistance) {
+	public void setAirDistance(Double airDistance) {
 		this.airDistance = airDistance;
 	}
 
