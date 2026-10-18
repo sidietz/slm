@@ -84,11 +84,11 @@ Always execute tests with `-x jacocoTestReport -x compileAotTestJava`:
 
 ## 5. Database & Schema Synchronization
 
-Whenever database schemas, tables, triggers, or functions are modified, agents must update **all three** schema artifacts:
+Whenever database schemas, tables, triggers, or functions are modified, agents must synchronize the baseline schema artifacts and provide an incremental migration script for legacy databases:
 
-1. **`src/test/resources/schema-init.sql`**: Authoritative schema for Testcontainers integration tests.
+1. **`src/main/resources/tables.sql`** & **`enums.sql`**: Baseline reference schema for local installations. Always represents the latest authoritative state.
 2. **`init.sql`**: Root initialization script mounted by Docker Compose (`/docker-entrypoint-initdb.d/init.sql`).
-3. **`src/main/resources/tables.sql`** & **`enums.sql`**: Baseline reference schema for local installations.
+3. **`src/test/resources/schema-init.sql`**: Authoritative schema for Testcontainers integration tests.
 4. **`src/main/resources/migration_YYYY-MM-DD[_N].sql`**: Incremental migration script for existing local / production databases.
 
 ### Mandatory Schema Elements
@@ -99,7 +99,28 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 
 ---
 
-## 6. Domain Invariants & Architecture Rules
+## 6. Database Migrations & Legacy Upgrades
+
+- **`tables.sql` Is Always Authoritative**:
+  - [`src/main/resources/tables.sql`](src/main/resources/tables.sql) (along with [`enums.sql`](src/main/resources/enums.sql)) is **always the single authoritative, most up-to-date schema** reflecting the full, current state of the application.
+  - New local installations, Docker Compose bootstrap ([`init.sql`](init.sql)), and Testcontainers test suites ([`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql)) instantiate the full database directly from this complete schema.
+  - Fresh setups must never run legacy migration scripts sequentially—they execute the current `tables.sql` / `init.sql`.
+
+- **Migrations Only Affect Legacy Systems**:
+  - Incremental scripts (`src/main/resources/migration_YYYY-MM-DD[_N].sql`) exist **solely to upgrade existing / legacy databases** (e.g. running developer or production instances) without data loss.
+  - Migrations do not define the target architecture; they are non-destructive transitions bridging previous states to the current `tables.sql`.
+
+- **Protocol for Schema Alterations**:
+  1. **Update Baseline Files First**: Apply table modifications, indices, functions, and triggers to:
+     - [`src/main/resources/tables.sql`](src/main/resources/tables.sql)
+     - [`init.sql`](init.sql)
+     - [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql)
+  2. **Generate Migration Delta**: Create a new file [`src/main/resources/migration_YYYY-MM-DD[_N].sql`](src/main/resources/) containing only the statements needed to migrate legacy data and structures.
+  3. **Verification**: Verify that the migration script executes cleanly on a legacy database state and results in a schema equivalent to the fresh baseline.
+
+---
+
+## 7. Domain Invariants & Architecture Rules
 
 1. **JPA Model Entities Must NOT Be Java Records (ADR 002)**:
    - Entity classes in `de.oberamsystems.slm.model` must remain mutable JavaBeans with non-private no-arg constructors.
@@ -125,7 +146,7 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 
 ---
 
-## 7. Docker & Container Orchestration (ADR 014)
+## 8. Docker & Container Orchestration (ADR 014)
 
 - **Database Image**: `db` in `docker-compose.yml` must use `postgis/postgis:18-3.6`.
 - **Healthcheck**: `db` must declare a healthcheck (`test: ["CMD-SHELL", "pg_isready -U simon -d slm"]`).
@@ -134,7 +155,7 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 
 ---
 
-## 8. Communication & Response Style
+## 9. Communication & Response Style
 
 - Keep responses concise and focused on high-level decisions, open questions, and results.
 - Create clickable GitHub-style markdown links using the `file://` scheme for all mentioned files and classes (e.g. [`SessionController.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/SessionController.java)).
