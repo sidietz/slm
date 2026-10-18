@@ -11,14 +11,24 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import de.oberamsystems.slm.security.McpApiKeyAuthFilter;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+	@Autowired
+	private McpApiKeyAuthFilter mcpApiKeyAuthFilter;
+
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-		http.cors(Customizer.withDefaults()).csrf(Customizer.withDefaults())
+		http.cors(Customizer.withDefaults())
+				.csrf(csrf -> csrf.ignoringRequestMatchers("/mcp/**", "/sse", "/api/**"))
+				.addFilterBefore(mcpApiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index", "/index.html", "/login/*", "/error", "/webjars/**", "/css/**")
 						.permitAll()
@@ -85,6 +95,7 @@ public class SecurityConfig {
 						.requestMatchers("/sessions", "/sessions/**", "/coding-sessions", "/working-sessions").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()
 						.requestMatchers("/points", "/routes", "/car-trips", "/cars").permitAll()
+						.requestMatchers("/mcp/**", "/sse").permitAll()
 						.requestMatchers("/api/**")
 						.authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());

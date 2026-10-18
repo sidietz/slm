@@ -20,6 +20,8 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 012: Decoupling Biological Rest from Net Focused Time & Context-Adaptive KPIs](#adr-012-decoupling-biological-rest-from-net-focused-time--context-adaptive-kpis)
 - [ADR 013: Migration to JUnit 6 Testing Platform](#adr-013-migration-to-junit-6-testing-platform)
 - [ADR 014: Containerized Production Deployment with PostGIS 18-3.6 & Healthcheck Orchestration](#adr-014-containerized-production-deployment-with-postgis-18-36--healthcheck-orchestration)
+- [ADR 015: Unified Life Events, Anniversaries & Memorials Architecture](#adr-015-unified-life-events-anniversaries--memorials-architecture)
+- [ADR 016: Spring AI Model Context Protocol (MCP) Server Integration](#adr-016-spring-ai-model-context-protocol-mcp-server-integration)
 
 ---
 
@@ -522,3 +524,55 @@ Previously, contact date management was limited to a single `birthday: DATE` fie
    - Aggregate top upcoming milestones into the Home Dashboard alert stream.
 5. **Seamless Backward Compatibility & Auto-Migration**:
    Automatically migrate existing `human.birthday` values into initial `BIRTHDAY` events in `migration_2026-10-18_5.sql` and keep contact edits synchronized.
+
+---
+
+## ADR 016: Spring AI Model Context Protocol (MCP) Server Integration
+
+### Status
+Accepted (v0.0.2h)
+
+### Context
+Simon's Life Manager (SLM) serves as the central operational hub for personal tracking, deep work sessions, life balance, habits, medical appointments, and life milestones. Interacting with this data via external AI assistants (e.g. Claude Desktop, Gemini CLI, Cursor, Antigravity IDE) required exposing SLM's domain capabilities through a standardized protocol.
+
+The **Model Context Protocol (MCP)** by Anthropic is the industry standard for connecting AI agents to local/remote tools and data sources. Spring AI provides native MCP server support via `spring-ai-starter-mcp-server-webmvc`.
+
+Key architectural requirements:
+1. **Transport Protocol**: Server-Sent Events (SSE) over HTTP to allow concurrent external AI client connectivity while SLM runs as a web service.
+2. **Endpoint Standardization**: Rely on standard Spring AI WebMVC default endpoints (`/sse` handshake and `/mcp/message` JSON-RPC message endpoint) rather than custom non-standard paths.
+3. **Security Architecture**: Secure all MCP communications against unauthorized local network access using a dedicated API key authentication filter (`X-API-KEY` header, `?apiKey=` query parameter, or `Bearer` token) while bypassing CSRF protection for JSON-RPC operations.
+4. **Jackson Compatibility**: Seamlessly interoperate with SLM's Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`).
+5. **Domain Breadth**: Expose a cohesive suite of tools spanning Life Events, Polymorphic Sessions & Four Pillars Balance, Wellness & Habits, and Medical Healthcare Appointments.
+
+### Decision
+
+1. **Spring AI WebMVC Dependency**:
+   Integrated `spring-ai-bom:2.0.1` and `spring-ai-starter-mcp-server-webmvc` into [`build.gradle`](file:///home/simon/code/eclipse/slm/build.gradle). This pulls `io.modelcontextprotocol.sdk:mcp-json-jackson3:2.0.0`, natively matching SLM's Jackson 3 architecture.
+2. **Default SSE Transport Endpoints**:
+   Maintained standard Spring AI default paths:
+   - `GET /sse`: Server-Sent Events handshake and event stream.
+   - `POST /mcp/message`: Inbound JSON-RPC protocol messages and tool invocation requests.
+3. **Dedicated API Key Security Layer**:
+   Implemented [`McpApiKeyAuthFilter`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/security/McpApiKeyAuthFilter.java) placed before `UsernamePasswordAuthenticationFilter`:
+   - Validates incoming requests to `/mcp/**` and `/sse`.
+   - Checks `X-API-KEY` header, `?apiKey=` URL query parameter, or `Authorization: Bearer <key>` against configurable property `slm.mcp.api-key` (default: `slm-mcp-secret-key-2026`).
+   - Returns clean HTTP 401 JSON error responses for unauthenticated requests.
+   - Configured [`SecurityConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/SecurityConfig.java) with `.ignoringRequestMatchers("/mcp/**", "/sse", "/api/**")` to prevent CSRF interference on state-changing tool executions.
+4. **Tool Suite Architecture (`de.oberamsystems.slm.mcp`)**:
+   Organized tool callbacks across 4 functional domains using `@Tool`:
+   - [`McpLifeEventTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpLifeEventTools.java): `getUpcomingEvents`, `getEventsForContact`, `createLifeEvent`.
+   - [`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java): `getDailyLifeBalance` (Productivity, Sport, Wellness, Leisure hours), `getRecentSessions`, `logCodingSession`, `logSleepSession`.
+   - [`McpWellnessTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpWellnessTools.java): `getHabitsStatus`, `recordHabitCompleted`, `logDailyMood`, `logGratitude`.
+   - [`McpMedicalTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpMedicalTools.java): `getUpcomingAppointments`, `searchDoctors`, `scheduleAppointment`.
+   - Configured [`McpServerConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpServerConfig.java) providing a `ToolCallbackProvider` bean with `MethodToolCallbackProvider`.
+5. **Live Integration Testing**:
+   Created [`McpServerIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/McpServerIT.java) extending `AbstractIntegrationTest`:
+   - Verifies HTTP 401 rejection on `/sse` and `/mcp/message` without API key.
+   - Verifies successful SSE connection with valid `X-API-KEY`.
+   - Validates live JSON-RPC `tools/call` invocations against the shared singleton PostGIS Testcontainer.
+
+### Consequences & Trade-offs
+- **Benefits**: Any MCP-compliant agent can query and modify SLM schedule, balance, and health state directly via SSE.
+- **Security**: Direct API key authentication isolates AI agent interactions from browser session state without requiring form login or session cookies.
+- **Constraints**: Standard `/sse` and `/mcp/message` paths must remain unmapped and exempt from CSRF checks.
+

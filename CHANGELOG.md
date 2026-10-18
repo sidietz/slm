@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2h] - 2026-10-18
+
+### Added
+- Integrated **Spring AI Model Context Protocol (MCP) Server** (ADR 016):
+  - Added `spring-ai-starter-mcp-server-webmvc` and `spring-ai-bom:2.0.1` compatible with SLM's Jackson 3 BOM platform.
+  - Configured WebMVC Server-Sent Events (SSE) transport using standard default endpoints (`GET /sse` for event streaming and `POST /mcp/message` for JSON-RPC message dispatching).
+  - Implemented [`McpApiKeyAuthFilter`](src/main/java/de/oberamsystems/slm/security/McpApiKeyAuthFilter.java) enforcing API key authorization (`X-API-KEY`, query parameter `?apiKey=`, or Bearer token) on `/mcp/**` and `/sse`.
+  - Implemented 4 cohesive tool groups under `de.oberamsystems.slm.mcp`:
+    - [`McpLifeEventTools`](src/main/java/de/oberamsystems/slm/mcp/McpLifeEventTools.java): query upcoming events, query contact events, and schedule new life events.
+    - [`McpSessionTools`](src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java): calculate Four Pillars daily balance (productivity, sport, wellness, leisure hours), fetch recent sessions, and log coding or sleep sessions.
+    - [`McpWellnessTools`](src/main/java/de/oberamsystems/slm/mcp/McpWellnessTools.java): habit status overview, mark habit completed, log daily mood, and record gratitude notes.
+    - [`McpMedicalTools`](src/main/java/de/oberamsystems/slm/mcp/McpMedicalTools.java): query upcoming medical appointments, search doctors by name/specialty, and schedule doctor appointments.
+  - Added comprehensive Testcontainers integration suite [`McpServerIT`](src/test/java/de/oberamsystems/slm/McpServerIT.java) verifying API key rejection/acceptance and live tool execution against PostGIS 18.
+
+### Security
+- Configured CSRF exclusion for `/mcp/**` and `/sse` in [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java) with pre-authentication enforcement via `McpApiKeyAuthFilter`.
+
 ## [0.0.2g] - 2026-10-18
 
 ### Added
@@ -185,7 +202,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2g...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2h...HEAD
+[0.0.2h]: https://github.com/sidietz/slm/compare/v0.0.2g...v0.0.2h
 [0.0.2g]: https://github.com/sidietz/slm/compare/v0.0.2f...v0.0.2g
 [0.0.2f]: https://github.com/sidietz/slm/compare/v0.0.2e...v0.0.2f
 [0.0.2e]: https://github.com/sidietz/slm/compare/v0.0.2d...v0.0.2e
