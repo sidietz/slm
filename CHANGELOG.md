@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2f] - 2026-10-18
+
+### Added
+- Converted `SleepTime` into joined inheritance `SleepSession extends Session` (`sleep_session` table) under the unified Sessions architecture.
+- Added four pillars category balance model across Sessions Hub (`/sessions`):
+  - **Productivity**: Coding, Working, Learning, Reading sessions.
+  - **Sport**: Dedicated separate category for fitness, cardio, and workouts.
+  - **Wellness**: Restorative practices including Meditation and Sleep sessions.
+  - **Leisure**: Recreational gaming sessions.
+- Added 4 interactive category balance metric cards with direct category filtering to `/sessions`.
+- Added `SLEEP` session filter pill, `Sleep Chart` quick navigation, and full sleep logging form modal (bedtime, wake up, sleep type, deep sleep, REM sleep, awake count, break/awake duration, sleep quality rating, and dream notes).
+- Preserved full backward compatibility for `/sleep-times`, `/sleeptime-bb`, and `/api/sleeptimes` using transient compatibility accessors (`gotobed`, `getup`, `sleeptime`).
+- Added end-to-end integration tests in `SleepTimeIT` verifying `SleepSession` persistence, polymorphic session queries, and endpoint rendering against live PostgreSQL 18 Testcontainers.
+- Upgraded Jackson to Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`) with `jackson-annotations:2.22`.
+
 ## [0.0.2e] - 2026-10-18
 
 ### Added
