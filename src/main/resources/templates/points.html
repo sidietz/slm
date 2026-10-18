@@ -66,16 +66,17 @@
                                 <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
                                 <input type="text" id="description" th:field="*{description}" class="form-control" placeholder="e.g. Primary residence garage" required>
                             </div>
-                            <div class="row g-2 mb-4">
+                            <div class="row g-2 mb-3">
                                 <div class="col-6">
-                                    <label for="lat" class="form-label">Latitude <span class="text-danger">*</span></label>
-                                    <input type="text" id="lat" th:field="*{latitude}" class="form-control font-monospace" placeholder="e.g. 48.137154" required>
+                                    <label for="lat" class="form-label">Latitude (°N/S) <span class="text-danger">*</span></label>
+                                    <input type="number" step="any" id="lat" th:field="*{latitude}" class="form-control font-monospace" placeholder="e.g. 49.284581" required>
                                 </div>
                                 <div class="col-6">
-                                    <label for="long" class="form-label">Longitude <span class="text-danger">*</span></label>
-                                    <input type="text" id="long" th:field="*{longitude}" class="form-control font-monospace" placeholder="e.g. 11.576124" required>
+                                    <label for="long" class="form-label">Longitude (°E/W) <span class="text-danger">*</span></label>
+                                    <input type="number" step="any" id="long" th:field="*{longitude}" class="form-control font-monospace" placeholder="e.g. 10.681444" required>
                                 </div>
                             </div>
+                            <div class="form-text mb-4 text-muted small"><i class="bi bi-info-circle me-1"></i>Coordinates are stored as WGS 84 geography points for PostGIS spatial calculations.</div>
                             <button type="submit" class="btn btn-primary w-100 py-2">
                                 <i class="bi bi-plus-circle me-1"></i> Add Point
                             </button>

@@ -14,14 +14,22 @@ public class Point {
 	private Long id;
 	private String name;
 	private String description;
-	private String latitude;
-	private String longitude;
+	private Double latitude;
+	private Double longitude;
 	@OneToMany(mappedBy="start")
 	private List<Route> starts = new ArrayList<Route>();
 	@OneToMany(mappedBy="end")
 	private List<Route> ends = new ArrayList<Route>();
 
 	public Point() {
+	}
+
+	public Point(Long id, String name, String description, Double latitude, Double longitude) {
+		this.id = id;
+		this.name = name;
+		this.description = description;
+		this.latitude = latitude;
+		this.longitude = longitude;
 	}
 
 	public String getName() {
@@ -40,19 +48,19 @@ public class Point {
 		this.description = description;
 	}
 
-	public String getLatitude() {
+	public Double getLatitude() {
 		return latitude;
 	}
 
-	public void setLatitude(String latitude) {
+	public void setLatitude(Double latitude) {
 		this.latitude = latitude;
 	}
 
-	public String getLongitude() {
+	public Double getLongitude() {
 		return longitude;
 	}
 
-	public void setLongitude(String longitude) {
+	public void setLongitude(Double longitude) {
 		this.longitude = longitude;
 	}
 
