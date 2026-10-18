@@ -125,6 +125,7 @@ public class SleepTimeIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("sessions"))
                 .andExpect(model().attributeExists("sessions"))
+                .andExpect(model().attribute("kpiDurationTitle", "Rest & Recovery Time"))
                 .andExpect(model().attributeExists("productivityDuration"))
                 .andExpect(model().attributeExists("sportDuration"))
                 .andExpect(model().attributeExists("wellnessDuration"))
@@ -132,10 +133,19 @@ public class SleepTimeIT extends AbstractIntegrationTest {
                 .andExpect(content().string(containsString("badge-sleep")))
                 .andExpect(content().string(containsString("Night Sleep")));
 
-        // 4. Test GET /sessions?type=WELLNESS (Four Pillars category)
+        // 4. Test GET /sessions?type=ALL - verify Sleep is excluded from Net Focused Time
+        mockMvc.perform(get("/sessions").param("type", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("sessions"))
+                .andExpect(model().attribute("kpiDurationTitle", "Net Focused Time"))
+                .andExpect(model().attribute("totalNetDuration", "0m"))
+                .andExpect(model().attribute("wellnessDuration", not("0m")));
+
+        // 5. Test GET /sessions?type=WELLNESS (Four Pillars category)
         mockMvc.perform(get("/sessions").param("type", "WELLNESS"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("sessions"))
+                .andExpect(model().attribute("kpiDurationTitle", "Rest & Recovery Time"))
                 .andExpect(model().attributeExists("sessions"));
 
         // 5. Test POST /sessions/sleep submission

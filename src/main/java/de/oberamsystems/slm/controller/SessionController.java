@@ -104,13 +104,45 @@ public class SessionController {
 					.collect(Collectors.toList());
 		}
 
+		// Determine contextual labels for KPI header cards
+		String kpiDurationTitle;
+		String kpiRatingTitle;
+		String normalizedType = type.toUpperCase();
+
+		if ("SPORT".equals(normalizedType)) {
+			kpiDurationTitle = "Active Training Time";
+			kpiRatingTitle = "Avg Workout Intensity";
+		} else if ("WELLNESS".equals(normalizedType) || "SLEEP".equals(normalizedType)) {
+			kpiDurationTitle = "Rest & Recovery Time";
+			kpiRatingTitle = "Avg Sleep Quality";
+		} else if ("MEDITATION".equals(normalizedType)) {
+			kpiDurationTitle = "Mindfulness Time";
+			kpiRatingTitle = "Avg Mindfulness Rating";
+		} else if ("LEISURE".equals(normalizedType) || "GAMING".equals(normalizedType)) {
+			kpiDurationTitle = "Recreation Time";
+			kpiRatingTitle = "Avg Game Rating";
+		} else {
+			// ALL, PRODUCTIVITY, CODING, WORKING, LEARNING, READING
+			kpiDurationTitle = "Net Focused Time";
+			kpiRatingTitle = "Avg Focus Rating";
+		}
+
 		// Calculate statistics
 		Duration totalNetDuration = Duration.ZERO;
 		Duration totalBreakDuration = Duration.ZERO;
 		double focusRatingSum = 0;
 		int ratedCount = 0;
 
-		for (Session s : filteredSessions) {
+		// When type=ALL, cognitive "Net Focused Time", breaks, and "Avg Focus Rating" are strictly computed
+		// across Productivity sessions (Coding, Working, Learning, Reading), excluding Sleep and Wellness.
+		List<Session> statsSource = "ALL".equalsIgnoreCase(type)
+				? allSessions.stream()
+						.filter(s -> s instanceof CodingSession || s instanceof WorkingSession
+								|| s instanceof LearningSession || s instanceof ReadingSession)
+						.collect(Collectors.toList())
+				: filteredSessions;
+
+		for (Session s : statsSource) {
 			if (s.getNetDuration() != null) {
 				totalNetDuration = totalNetDuration.plus(s.getNetDuration());
 			} else if (s.getDuration() != null) {
@@ -132,10 +164,12 @@ public class SessionController {
 		Duration sportDuration = Duration.ZERO;
 		Duration wellnessDuration = Duration.ZERO;
 		Duration leisureDuration = Duration.ZERO;
+		Duration totalLifeDuration = Duration.ZERO;
 
 		for (Session s : allSessions) {
 			Duration d = s.getNetDuration() != null ? s.getNetDuration()
 					: (s.getDuration() != null ? s.getDuration() : Duration.ZERO);
+			totalLifeDuration = totalLifeDuration.plus(d);
 			if (s instanceof CodingSession || s instanceof WorkingSession
 					|| s instanceof LearningSession || s instanceof ReadingSession) {
 				productivityDuration = productivityDuration.plus(d);
@@ -150,10 +184,13 @@ public class SessionController {
 
 		model.addAttribute("sessions", filteredSessions);
 		model.addAttribute("activeType", type.toUpperCase());
+		model.addAttribute("kpiDurationTitle", kpiDurationTitle);
+		model.addAttribute("kpiRatingTitle", kpiRatingTitle);
 		model.addAttribute("totalSessionsCount", filteredSessions.size());
 		model.addAttribute("totalNetDuration", DurationFormatter.format(totalNetDuration));
 		model.addAttribute("totalBreakDuration", DurationFormatter.format(totalBreakDuration));
 		model.addAttribute("avgFocusRating", String.format(Locale.US, "%.1f", avgFocusRating));
+		model.addAttribute("totalLifeTracked", DurationFormatter.format(totalLifeDuration));
 
 		model.addAttribute("productivityDuration", DurationFormatter.format(productivityDuration));
 		model.addAttribute("sportDuration", DurationFormatter.format(sportDuration));

@@ -273,6 +273,9 @@ public class SessionControllerTest {
         // Test Category Balances on ALL
         ConcurrentModel modelAll = new ConcurrentModel();
         controller.viewSessions("ALL", modelAll);
+        assertEquals("Net Focused Time", modelAll.getAttribute("kpiDurationTitle"));
+        assertEquals("1h 00m", modelAll.getAttribute("totalNetDuration"), "Net Focused Time on ALL must exclude Sleep, Sport, and Gaming");
+        assertEquals("10h 45m", modelAll.getAttribute("totalLifeTracked"));
         assertEquals("1h 00m", modelAll.getAttribute("productivityDuration"));
         assertEquals("45m", modelAll.getAttribute("sportDuration"));
         assertEquals("8h 00m", modelAll.getAttribute("wellnessDuration"));
@@ -282,26 +285,36 @@ public class SessionControllerTest {
         // Test SPORT filter (separate pillar)
         ConcurrentModel modelSport = new ConcurrentModel();
         controller.viewSessions("SPORT", modelSport);
+        assertEquals("Active Training Time", modelSport.getAttribute("kpiDurationTitle"));
+        assertEquals("45m", modelSport.getAttribute("totalNetDuration"));
         assertEquals(1, modelSport.getAttribute("totalSessionsCount"));
 
         // Test WELLNESS filter (includes Sleep & Meditation)
         ConcurrentModel modelWellness = new ConcurrentModel();
         controller.viewSessions("WELLNESS", modelWellness);
+        assertEquals("Rest & Recovery Time", modelWellness.getAttribute("kpiDurationTitle"));
+        assertEquals("8h 00m", modelWellness.getAttribute("totalNetDuration"));
         assertEquals(1, modelWellness.getAttribute("totalSessionsCount"));
 
         // Test SLEEP specific filter
         ConcurrentModel modelSleep = new ConcurrentModel();
         controller.viewSessions("SLEEP", modelSleep);
+        assertEquals("Rest & Recovery Time", modelSleep.getAttribute("kpiDurationTitle"));
+        assertEquals("8h 00m", modelSleep.getAttribute("totalNetDuration"));
         assertEquals(1, modelSleep.getAttribute("totalSessionsCount"));
 
         // Test PRODUCTIVITY filter
         ConcurrentModel modelProd = new ConcurrentModel();
         controller.viewSessions("PRODUCTIVITY", modelProd);
+        assertEquals("Net Focused Time", modelProd.getAttribute("kpiDurationTitle"));
+        assertEquals("1h 00m", modelProd.getAttribute("totalNetDuration"));
         assertEquals(1, modelProd.getAttribute("totalSessionsCount"));
 
         // Test LEISURE filter
         ConcurrentModel modelLeisure = new ConcurrentModel();
         controller.viewSessions("LEISURE", modelLeisure);
+        assertEquals("Recreation Time", modelLeisure.getAttribute("kpiDurationTitle"));
+        assertEquals("1h 00m", modelLeisure.getAttribute("totalNetDuration"));
         assertEquals(1, modelLeisure.getAttribute("totalSessionsCount"));
     }
 
