@@ -19,6 +19,7 @@ import de.oberamsystems.slm.model.CodingSession;
 import de.oberamsystems.slm.model.CodingSessionRepository;
 import de.oberamsystems.slm.model.GamingSession;
 import de.oberamsystems.slm.model.LearningSession;
+import de.oberamsystems.slm.model.LectureSession;
 import de.oberamsystems.slm.model.MeditationSession;
 import de.oberamsystems.slm.model.ReadingSession;
 import de.oberamsystems.slm.model.Session;
@@ -64,7 +65,7 @@ public class McpSessionTools {
 			}
 			long minutes = (d != null && !d.isNegative()) ? d.toMinutes() : 0;
 
-			if (s instanceof CodingSession || s instanceof WorkingSession || s instanceof LearningSession || s instanceof ReadingSession) {
+			if (s instanceof CodingSession || s instanceof WorkingSession || s instanceof LearningSession || s instanceof ReadingSession || s instanceof LectureSession) {
 				productivityMinutes += minutes;
 			} else if (s instanceof SportSession) {
 				sportMinutes += minutes;
@@ -103,7 +104,7 @@ public class McpSessionTools {
 
 		List<Session> filtered = all.stream().filter(s -> {
 			if ("ALL".equals(cat)) return true;
-			if ("PRODUCTIVITY".equals(cat)) return s instanceof CodingSession || s instanceof WorkingSession || s instanceof LearningSession || s instanceof ReadingSession;
+			if ("PRODUCTIVITY".equals(cat)) return s instanceof CodingSession || s instanceof WorkingSession || s instanceof LearningSession || s instanceof ReadingSession || s instanceof LectureSession;
 			if ("SPORT".equals(cat)) return s instanceof SportSession;
 			if ("WELLNESS".equals(cat)) return s instanceof MeditationSession || s instanceof SleepSession;
 			if ("LEISURE".equals(cat)) return s instanceof GamingSession;
@@ -203,6 +204,7 @@ public class McpSessionTools {
 		if (s instanceof LearningSession) return "LEARNING";
 		if (s instanceof ReadingSession) return "READING";
 		if (s instanceof SportSession) return "SPORT";
+		if (s instanceof LectureSession) return "LECTURE";
 		if (s instanceof MeditationSession) return "MEDITATION";
 		if (s instanceof SleepSession) return "SLEEP";
 		if (s instanceof GamingSession) return "GAMING";

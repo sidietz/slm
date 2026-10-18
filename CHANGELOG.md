@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2i] - 2026-10-19
+
+### Added
+- Implemented **University Lectures, Academic Tracking & Native UUIDv7 Markdown Lecture Notes** (ADR 017):
+  - Created first-class [`Course`](src/main/java/de/oberamsystems/slm/model/Course.java) entity modeling academic modules, semester, ECTS credits, lecturer association ([`Human`](src/main/java/de/oberamsystems/slm/model/Human.java) with `category = 'LECTURER'`), default room, syllabus, and exam schedule (`LocalDateTime examDate` and exam location).
+  - Extended polymorphic session hierarchy with joined inheritance [`LectureSession extends Session`](src/main/java/de/oberamsystems/slm/model/LectureSession.java) (`lecture_session` table) under the **Productivity** pillar, contributing to Net Focused Time.
+  - Created first-class [`LectureNote`](src/main/java/de/oberamsystems/slm/model/LectureNote.java) entity using native **UUIDv7** (`java.util.UUID` with Hibernate 7 `@UuidGenerator(style = Style.VERSION_7)` and PostgreSQL 18 `DEFAULT uuidv7()`).
+  - Added split-screen Markdown editor with real-time preview via `marked.js`, snippet toolbar (formulas, code, tables, callouts), key concepts tagging, homework action items, and 1–5 exam relevance ratings.
+  - Implemented [`AcademicController`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java) managing course catalogs, course details, notes management, and global keyword search.
+  - Integrated lecture sessions and academic navigation into Sessions Hub ([`sessions.html`](src/main/resources/templates/sessions.html)) and Home Dashboard ([`index.html`](src/main/resources/templates/index.html)).
+  - Added Spring AI MCP Academic Tool Suite ([`McpAcademicTools`](src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java)) exposing `getCourses`, `getCourseDetails`, `logLectureSession`, `saveLectureNote`, and `searchLectureNotes`.
+  - Added comprehensive Testcontainers integration test [`AcademicIT`](src/test/java/de/oberamsystems/slm/AcademicIT.java) verifying course persistence, lecturer linking, polymorphic session duration calculation, UUIDv7 generation, and MCP tool interactions.
+  - Added `testAddLecturerInHumansSection` in [`HumanEventIT`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) verifying contact directory lecturer registration and category querying.
+  - Created legacy migration script [`migration_2026-10-18_6.sql`](src/main/resources/migration_2026-10-18_6.sql) and synchronized authoritative baselines [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
+
+### Security
+- Configured public access in [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java) across all academic routes:
+  - `/courses`, `/courses/**`, `/course`, `/course/**`, `/courses.html`, `/course.html`, `/course-detail`, `/course-detail.html`.
+  - `/notes`, `/notes/**`, `/note`, `/note/**`, `/lecture-notes`, `/lecture-notes/**`, `/lecture-note`, `/lecture-note/**`.
+  - `/lecture-sessions`, `/lecture-sessions/**`, `/lecture-session`, `/lecture-session/**`, and `/academics/**`.
+  - Fixed primitive `long` binding in Thymeleaf lecturer selection avoiding `ConversionFailedException` during unauthorized redirect evaluations.
+  - Added Spring Security integration tests in [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java) verifying public accessibility of all academic endpoints.
+
 ## [0.0.2h] - 2026-10-18
 
 ### Added
@@ -202,7 +225,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2h...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2i...HEAD
+[0.0.2i]: https://github.com/sidietz/slm/compare/v0.0.2h...v0.0.2i
 [0.0.2h]: https://github.com/sidietz/slm/compare/v0.0.2g...v0.0.2h
 [0.0.2g]: https://github.com/sidietz/slm/compare/v0.0.2f...v0.0.2g
 [0.0.2f]: https://github.com/sidietz/slm/compare/v0.0.2e...v0.0.2f

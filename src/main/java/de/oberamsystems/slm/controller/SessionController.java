@@ -69,6 +69,12 @@ public class SessionController {
 	@Autowired
 	private EmployerRepository employerRepo;
 
+	@Autowired
+	private LectureSessionRepository lectureSessionRepo;
+
+	@Autowired
+	private CourseRepository courseRepo;
+
 	@GetMapping("/sessions")
 	public String viewSessions(@RequestParam(required = false, defaultValue = "ALL") String type, Model model) {
 		List<Session> allSessions = sessionRepo.findAll();
@@ -81,7 +87,8 @@ public class SessionController {
 		} else if ("PRODUCTIVITY".equalsIgnoreCase(type)) {
 			filteredSessions = allSessions.stream()
 					.filter(s -> s instanceof CodingSession || s instanceof WorkingSession
-							|| s instanceof LearningSession || s instanceof ReadingSession)
+							|| s instanceof LearningSession || s instanceof ReadingSession
+							|| s instanceof LectureSession)
 					.collect(Collectors.toList());
 		} else if ("SPORT".equalsIgnoreCase(type)) {
 			filteredSessions = allSessions.stream()
@@ -134,11 +141,12 @@ public class SessionController {
 		int ratedCount = 0;
 
 		// When type=ALL, cognitive "Net Focused Time", breaks, and "Avg Focus Rating" are strictly computed
-		// across Productivity sessions (Coding, Working, Learning, Reading), excluding Sleep and Wellness.
+		// across Productivity sessions (Coding, Working, Learning, Reading, Lecture), excluding Sleep and Wellness.
 		List<Session> statsSource = "ALL".equalsIgnoreCase(type)
 				? allSessions.stream()
 						.filter(s -> s instanceof CodingSession || s instanceof WorkingSession
-								|| s instanceof LearningSession || s instanceof ReadingSession)
+								|| s instanceof LearningSession || s instanceof ReadingSession
+								|| s instanceof LectureSession)
 						.collect(Collectors.toList())
 				: filteredSessions;
 
@@ -171,7 +179,8 @@ public class SessionController {
 					: (s.getDuration() != null ? s.getDuration() : Duration.ZERO);
 			totalLifeDuration = totalLifeDuration.plus(d);
 			if (s instanceof CodingSession || s instanceof WorkingSession
-					|| s instanceof LearningSession || s instanceof ReadingSession) {
+					|| s instanceof LearningSession || s instanceof ReadingSession
+					|| s instanceof LectureSession) {
 				productivityDuration = productivityDuration.plus(d);
 			} else if (s instanceof SportSession) {
 				sportDuration = sportDuration.plus(d);
@@ -209,6 +218,7 @@ public class SessionController {
 		model.addAttribute("meditationSession", new MeditationSession());
 		model.addAttribute("sportSession", new SportSession());
 		model.addAttribute("sleepSession", new SleepSession());
+		model.addAttribute("lectureSession", new LectureSession());
 
 		return "sessions";
 	}
@@ -340,6 +350,19 @@ public class SessionController {
 		return "redirect:/sessions?type=SLEEP";
 	}
 
+	@PostMapping("/sessions/lecture")
+	public String submitLectureSession(@ModelAttribute LectureSession session,
+			@RequestParam(required = false) Long courseId,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
+		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		Long cid = courseId != null ? courseId : (session.getCourse() != null ? session.getCourse().getId() : null);
+		if (cid != null) {
+			courseRepo.findById(cid).ifPresent(session::setCourse);
+		}
+		lectureSessionRepo.save(session);
+		return "redirect:/sessions?type=LECTURE";
+	}
+
 	@PostMapping("/sessions/delete/{id}")
 	public String deleteSession(@PathVariable String id,
 			@RequestParam(required = false, defaultValue = "ALL") String returnType) {
@@ -354,5 +377,6 @@ public class SessionController {
 		model.addAttribute("books", bookRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
 		model.addAttribute("sportTypes", sportTypeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("courses", courseRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
 	}
 }

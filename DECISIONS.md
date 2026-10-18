@@ -576,3 +576,74 @@ Key architectural requirements:
 - **Security**: Direct API key authentication isolates AI agent interactions from browser session state without requiring form login or session cookies.
 - **Constraints**: Standard `/sse` and `/mcp/message` paths must remain unmapped and exempt from CSRF checks.
 
+---
+
+## ADR 017: University Lectures, Academic Tracking & Native UUIDv7 Markdown Lecture Notes
+
+### Status
+Accepted (v0.0.2i)
+
+### Context
+Simon's Life Manager previously supported open-ended `LearningSession` entries, but lacked dedicated infrastructure for university studies and academic courses:
+1. **Curricular Context**: Courses require academic attributes such as semester (e.g. `WS 2026/27`), ECTS credits, assigned lecturers (modeled via [`Human`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Human.java) with `HumanCategory.LECTURER`), default lecture halls/meeting links, syllabi, and exam schedules (`LocalDateTime examDate` with exam locations).
+2. **Cognitive Focus Tracking**: Attending a lecture is an intentional cognitive deep work activity. Under the **Four Pillars Life Balance Model** ([ADR 011](DECISIONS.md#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model)), it belongs to the **Productivity** pillar alongside Coding, Working, Learning, and Reading sessions, and must contribute to **Net Focused Time** ([ADR 012](DECISIONS.md#adr-012-decoupling-biological-rest-from-net-focused-time--context-adaptive-kpis)).
+3. **Lecture Notes & Knowledge Retention**: Lecture notes require chronological sequencing per course, rich Markdown formatting, key concepts, executive takeaway summaries, homework tracking, and exam relevance ratings (1–5).
+4. **Identifier Architecture**: Notes benefit from time-ordered identifiers for sequential B-tree clustering, distributed generation, and tamper-resistant URL routing. PostgreSQL 18 introduced native `uuidv7()` and Hibernate 7 natively provides `@UuidGenerator(style = Style.VERSION_7)`.
+
+### Decision
+
+1. **First-Class Academic Course Entity (`course` table)**:
+   - Modeled via [`Course`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Course.java) with `title`, `code`, `semester`, `ectsCredits` (`NUMERIC(3,1)`), `syllabus`, `defaultRoom`, `meetingLink`, `examDate` (`LocalDateTime` / `TIMESTAMP`), `examLocation`, `grade`, `examPassed`, and `status`.
+   - Links to [`Human`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Human.java) lecturer (`category = 'LECTURER'`).
+   - Managed via [`AcademicController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/AcademicController.java) at `/courses` and `/courses/{id}`.
+
+2. **Joined Polymorphic `LectureSession` Entity (`lecture_session` table)**:
+   - Extends [`Session`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Session.java) with joined inheritance (`@DiscriminatorValue("LECTURE")`).
+   - Links to [`Course`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Course.java) with `lectureNumber`, `topic`, `room`, and standard `start`, `end`, `breakDuration`, `focusRating`, and `comment`.
+   - Included under the **Productivity** pillar in `/sessions` filtering, dashboard balance metrics, and Net Focused Time aggregation.
+
+3. **First-Class `LectureNote` with Native UUIDv7 (`lecture_note` table)**:
+   - Primary key is native UUIDv7:
+     ```sql
+     CREATE TABLE lecture_note (
+         id UUID PRIMARY KEY DEFAULT uuidv7(),
+         course_id BIGINT REFERENCES course(id) ON DELETE CASCADE,
+         lecture_session_id TEXT REFERENCES lecture_session(id) ON DELETE SET NULL,
+         title TEXT NOT NULL,
+         lecture_number INTEGER,
+         lecture_date DATE,
+         content_markdown TEXT,
+         key_concepts TEXT,
+         summary TEXT,
+         has_homework BOOLEAN DEFAULT FALSE,
+         homework_todo TEXT,
+         exam_relevance_rating INTEGER,
+         created_at TIMESTAMP,
+         last_updated TIMESTAMP
+     );
+     ```
+   - In JPA:
+     ```java
+     @Id
+     @GeneratedValue
+     @UuidGenerator(style = Style.VERSION_7)
+     @Column(name = "id", columnDefinition = "uuid")
+     private UUID id;
+     ```
+   - Features a split-screen Markdown editor with live preview via `marked.js`, snippet insertion toolbar (formulas, code, callouts, tables), key concepts, and exam relevance stars.
+   - Global keyword search across Markdown content, titles, and concept tags via `LectureNoteRepository.searchNotes()`.
+
+4. **Spring AI Model Context Protocol (MCP) Expansion**:
+   - Implemented [`McpAcademicTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java) providing `getCourses`, `getCourseDetails`, `logLectureSession`, `saveLectureNote`, and `searchLectureNotes`.
+   - Integrated into [`McpServerConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpServerConfig.java) callback provider.
+   - Updated [`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java) to factor `LectureSession` into daily Productivity balance.
+
+5. **Schema Synchronization & Migration**:
+   - Synchronized baseline schema artifacts: [`tables.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/tables.sql), [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql), and [`schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql).
+   - Generated non-destructive incremental migration [`migration_2026-10-18_6.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-18_6.sql) for upgrading existing local / production databases.
+
+### Consequences & Trade-offs
+- **Benefits**: Complete academic lifecycle tracking seamlessly unified with personal life management; instant notes retrieval; Net Focused Time remains an accurate measure of cognitive work; optimal database clustering through UUIDv7.
+- **Constraints**: Requires PostgreSQL 18+ for native SQL `uuidv7()` defaults; client-side Markdown rendering requires `marked.js` in views.
+
+

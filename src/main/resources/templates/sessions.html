@@ -47,6 +47,7 @@
         .badge-meditation { background-color: #10b981; color: white; }
         .badge-sport { background-color: #ef4444; color: white; }
         .badge-sleep { background-color: #0d9488; color: white; }
+        .badge-lecture { background-color: #0284c7; color: white; }
         
         .nav-pills .nav-link {
             border-radius: 2rem;
@@ -267,9 +268,17 @@
                         <i class="bi bi-moon-stars me-1"></i> Sleep
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'LECTURE'} ? 'active' : ''" href="/sessions?type=LECTURE">
+                        <i class="bi bi-mortarboard-fill me-1"></i> Lecture
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex gap-2">
+                <a href="/courses" class="btn btn-sm btn-outline-info rounded-pill">
+                    <i class="bi bi-mortarboard me-1"></i> Academics
+                </a>
                 <a href="/sleeptime-bb" class="btn btn-sm btn-outline-success rounded-pill">
                     <i class="bi bi-graph-up me-1"></i> Sleep Chart
                 </a>
@@ -316,7 +325,8 @@
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Gaming')} ? 'badge-gaming' : 
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Reading')} ? 'badge-reading' : 
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Meditation')} ? 'badge-meditation' : 
-                                    (${#strings.contains(s.getClass().getSimpleName(), 'Sport')} ? 'badge-sport' : 'badge-sleep')))))))"
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Sport')} ? 'badge-sport' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Lecture')} ? 'badge-lecture' : 'badge-sleep'))))))))"
                                     th:text="${#strings.replace(s.getClass().getSimpleName(), 'Session', '')}">
                                     Session
                                 </span>
@@ -371,6 +381,13 @@
                                         <span th:if="${s.deepSleepDuration != null and s.remSleepDuration != null}"> • </span>
                                         <span th:if="${s.remSleepDuration != null}" th:text="'REM: ' + ${{s.remSleepDuration}}">REM</span>
                                     </div>
+                                </div>
+                                <!-- Lecture Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Lecture')}">
+                                    <strong th:text="${s.course != null ? (s.course.code != null ? s.course.code + ' - ' : '') + s.course.title : 'University Lecture'}">Course</strong>
+                                    <span th:if="${s.lectureNumber != null}" class="badge bg-info-subtle text-info ms-1" th:text="'Lecture ' + ${s.lectureNumber}">Lecture 1</span>
+                                    <div class="small text-muted" th:if="${s.topic != null and !s.topic.empty}" th:text="${s.topic}">Topic</div>
+                                    <div class="small text-muted" th:if="${s.room != null and !s.room.empty}"><i class="bi bi-geo-alt me-1"></i><span th:text="${s.room}">Room</span></div>
                                 </div>
                             </td>
 
@@ -464,6 +481,9 @@
 
                             <input type="radio" class="btn-check" name="modalType" id="typeSleep" value="sleep" onchange="switchModalForm('sleep')">
                             <label class="btn btn-outline-primary" for="typeSleep"><i class="bi bi-moon-stars me-1"></i> Sleep</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeLecture" value="lecture" onchange="switchModalForm('lecture')">
+                            <label class="btn btn-outline-primary" for="typeLecture"><i class="bi bi-mortarboard me-1"></i> Lecture</label>
                         </div>
                     </div>
 
@@ -853,6 +873,69 @@
                             <button type="submit" class="btn btn-primary fw-bold">Save Sleep Session</button>
                         </div>
                     </form>
+
+                    <!-- LECTURE FORM -->
+                    <form id="form-lecture" th:action="@{/sessions/lecture}" th:object="${lectureSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Course / Module</label>
+                                <select name="courseId" class="form-select" required>
+                                    <option value="">-- Select University Course --</option>
+                                    <option th:each="c : ${courses}" th:value="${c.id}" th:text="${(c.code != null ? c.code + ' - ' : '') + c.title + ' (' + c.semester + ')'}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Lecture Number</label>
+                                <input type="number" th:field="*{lectureNumber}" class="form-control" placeholder="e.g. 1, 2, 3..." min="1">
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Lecture Topic</label>
+                                <input type="text" th:field="*{topic}" class="form-control" placeholder="e.g. Relational Calculus &amp; Optimization">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Room / Location</label>
+                                <input type="text" th:field="*{room}" class="form-control" placeholder="e.g. Audimax II / Zoom">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Recording URL</label>
+                                <input type="url" th:field="*{recordingUrl}" class="form-control" placeholder="https://stream.university.edu/...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Slides / Materials URL</label>
+                                <input type="url" th:field="*{slidesUrl}" class="form-control" placeholder="https://course.university.edu/slides01.pdf">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Break / Pause Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Attention / Focus Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5 - Excellent Focus)</option>
+                                    <option value="4" selected>★★★★☆ (4 - Good Focus)</option>
+                                    <option value="3">★★★☆☆ (3 - Moderate)</option>
+                                    <option value="2">★★☆☆☆ (2 - Distracted)</option>
+                                    <option value="1">★☆☆☆☆ (1 - Low Focus)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes &amp; Key Takeaways</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2" placeholder="Summary notes, important exam hints from lecturer..."></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Lecture Session</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -860,7 +943,7 @@
 
     <script>
         function switchModalForm(type) {
-            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep'];
+            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep', 'lecture'];
             forms.forEach(f => {
                 const formEl = document.getElementById('form-' + f);
                 if (formEl) {

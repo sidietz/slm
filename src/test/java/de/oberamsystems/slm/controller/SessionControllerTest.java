@@ -33,6 +33,8 @@ public class SessionControllerTest {
     private BookRepository bookRepo;
     private SportTypeRepository sportTypeRepo;
     private EmployerRepository employerRepo;
+    private LectureSessionRepository lectureSessionRepo;
+    private CourseRepository courseRepo;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -53,6 +55,8 @@ public class SessionControllerTest {
         bookRepo = mock(BookRepository.class);
         sportTypeRepo = mock(SportTypeRepository.class);
         employerRepo = mock(EmployerRepository.class);
+        lectureSessionRepo = mock(LectureSessionRepository.class);
+        courseRepo = mock(CourseRepository.class);
 
         setField("sessionRepo", sessionRepo);
         setField("codingSessionRepo", codingSessionRepo);
@@ -69,6 +73,8 @@ public class SessionControllerTest {
         setField("bookRepo", bookRepo);
         setField("sportTypeRepo", sportTypeRepo);
         setField("employerRepo", employerRepo);
+        setField("lectureSessionRepo", lectureSessionRepo);
+        setField("courseRepo", courseRepo);
     }
 
     private void setField(String fieldName, Object val) throws Exception {

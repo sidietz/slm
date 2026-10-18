@@ -22,8 +22,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
@@ -115,6 +117,33 @@ public class HumanEventIT extends AbstractIntegrationTest {
 		// Non-permitted endpoints should trigger authentication challenge (HTTP 401 Unauthorized)
 		mockMvc.perform(get("/unauthorized-test-endpoint"))
 				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void testAddLecturerInHumansSection() throws Exception {
+		MockMvc mockMvc = webAppContextSetup(context)
+				.apply(springSecurity())
+				.build();
+
+		// 1. GET /humans should be accessible and return HTTP 200 OK
+		mockMvc.perform(get("/humans"))
+				.andExpect(status().isOk());
+
+		// 2. Submit new lecturer contact via POST /humans
+		mockMvc.perform(post("/humans")
+				.with(csrf())
+				.param("firstname", "Donald")
+				.param("lastname", "Knuth")
+				.param("birthday", "1938-01-10")
+				.param("category", "LECTURER"))
+				.andExpect(status().isOk());
+
+		// 3. Verify Donald Knuth was persisted with category LECTURER
+		List<Human> lecturers = humanRepo.findByCategory(HumanCategory.LECTURER);
+		assertFalse(lecturers.isEmpty(), "Lecturer list should contain at least 1 lecturer");
+		boolean found = lecturers.stream()
+				.anyMatch(h -> "Donald".equals(h.getFirstname()) && "Knuth".equals(h.getLastname()) && h.getCategory() == HumanCategory.LECTURER);
+		assertTrue(found, "Lecturer Donald Knuth should be persisted with category LECTURER");
 	}
 }
 

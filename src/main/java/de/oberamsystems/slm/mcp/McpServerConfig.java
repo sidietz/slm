@@ -13,10 +13,11 @@ public class McpServerConfig {
 			McpLifeEventTools lifeEventTools,
 			McpSessionTools sessionTools,
 			McpWellnessTools wellnessTools,
-			McpMedicalTools medicalTools) {
+			McpMedicalTools medicalTools,
+			McpAcademicTools academicTools) {
 
 		return MethodToolCallbackProvider.builder()
-				.toolObjects(lifeEventTools, sessionTools, wellnessTools, medicalTools)
+				.toolObjects(lifeEventTools, sessionTools, wellnessTools, medicalTools, academicTools)
 				.build();
 	}
 }
