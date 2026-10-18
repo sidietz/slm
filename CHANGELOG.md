@@ -5,6 +5,65 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2f] - 2026-10-18
+
+### Added
+- Converted `SleepTime` into joined inheritance `SleepSession extends Session` (`sleep_session` table) under the unified Sessions architecture.
+- Added four pillars category balance model across Sessions Hub (`/sessions`):
+  - **Productivity**: Coding, Working, Learning, Reading sessions.
+  - **Sport**: Dedicated separate category for fitness, cardio, and workouts.
+  - **Wellness**: Restorative practices including Meditation and Sleep sessions.
+  - **Leisure**: Recreational gaming sessions.
+- Added 4 interactive category balance metric cards with direct category filtering to `/sessions`.
+- Added `SLEEP` session filter pill, `Sleep Chart` quick navigation, and full sleep logging form modal (bedtime, wake up, sleep type, deep sleep, REM sleep, awake count, break/awake duration, sleep quality rating, and dream notes).
+- Preserved full backward compatibility for `/sleep-times`, `/sleeptime-bb`, and `/api/sleeptimes` using transient compatibility accessors (`gotobed`, `getup`, `sleeptime`).
+- Added end-to-end integration tests in `SleepTimeIT` verifying `SleepSession` persistence, polymorphic session queries, and endpoint rendering against live PostgreSQL 18 Testcontainers.
+- Upgraded Jackson to Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`) with `jackson-annotations:2.22`.
+
+### Changed
+- Decoupled Wellness (Meditation, Sleep), Sport, and Leisure sessions from **Net Focused Time** and **Avg Focus Rating** on the Sessions Hub (`/sessions`).
+- Net Focused Time now strictly aggregates intentional cognitive productivity sessions (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`), preventing biological sleep hours from inflating deep focus statistics.
+- Added adaptive KPI header titles across session categories (`kpiDurationTitle`, `kpiRatingTitle`, and disruption/break labels):
+  - **All / Productivity**: "Net Focused Time" (`(Cognitive focus hours)`), "Avg Focus Rating", and "Total Life: Xh Ym".
+  - **Sport**: "Active Training Time", "Avg Workout Intensity".
+  - **Wellness / Sleep**: "Rest & Recovery Time" / "Sleep Duration", "Awake / Disruptions", "Avg Sleep Quality" / "Avg Restfulness Rating".
+  - **Leisure**: "Recreation Time", "Avg Game Rating".
+
+## [0.0.2e] - 2026-10-18
+
+### Added
+- Spring Boot Testcontainers integration test framework running PostgreSQL 18 with PostGIS 3.6 (`postgis/postgis:18-3.6`) using a shared singleton container pattern (`AbstractIntegrationTest`) and `@ServiceConnection`.
+- Comprehensive integration test suite ending in `IT` (`RouteSpatialIT`, `DoctorSpatialIT`, `SessionHierarchyIT`, `EmployerContractIT`, `SelfieControllerIT`) testing real PostGIS spatial calculations, database triggers, JPA joined inheritance, and MockMvc workflows.
+- Authoritative test schema initialization in `src/test/resources/schema-init.sql` consolidating `enums.sql`, `tables.sql`, and spatial triggers directly for fresh installations without legacy migration scripts.
+- Test dependencies: `spring-boot-testcontainers`, `testcontainers:postgresql`, and `testcontainers:junit-jupiter`.
+
+### Changed
+- Configured Gradle `test` task to execute both unit tests (`*Test.class`) and integration tests (`*IT.class`).
+
+## [0.0.2d] - 2026-10-18
+
+### Added
+- Dedicated `SelfieStorageService` providing path traversal defense (CWE-22) via strict canonical path boundary checks (`targetPath.startsWith(baseDir)`), regex-based extension validation, and raw byte storage integrity.
+- Direct native support for `.heic` and `.jpg` (and `.jpeg`) photo uploads, preserving original files without conversion or transcoding.
+- Comprehensive security test suite in `SelfieStorageServiceTest` verifying rejection of directory traversal attempts (`../../`, `..\..\`, `/etc/passwd`), invalid extensions, and format change replacement cleanup.
+
+### Changed
+- Refactored `SelfieController` to delegate file storage, validation, and error handling to `SelfieStorageService`.
+- Updated `selfies.html` upload form input accept attribute and label to explicitly allow and support `.jpg` and `.heic` files without conversion.
+
+## [0.0.2c] - 2026-10-18
+
+### Added
+- Natural alphanumeric `TrainLineComparator` utility to order rail transit lines by natural line numbers (e.g. `RE1`, `RE28`, `RE90`, `S1`, `S4`).
+- Unit tests in `TrainLineComparatorTest` verifying natural alphanumeric sorting behavior.
+
+### Changed
+- Standardized all date/time log and history tables to sort by date descending (`DESC`, most recent first) across Train Trips, Car Trips, Appointments, Sessions (Sessions Hub, Coding, Working, Gaming, Reading, Meditation, Sport, Learning), Sleep Times, Contracts, Purchases, Diary Entries, Selfies, Moods, Gratitudes, Habit Entries, Activities, and Calendar Events.
+- Standardized all `<select>` dropdown menus to sort options alphabetically ascending (`ASC`) across Doctors, Specialities, Practice & Base Points, Routes, Cars, Employers, Games, Devices, Books, Authors, Presses, Publishers, Studios, Vendors, Manufacturers, Sport Types, and Activity Types.
+- Sorted Train Lines in both tables and dropdowns by natural alphanumeric line order (`RE1, RE28, RE90, S1, S4`).
+- Sorted catalog and directory tables without dates alphabetically ascending (`ASC`) by display title or name (Doctors, Specialities, Routes, Cars, Employers, Contractors, Habits, Activity Types, Books, Games, Publishers, Studios, Vendors, Manufacturers).
+- Cleaned up fully-qualified package and class hierarchies in favor of top-level imports across controllers (`LearningController`, `GameController`, `BookController`, `SessionController`) and test suites (`SessionControllerTest`, `ContractControllerTest`, `EmployerControllerTest`, `RouteControllerTest`).
+
 ## [0.0.2b] - 2026-10-18
 
 ### Added
@@ -95,7 +154,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2b...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2e...HEAD
+[0.0.2e]: https://github.com/sidietz/slm/compare/v0.0.2d...v0.0.2e
+[0.0.2d]: https://github.com/sidietz/slm/compare/v0.0.2c...v0.0.2d
+[0.0.2c]: https://github.com/sidietz/slm/compare/v0.0.2b...v0.0.2c
 [0.0.2b]: https://github.com/sidietz/slm/compare/v0.0.2a...v0.0.2b
 [0.0.2a]: https://github.com/sidietz/slm/compare/v0.0.2-SNAPSHOT...v0.0.2a
 [0.0.2-SNAPSHOT]: https://github.com/sidietz/slm/compare/v0.0.1a-SNAPSHOT...v0.0.2-SNAPSHOT

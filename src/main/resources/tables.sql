@@ -10,6 +10,7 @@ CREATE TABLE human(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birt
 CREATE TABLE address(id BIGSERIAL PRIMARY KEY, human_id BIGSERIAL NOT NULL REFERENCES human(id), street TEXT, streetnumber INTEGER, plz CHAR(5), place TEXT, country TEXT);
 
 CREATE TABLE calendar_event(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE sleeptime(id BIGSERIAL PRIMARY KEY, gotobed TIMESTAMP, standup TIMESTAMP, sleeptime INTERVAL GENERATED ALWAYS AS (standup - gotobed) STORED);
 
 CREATE TABLE train_station(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
 CREATE TABLE train_trip(id BIGSERIAL PRIMARY KEY, line TEXT, origin_id BIGSERIAL NOT NULL REFERENCES train_station(id), destination_id BIGSERIAL NOT NULL REFERENCES train_station(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
@@ -73,6 +74,7 @@ CREATE TABLE gaming_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE
 CREATE TABLE coding_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, project TEXT, repository TEXT, branch TEXT, ticket TEXT, language TEXT);
 CREATE TABLE employer(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE working_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
+CREATE TABLE sleep_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
 
 CREATE TABLE contractor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, end_date DATE, active BOOL);

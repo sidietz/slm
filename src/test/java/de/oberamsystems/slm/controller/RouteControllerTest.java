@@ -4,8 +4,11 @@ import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 
+import java.lang.reflect.Field;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class RouteControllerTest {
 
@@ -20,27 +23,27 @@ public class RouteControllerTest {
         ManufacturerRepository manufacturerRepo = mock(ManufacturerRepository.class);
         VendorRepository vendorRepo = mock(VendorRepository.class);
         
-        java.lang.reflect.Field f1 = RouteController.class.getDeclaredField("repo");
+        Field f1 = RouteController.class.getDeclaredField("repo");
         f1.setAccessible(true);
         f1.set(controller, repo);
         
-        java.lang.reflect.Field f2 = RouteController.class.getDeclaredField("carRepo");
+        Field f2 = RouteController.class.getDeclaredField("carRepo");
         f2.setAccessible(true);
         f2.set(controller, carRepo);
         
-        java.lang.reflect.Field f3 = RouteController.class.getDeclaredField("pointRepo");
+        Field f3 = RouteController.class.getDeclaredField("pointRepo");
         f3.setAccessible(true);
         f3.set(controller, pointRepo);
         
-        java.lang.reflect.Field f4 = RouteController.class.getDeclaredField("carTripRepo");
+        Field f4 = RouteController.class.getDeclaredField("carTripRepo");
         f4.setAccessible(true);
         f4.set(controller, carTripRepo);
         
-        java.lang.reflect.Field f5 = RouteController.class.getDeclaredField("manufacturerRepo");
+        Field f5 = RouteController.class.getDeclaredField("manufacturerRepo");
         f5.setAccessible(true);
         f5.set(controller, manufacturerRepo);
         
-        java.lang.reflect.Field f6 = RouteController.class.getDeclaredField("vendorRepo");
+        Field f6 = RouteController.class.getDeclaredField("vendorRepo");
         f6.setAccessible(true);
         f6.set(controller, vendorRepo);
         
@@ -59,7 +62,7 @@ public class RouteControllerTest {
         Route r2 = new Route();
         r2.setStart(p1);
         r2.setEnd(p2);
-        org.mockito.Mockito.when(repo.calculateAirDistance(1L, 2L)).thenReturn(13.45);
+        when(repo.calculateAirDistance(1L, 2L)).thenReturn(13.45);
         String view2b = controller.submitBooks(r2, model);
         assertEquals("redirect:/routes", view2b);
         assertEquals(13.45, r2.getAirDistance());

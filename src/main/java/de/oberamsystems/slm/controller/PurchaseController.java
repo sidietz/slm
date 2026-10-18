@@ -30,7 +30,7 @@ public class PurchaseController {
 	
 	@GetMapping("/purchases")
 	public String addPurchases(@RequestParam(required = false) Long id, Model model) {
-		List<Purchase> purchases = repo.findAll(Sort.by("purchaseDate"));
+		List<Purchase> purchases = repo.findAll(Sort.by(Sort.Direction.DESC, "purchaseDate"));
 		float totalPrice = 0;
 		
 		for (Purchase p : purchases) {
@@ -42,13 +42,13 @@ public class PurchaseController {
 		Purchase p = new Purchase();
 		p.setPurchaseDate(LocalDate.now());
 		model.addAttribute("purchase", new Purchase());
-		model.addAttribute("vendors", vendorRepo.findAll());
+		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "purchases";
 	}
 	
 	@PostMapping("/purchases")
 	public String submitPurchases(@ModelAttribute Purchase tt, Model model) {
-		List<Purchase> purchases = repo.findAll(Sort.by("purchaseDate"));
+		List<Purchase> purchases = repo.findAll(Sort.by(Sort.Direction.DESC, "purchaseDate"));
 		float totalPrice = 0;
 		
 		for (Purchase p : purchases) {
@@ -57,7 +57,7 @@ public class PurchaseController {
 
 		model.addAttribute("purchases", purchases);
 		model.addAttribute("totalPrice", totalPrice);
-		model.addAttribute("vendors", vendorRepo.findAll());
+		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(tt);
 		model.addAttribute("purchase", tt);
 		return "redirect:/purchases";

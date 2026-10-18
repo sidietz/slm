@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import de.oberamsystems.slm.model.SleepTime;
 import de.oberamsystems.slm.model.SleepTimeRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class SleepTimeController {
 	
@@ -24,13 +26,13 @@ public class SleepTimeController {
 
 	@GetMapping("/sleeptime-bb")
 	public String sleepTimeC3(Model model) {
-		model.addAttribute("sleeptimes", repo.findAll());
+		model.addAttribute("sleeptimes", repo.findAll(Sort.by(Sort.Direction.DESC, "gotobed")));
 		return "sleeptime-bb";
 	}
 	
 	@GetMapping("/sleep-times")
 	public String addSleepTimes(Model model) {
-		model.addAttribute("sleeptimes", repo.findAll());
+		model.addAttribute("sleeptimes", repo.findAll(Sort.by(Sort.Direction.DESC, "gotobed")));
 		SleepTime st = new SleepTime();
 		st.setGotobed(LocalDateTime.now().minusHours(9).truncatedTo(ChronoUnit.MINUTES));
 		st.setGetup(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
@@ -40,7 +42,7 @@ public class SleepTimeController {
 	
 	@PostMapping("/sleep-times")
 	public String submitSleepTimes(@ModelAttribute SleepTime sleepTime, Model model) {
-		model.addAttribute("sleeptimes", repo.findAll());
+		model.addAttribute("sleeptimes", repo.findAll(Sort.by(Sort.Direction.DESC, "gotobed")));
 		repo.save(sleepTime);
 		model.addAttribute("sleeptime", sleepTime);
 		return "redirect:/sleep-times";

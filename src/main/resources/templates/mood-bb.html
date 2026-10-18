@@ -67,7 +67,7 @@
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 
-    <script>
+    <script th:inline="none">
     function getData2() {
         let url = "/api/moods";
         fetch(url).then((response) => {
@@ -78,6 +78,10 @@
     }
 
     function convertToBb(rawData) {
+        if (!rawData || rawData.length === 0) {
+            return;
+        }
+
         let x = ["x"];
         let d1 = ["Happiness"];
         let d2 = ["Impetus"];
@@ -120,7 +124,7 @@
                 "Impetus": "#6366f1",
                 "Stress": "#ef4444"
             },
-            columns: [[]]
+            columns: []
         }
     });
 

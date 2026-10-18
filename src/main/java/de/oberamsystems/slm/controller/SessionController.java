@@ -5,11 +5,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -62,6 +64,9 @@ public class SessionController {
 	private SportTypeRepository sportTypeRepo;
 
 	@Autowired
+	private SleepSessionRepository sleepSessionRepo;
+
+	@Autowired
 	private EmployerRepository employerRepo;
 
 	@GetMapping("/sessions")
@@ -73,6 +78,23 @@ public class SessionController {
 		List<Session> filteredSessions;
 		if ("ALL".equalsIgnoreCase(type)) {
 			filteredSessions = allSessions;
+		} else if ("PRODUCTIVITY".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof CodingSession || s instanceof WorkingSession
+							|| s instanceof LearningSession || s instanceof ReadingSession)
+					.collect(Collectors.toList());
+		} else if ("SPORT".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof SportSession)
+					.collect(Collectors.toList());
+		} else if ("WELLNESS".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof MeditationSession || s instanceof SleepSession)
+					.collect(Collectors.toList());
+		} else if ("LEISURE".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof GamingSession)
+					.collect(Collectors.toList());
 		} else {
 			filteredSessions = allSessions.stream()
 					.filter(s -> {
@@ -82,13 +104,45 @@ public class SessionController {
 					.collect(Collectors.toList());
 		}
 
+		// Determine contextual labels for KPI header cards
+		String kpiDurationTitle;
+		String kpiRatingTitle;
+		String normalizedType = type.toUpperCase();
+
+		if ("SPORT".equals(normalizedType)) {
+			kpiDurationTitle = "Active Training Time";
+			kpiRatingTitle = "Avg Workout Intensity";
+		} else if ("WELLNESS".equals(normalizedType) || "SLEEP".equals(normalizedType)) {
+			kpiDurationTitle = "Rest & Recovery Time";
+			kpiRatingTitle = "Avg Sleep Quality";
+		} else if ("MEDITATION".equals(normalizedType)) {
+			kpiDurationTitle = "Mindfulness Time";
+			kpiRatingTitle = "Avg Mindfulness Rating";
+		} else if ("LEISURE".equals(normalizedType) || "GAMING".equals(normalizedType)) {
+			kpiDurationTitle = "Recreation Time";
+			kpiRatingTitle = "Avg Game Rating";
+		} else {
+			// ALL, PRODUCTIVITY, CODING, WORKING, LEARNING, READING
+			kpiDurationTitle = "Net Focused Time";
+			kpiRatingTitle = "Avg Focus Rating";
+		}
+
 		// Calculate statistics
 		Duration totalNetDuration = Duration.ZERO;
 		Duration totalBreakDuration = Duration.ZERO;
 		double focusRatingSum = 0;
 		int ratedCount = 0;
 
-		for (Session s : filteredSessions) {
+		// When type=ALL, cognitive "Net Focused Time", breaks, and "Avg Focus Rating" are strictly computed
+		// across Productivity sessions (Coding, Working, Learning, Reading), excluding Sleep and Wellness.
+		List<Session> statsSource = "ALL".equalsIgnoreCase(type)
+				? allSessions.stream()
+						.filter(s -> s instanceof CodingSession || s instanceof WorkingSession
+								|| s instanceof LearningSession || s instanceof ReadingSession)
+						.collect(Collectors.toList())
+				: filteredSessions;
+
+		for (Session s : statsSource) {
 			if (s.getNetDuration() != null) {
 				totalNetDuration = totalNetDuration.plus(s.getNetDuration());
 			} else if (s.getDuration() != null) {
@@ -105,12 +159,43 @@ public class SessionController {
 
 		double avgFocusRating = ratedCount > 0 ? (focusRatingSum / ratedCount) : 0.0;
 
+		// Calculate four pillars category balances across all sessions
+		Duration productivityDuration = Duration.ZERO;
+		Duration sportDuration = Duration.ZERO;
+		Duration wellnessDuration = Duration.ZERO;
+		Duration leisureDuration = Duration.ZERO;
+		Duration totalLifeDuration = Duration.ZERO;
+
+		for (Session s : allSessions) {
+			Duration d = s.getNetDuration() != null ? s.getNetDuration()
+					: (s.getDuration() != null ? s.getDuration() : Duration.ZERO);
+			totalLifeDuration = totalLifeDuration.plus(d);
+			if (s instanceof CodingSession || s instanceof WorkingSession
+					|| s instanceof LearningSession || s instanceof ReadingSession) {
+				productivityDuration = productivityDuration.plus(d);
+			} else if (s instanceof SportSession) {
+				sportDuration = sportDuration.plus(d);
+			} else if (s instanceof MeditationSession || s instanceof SleepSession) {
+				wellnessDuration = wellnessDuration.plus(d);
+			} else if (s instanceof GamingSession) {
+				leisureDuration = leisureDuration.plus(d);
+			}
+		}
+
 		model.addAttribute("sessions", filteredSessions);
 		model.addAttribute("activeType", type.toUpperCase());
+		model.addAttribute("kpiDurationTitle", kpiDurationTitle);
+		model.addAttribute("kpiRatingTitle", kpiRatingTitle);
 		model.addAttribute("totalSessionsCount", filteredSessions.size());
 		model.addAttribute("totalNetDuration", DurationFormatter.format(totalNetDuration));
 		model.addAttribute("totalBreakDuration", DurationFormatter.format(totalBreakDuration));
-		model.addAttribute("avgFocusRating", String.format(java.util.Locale.US, "%.1f", avgFocusRating));
+		model.addAttribute("avgFocusRating", String.format(Locale.US, "%.1f", avgFocusRating));
+		model.addAttribute("totalLifeTracked", DurationFormatter.format(totalLifeDuration));
+
+		model.addAttribute("productivityDuration", DurationFormatter.format(productivityDuration));
+		model.addAttribute("sportDuration", DurationFormatter.format(sportDuration));
+		model.addAttribute("wellnessDuration", DurationFormatter.format(wellnessDuration));
+		model.addAttribute("leisureDuration", DurationFormatter.format(leisureDuration));
 
 		// Reference items for the modal forms
 		populateReferenceData(model);
@@ -123,6 +208,7 @@ public class SessionController {
 		model.addAttribute("readingSession", new ReadingSession());
 		model.addAttribute("meditationSession", new MeditationSession());
 		model.addAttribute("sportSession", new SportSession());
+		model.addAttribute("sleepSession", new SleepSession());
 
 		return "sessions";
 	}
@@ -152,7 +238,7 @@ public class SessionController {
 		List<WorkingSession> list = workingSessionRepo.findAll();
 		list.sort(Comparator.comparing(WorkingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
-		model.addAttribute("employers", employerRepo.findAll());
+		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		WorkingSession ws = new WorkingSession();
 		ws.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
 		ws.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
@@ -238,6 +324,22 @@ public class SessionController {
 		return "redirect:/sessions?type=SPORT";
 	}
 
+	@PostMapping("/sessions/sleep")
+	public String submitSleepSession(@ModelAttribute SleepSession session,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			@RequestParam(required = false, defaultValue = "0") Long deepSleepMinutes,
+			@RequestParam(required = false, defaultValue = "0") Long remSleepMinutes) {
+		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		if (deepSleepMinutes != null && deepSleepMinutes > 0) {
+			session.setDeepSleepDuration(DurationFormatter.fromMinutes(deepSleepMinutes));
+		}
+		if (remSleepMinutes != null && remSleepMinutes > 0) {
+			session.setRemSleepDuration(DurationFormatter.fromMinutes(remSleepMinutes));
+		}
+		sleepSessionRepo.save(session);
+		return "redirect:/sessions?type=SLEEP";
+	}
+
 	@PostMapping("/sessions/delete/{id}")
 	public String deleteSession(@PathVariable String id,
 			@RequestParam(required = false, defaultValue = "ALL") String returnType) {
@@ -246,11 +348,11 @@ public class SessionController {
 	}
 
 	private void populateReferenceData(Model model) {
-		model.addAttribute("learningItems", learningItemRepo.findAll());
-		model.addAttribute("games", gameRepo.findAll());
-		model.addAttribute("devices", deviceRepo.findAll());
-		model.addAttribute("books", bookRepo.findAll());
-		model.addAttribute("sportTypes", sportTypeRepo.findAll());
-		model.addAttribute("employers", employerRepo.findAll());
+		model.addAttribute("learningItems", learningItemRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("games", gameRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("devices", deviceRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("books", bookRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("sportTypes", sportTypeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 	}
 }

@@ -15,6 +15,8 @@ import de.oberamsystems.slm.model.HabitEntry;
 import de.oberamsystems.slm.model.HabitRepository;
 import de.oberamsystems.slm.model.HabitEntryRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class HabitController {
 
@@ -28,14 +30,14 @@ public class HabitController {
 	
 	@GetMapping("/habits")
 	public String addHabits(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("habit", new Habit());
 		return "habits";
 	}
 	
 	@PostMapping("/habits")
 	public String submitHabits(@ModelAttribute Habit ts, Model model) {
-		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(ts);
 		model.addAttribute("habit", ts);
 		return "redirect:/habits";
@@ -43,18 +45,18 @@ public class HabitController {
 	
 	@GetMapping("/habit-entries")
 	public String addHabitEntries(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("habitentries", entryRepo.findAll());
+		model.addAttribute("habitentries", entryRepo.findAll(Sort.by(Sort.Direction.DESC, "lastDone")));
 		HabitEntry e = new HabitEntry();
 		e.setLastDone(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("habitentry", e);
-		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "habit-entries";
 	}
 
 	@PostMapping("/habit-entries")
 	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model) {
-		model.addAttribute("habitentries", entryRepo.findAll());
-		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habitentries", entryRepo.findAll(Sort.by(Sort.Direction.DESC, "lastDone")));
+		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		entryRepo.save(entry);
 		model.addAttribute("habitentry", entry);
 		return "redirect:/habit-entries";
@@ -67,7 +69,7 @@ public class HabitController {
 		Habit selected = repo.getById(id);
 		model.addAttribute("habit", selected);
 		model.addAttribute("habitId", id);
-		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
 		HabitEntry e = new HabitEntry();
 		e.setHabit(selected);
@@ -83,9 +85,9 @@ public class HabitController {
 		Habit selected = repo.getById(id);
 		entry.setHabit(selected);
 		model.addAttribute("habit", selected);
-		model.addAttribute("habits", repo.findAll());
+		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
-		model.addAttribute("habitentries", entryRepo.findAll());
+		model.addAttribute("habitentries", entryRepo.findAll(Sort.by(Sort.Direction.DESC, "lastDone")));
 		entryRepo.save(entry);
 		model.addAttribute("habitentry", entry);
 		return "redirect:/last-done-habit-entries";

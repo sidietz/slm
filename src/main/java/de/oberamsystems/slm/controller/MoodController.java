@@ -14,6 +14,8 @@ import de.oberamsystems.slm.model.Mood;
 import de.oberamsystems.slm.model.MoodRepository;
 
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class MoodController {
 
@@ -24,7 +26,7 @@ public class MoodController {
 	
 	@GetMapping("/moods")
 	public String addMoods(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("moods", repo.findAll());
+		model.addAttribute("moods", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		Mood m = new Mood();
 		m.setDate(LocalDate.now());
 		model.addAttribute("mood", m);
@@ -33,7 +35,7 @@ public class MoodController {
 
 	@PostMapping("/moods")
 	public String submitMoods(@ModelAttribute Mood m, Model model) {
-		model.addAttribute("moods", repo.findAll());
+		model.addAttribute("moods", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		repo.save(m);
 		model.addAttribute("mood", m);
 		return "redirect:/moods";
@@ -41,7 +43,7 @@ public class MoodController {
 
 	@GetMapping("/mood-bb")
 	public String moodBb(Model model) {
-		model.addAttribute("moods", repo.findAll());
+		model.addAttribute("moods", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		return "mood-bb";
 	}
 }

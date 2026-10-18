@@ -24,7 +24,7 @@ public class GratitudeController {
 	
 	@GetMapping("/gratitudes")
 	public String addGratitude(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("gratitudes", repo.findAll());
+		model.addAttribute("gratitudes", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		Gratitude g = new Gratitude();
 		g.setDate(LocalDate.now());
 		model.addAttribute("gratitude", g);
@@ -33,7 +33,7 @@ public class GratitudeController {
 	
 	@PostMapping("/gratitudes")
 	public String submitGratitude(@ModelAttribute Gratitude gratitude, Model model) {
-		model.addAttribute("gratitudes", repo.findAll());
+		model.addAttribute("gratitudes", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		repo.save(gratitude);
 		model.addAttribute("gratitude", gratitude);
 		return "redirect:/gratitudes";

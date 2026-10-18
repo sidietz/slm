@@ -3,13 +3,16 @@ package de.oberamsystems.slm.controller;
 import de.oberamsystems.slm.model.Employer;
 import de.oberamsystems.slm.model.EmployerRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 import org.springframework.ui.ConcurrentModel;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 public class EmployerControllerTest {
@@ -19,13 +22,14 @@ public class EmployerControllerTest {
         EmployerController controller = new EmployerController();
         EmployerRepository employerRepo = mock(EmployerRepository.class);
 
-        java.lang.reflect.Field field = EmployerController.class.getDeclaredField("employerRepo");
+        Field field = EmployerController.class.getDeclaredField("employerRepo");
         field.setAccessible(true);
         field.set(controller, employerRepo);
 
         List<Employer> employers = new ArrayList<>();
         employers.add(new Employer(1L, "Acme Corp"));
         when(employerRepo.findAll()).thenReturn(employers);
+        when(employerRepo.findAll(any(Sort.class))).thenReturn(employers);
 
         ConcurrentModel model = new ConcurrentModel();
 

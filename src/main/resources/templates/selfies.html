@@ -62,8 +62,9 @@
                                 <input type="date" id="photoDate" th:field="*{date}" class="form-control" required>
                             </div>
                             <div class="mb-4">
-                                <label for="file" class="form-label">Select .jpg File <span class="text-danger">*</span></label>
-                                <input type="file" name="file" id="file" class="form-control" accept=".jpg" required>
+                                <label for="file" class="form-label">Select Photo (.jpg or .heic) <span class="text-danger">*</span></label>
+                                <input type="file" name="file" id="file" class="form-control" accept=".jpg,.jpeg,.heic,.JPG,.JPEG,.HEIC,image/jpeg,image/heic" required>
+                                <div class="form-text text-muted small">Supported formats: JPEG (.jpg, .jpeg) and High Efficiency Image (.heic). Photos are stored as-is without conversion.</div>
                             </div>
                             <div class="d-flex gap-2">
                                 <button type="submit" class="btn btn-primary flex-grow-1 py-2">

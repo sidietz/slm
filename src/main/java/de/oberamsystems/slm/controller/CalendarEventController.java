@@ -38,7 +38,7 @@ public class CalendarEventController {
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(1) : minDate;
 	    maxDate = maxDate == null ? LocalDateTime.now() : maxDate;
 
-		model.addAttribute("events", repo.findByStartAfter(LocalDateTime.now().minusDays(1), Sort.by("start"))); // find getup time instead of gotobed
+		model.addAttribute("events", repo.findByStartAfter(LocalDateTime.now().minusDays(1), Sort.by(Sort.Direction.DESC, "start"))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
 		model.addAttribute("minDate", minDate); //fixes off by one bug

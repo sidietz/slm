@@ -33,16 +33,16 @@ public class ActivityController {
 		Activity a = new Activity();
 		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		model.addAttribute("activities", repo.findAll());
+		model.addAttribute("activities", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		model.addAttribute("activity", a);
-		model.addAttribute("activityTypes", typeRepo.findAll());
+		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "activities";
 	}
 	
 	@PostMapping("/activities")
 	public String submitActivity(@ModelAttribute Activity activity, Model model) {
-		model.addAttribute("activities", repo.findAll());
-		model.addAttribute("activityTypes", typeRepo.findAll());
+		model.addAttribute("activities", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
+		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(activity);
 		model.addAttribute("activity", activity);
 		return "redirect:/activities";
@@ -50,7 +50,7 @@ public class ActivityController {
 	
 	@GetMapping("/activity-types")
 	public String addActivityType(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("activityTypes", typeRepo.findAll());
+		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		ActivityType type = new ActivityType();
 		model.addAttribute("type", type);
 		return "activity-types";
@@ -58,7 +58,7 @@ public class ActivityController {
 	
 	@PostMapping("/activity-types")
 	public String submitActivityType(@ModelAttribute ActivityType type, Model model) {
-		model.addAttribute("activityTypes", typeRepo.findAll());
+		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		typeRepo.save(type);
 		model.addAttribute("type", type);
 		return "redirect:/activity-types";
