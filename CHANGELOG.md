@@ -27,6 +27,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added `CREATE EXTENSION IF NOT EXISTS postgis;` and geodesic air distance calculation triggers to [`tables.sql`](src/main/resources/tables.sql).
   - Deduplicated `platform` table definition in [`tables.sql`](src/main/resources/tables.sql).
   - Added `category human_category` column to `human` table across all baseline schemas.
+  - Adjusted [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java) to permit public access to `/human-events`, `/human-events/**`, `/events`, and `/events/**`.
+  - Added Spring Security filter chain integration test in [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) verifying authorization rules for human-events endpoints.
 
 ## [0.0.2f] - 2026-10-18
 

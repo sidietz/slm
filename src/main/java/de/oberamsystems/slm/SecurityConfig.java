@@ -75,7 +75,7 @@ public class SecurityConfig {
 						.requestMatchers("/publishers", "/studios", "/vendors", "/manufacturers").permitAll()
 						.requestMatchers("/activities", "/sports", "/sleep-times", "/gaming-sessions").permitAll()
 						.requestMatchers("/books", "/authors", "/reading-sessions").permitAll()
-						.requestMatchers("/humans").permitAll()
+						.requestMatchers("/humans", "/human-events", "/human-events/**", "/events", "/events/**").permitAll()
 						.requestMatchers("/selfies").permitAll()
 						.requestMatchers("/appointments", "/doctors", "/specialities").permitAll()
 						.requestMatchers("/last-done-habit-entries").permitAll()

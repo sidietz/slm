@@ -65,7 +65,15 @@ public class HumanEventController {
 	}
 
 	@PostMapping({"/human-events", "/events"})
-	public String saveEvent(@ModelAttribute HumanEvent event) {
+	public String saveEvent(@ModelAttribute HumanEvent event,
+	                         @RequestParam(required = false) Long humanId,
+	                         @RequestParam(required = false) Long secondaryHumanId) {
+		if (humanId != null) {
+			humanRepo.findById(humanId).ifPresent(event::setHuman);
+		}
+		if (secondaryHumanId != null) {
+			humanRepo.findById(secondaryHumanId).ifPresent(event::setSecondaryHuman);
+		}
 		if (event.getTitle() == null || event.getTitle().trim().isEmpty()) {
 			String contactName = event.getHuman() != null ? event.getHuman().getFullName() : "Contact";
 			event.setTitle(event.getEventType().getDisplayName() + " – " + contactName);

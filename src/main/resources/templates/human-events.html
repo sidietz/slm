@@ -225,14 +225,14 @@
                         </div>
                         <div class="mb-3">
                             <label for="primaryContact" class="form-label fw-semibold">Primary Contact <span class="text-danger">*</span></label>
-                            <select id="primaryContact" class="form-select" th:field="*{human.id}" required>
+                            <select id="primaryContact" class="form-select" name="humanId" required>
                                 <option value="" disabled selected>-- Select Contact --</option>
                                 <option th:each="h : ${humans}" th:value="${h.id}" th:text="${h.fullName} + (${h.deceased} ? ' (Deceased)' : '')"></option>
                             </select>
                         </div>
                         <div class="mb-3">
                             <label for="secondaryContact" class="form-label fw-semibold">Secondary Contact (Optional, for Couples / Weddings)</label>
-                            <select id="secondaryContact" class="form-select" th:field="*{secondaryHuman.id}">
+                            <select id="secondaryContact" class="form-select" name="secondaryHumanId">
                                 <option value="">-- None --</option>
                                 <option th:each="h : ${humans}" th:value="${h.id}" th:text="${h.fullName}"></option>
                             </select>
