@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2d] - 2026-10-18
+
+### Added
+- Dedicated `SelfieStorageService` providing path traversal defense (CWE-22) via strict canonical path boundary checks (`targetPath.startsWith(baseDir)`), regex-based extension validation, and raw byte storage integrity.
+- Direct native support for `.heic` and `.jpg` (and `.jpeg`) photo uploads, preserving original files without conversion or transcoding.
+- Comprehensive security test suite in `SelfieStorageServiceTest` verifying rejection of directory traversal attempts (`../../`, `..\..\`, `/etc/passwd`), invalid extensions, and format change replacement cleanup.
+
+### Changed
+- Refactored `SelfieController` to delegate file storage, validation, and error handling to `SelfieStorageService`.
+- Updated `selfies.html` upload form input accept attribute and label to explicitly allow and support `.jpg` and `.heic` files without conversion.
+
 ## [0.0.2c] - 2026-10-18
 
 ### Added
@@ -108,7 +119,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2c...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2d...HEAD
+[0.0.2d]: https://github.com/sidietz/slm/compare/v0.0.2c...v0.0.2d
 [0.0.2c]: https://github.com/sidietz/slm/compare/v0.0.2b...v0.0.2c
 [0.0.2b]: https://github.com/sidietz/slm/compare/v0.0.2a...v0.0.2b
 [0.0.2a]: https://github.com/sidietz/slm/compare/v0.0.2-SNAPSHOT...v0.0.2a
