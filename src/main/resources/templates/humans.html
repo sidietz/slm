@@ -12,32 +12,55 @@
             <div class="col-lg-8">
                 <div class="card slm-table-card shadow-sm h-100">
                     <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contact Directory</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(humans)} + ' contacts'">0 contacts</span>
+                        <div>
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contact Directory</h5>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <a th:href="@{/human-events}" class="btn btn-sm btn-outline-primary rounded-pill">
+                                <i class="bi bi-calendar2-heart me-1"></i> Life Events &amp; Anniversaries
+                            </a>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2" th:text="${#lists.size(humans)} + ' contacts'">0 contacts</span>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
                                     <th class="ps-3" style="width: 60px;">ID</th>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
+                                    <th>Name</th>
                                     <th>Birthday</th>
-                                    <th class="pe-3">Category</th>
+                                    <th>Status / Death Date</th>
+                                    <th>Category</th>
+                                    <th class="pe-3 text-end">Events</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="human : ${humans}">
                                     <td class="ps-3 text-secondary font-monospace small" th:text="${human.id}"></td>
-                                    <td class="fw-semibold text-dark" th:text="${human.firstname}"></td>
-                                    <td class="fw-semibold text-dark" th:text="${human.lastname}"></td>
-                                    <td class="text-muted small" th:text="${human.birthday}"></td>
-                                    <td class="pe-3">
+                                    <td>
+                                        <span class="fw-semibold text-dark" th:text="${human.fullName}">Full Name</span>
+                                    </td>
+                                    <td class="text-muted small">
+                                        <span th:text="${human.birthday != null ? #dates.format(human.birthday, 'dd.MM.yyyy') : '—'}">01.01.1980</span>
+                                        <span th:if="${human.birthday != null and !human.deceased}" class="text-secondary small d-block" th:text="'(' + ${human.age} + ' yrs)'"></span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${human.deceased}" class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1">
+                                            <i class="bi bi-candle me-1"></i>Deceased <span th:if="${human.deathDate != null}" th:text="'(' + #dates.format(human.deathDate, 'dd.MM.yyyy') + ')'"></span>
+                                        </span>
+                                        <span th:if="${!human.deceased}" class="badge bg-success-subtle text-success px-2 py-1">Living</span>
+                                    </td>
+                                    <td>
                                         <span class="badge bg-light text-dark border px-2 py-1" th:text="${human.category}"></span>
+                                    </td>
+                                    <td class="pe-3 text-end">
+                                        <a th:href="@{/human-events(humanId=${human.id})}" class="btn btn-sm btn-outline-secondary rounded-pill" title="View Events">
+                                            <i class="bi bi-calendar-event me-1"></i>Events
+                                        </a>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(humans)}">
-                                    <td colspan="5" class="text-center py-4 text-muted">No contacts registered yet.</td>
+                                    <td colspan="6" class="text-center py-4 text-muted">No contacts registered yet.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -66,9 +89,13 @@
                                 <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
                                 <input type="text" id="lastName" th:field="*{lastname}" class="form-control" placeholder="e.g. Doe" required>
                             </div>
-                            <div class="mb-4">
+                            <div class="mb-3">
                                 <label for="birthday" class="form-label">Birthday <span class="text-danger">*</span></label>
                                 <input type="date" id="birthday" th:field="*{birthday}" class="form-control" required>
+                            </div>
+                            <div class="mb-4">
+                                <label for="deathDate" class="form-label">Death Date <span class="text-muted small">(Optional, for memorials)</span></label>
+                                <input type="date" id="deathDate" th:field="*{deathDate}" class="form-control">
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-2">
                                 <i class="bi bi-person-plus me-1"></i> Add Contact

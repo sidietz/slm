@@ -20,6 +20,11 @@ public class Human {
 	@Column(name = "birthday", columnDefinition = "DATE")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private Date birthday;
+	
+	@Column(name = "death_date", columnDefinition = "DATE")
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	private Date deathDate;
+	
 	@Enumerated(EnumType.STRING)
 	@JdbcType(value = PostgreSQLEnumJdbcType.class)
 	private HumanCategory category;
@@ -27,20 +32,17 @@ public class Human {
 	@Formula(value = "date_part('year', age(birthday))")
 	private int age;
 	
+	@Formula(value = "CASE WHEN death_date IS NOT NULL THEN TRUE ELSE FALSE END")
+	private Boolean deceased;
 	
-	/*
-	chatgpt solution
-	@Formula(
-        "EXTRACT(DAY FROM (" +
-        "CASE " +
-        " WHEN (birthdate + (date_part('year', age(current_date, birthdate)) + 1) * interval '1 year')::date <= current_date " +
-        " THEN (birthdate + (date_part('year', age(current_date, birthdate)) + 2) * interval '1 year')::date - current_date " +
-        " ELSE (birthdate + (date_part('year', age(current_date, birthdate)) + 1) * interval '1 year')::date - current_date " +
-        "END))"
-    )
-	 */
+	@Formula(value = "CASE WHEN death_date IS NOT NULL THEN date_part('year', age(death_date, birthday)) ELSE NULL END")
+	private Integer ageAtDeath;
+	
 	@Formula(value = "CASE WHEN extract(day FROM this_years_birthday(birthday) - now()) <= 0 THEN extract(day FROM this_years_birthday(birthday) - now()) + 365 ELSE extract(day FROM this_years_birthday(birthday) - now()) END")
 	private int daysUntilBirthday;
+	
+	@OneToMany(mappedBy = "human", cascade = CascadeType.ALL, orphanRemoval = true)
+	private java.util.List<HumanEvent> events = new java.util.ArrayList<>();
 	
 	public Human() {
 	}
@@ -56,6 +58,10 @@ public class Human {
 	
 	public long getId() {
 		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
 	}
 
 	public String getFirstname() {
@@ -74,12 +80,39 @@ public class Human {
 		this.lastname = lastname;
 	}
 
+	public String getFullName() {
+		String fn = firstname != null ? firstname : "";
+		String ln = lastname != null ? lastname : "";
+		String full = (fn + " " + ln).trim();
+		return full.isEmpty() ? "Unknown Contact" : full;
+	}
+
 	public Date getBirthday() {
 		return birthday;
 	}
 
 	public void setBirthday(Date birthday) {
 		this.birthday = birthday;
+	}
+
+	public Date getDeathDate() {
+		return deathDate;
+	}
+
+	public void setDeathDate(Date deathDate) {
+		this.deathDate = deathDate;
+	}
+
+	public Boolean getDeceased() {
+		return deceased;
+	}
+
+	public boolean isDeceased() {
+		return deceased != null && deceased;
+	}
+
+	public Integer getAgeAtDeath() {
+		return ageAtDeath;
 	}
 
 	public int getAge() {
@@ -96,5 +129,13 @@ public class Human {
 
 	public void setCategory(HumanCategory category) {
 		this.category = category;
+	}
+
+	public java.util.List<HumanEvent> getEvents() {
+		return events;
+	}
+
+	public void setEvents(java.util.List<HumanEvent> events) {
+		this.events = events;
 	}
 }

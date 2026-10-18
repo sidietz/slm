@@ -148,8 +148,13 @@
 
         <!-- System Messages / Alerts -->
         <div class="mt-4" th:if="${msgs != null and !msgs.empty}">
-            <div class="alert alert-info shadow-sm" th:each="msg : ${msgs}">
-                <i class="bi bi-info-circle me-2"></i><span th:text="${msg}">Notification</span>
+            <div class="alert alert-info shadow-sm d-flex justify-content-between align-items-center flex-wrap gap-2" th:each="msg : ${msgs}">
+                <div>
+                    <i class="bi bi-info-circle me-2"></i><span th:text="${msg}">Notification</span>
+                </div>
+                <a th:if="${#strings.contains(msg, 'milestone') or #strings.contains(msg, 'birthday')}" th:href="@{/human-events}" class="btn btn-sm btn-outline-primary rounded-pill">
+                    <i class="bi bi-calendar2-heart me-1"></i>View Events &rarr;
+                </a>
             </div>
         </div>
     </main>

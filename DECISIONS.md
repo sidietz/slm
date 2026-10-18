@@ -492,3 +492,33 @@ The default `docker-compose.yml` previously used standard `postgres`, which lack
    ```
 4. Update [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql) to include PostGIS extensions, modern polymorphic session tables, and spatial distance calculation triggers.
 5. Modernize [`Dockerfile`](file:///home/simon/code/eclipse/slm/Dockerfile) runtime base image to `eclipse-temurin:27-jre` matching Java 27.
+
+---
+
+## ADR 015: Unified Life Events, Anniversaries & Memorials Architecture
+
+### Status
+Accepted (v0.0.2g)
+
+### Context
+Previously, contact date management was limited to a single `birthday: DATE` field on the `Human` entity. In reality, personal relationships encompass a wide spectrum of annual recurring milestones:
+1. **Birthdays**: Age milestones for living contacts.
+2. **Memorials & Death Dates**: Remembrance days for deceased friends, relatives, and historical figures, calculating years since passing and respecting deceased status.
+3. **Wedding & Relationship Anniversaries**: Milestone celebrations (e.g. Silver or Golden Wedding) that link primary and secondary partner contacts.
+4. **Career & Custom Anniversaries**: Workplace milestones, graduations, or personal achievements.
+
+### Decision
+1. **First-Class `HumanEvent` Entity**:
+   Introduce a unified `human_event` table and entity modeling all annual life events with:
+   - `human_id` (primary contact) and optional `secondary_human_id` (partner contact for couple celebrations).
+   - `event_type` (`BIRTHDAY`, `MEMORIAL`, `WEDDING_ANNIVERSARY`, `RELATIONSHIP_ANNIVERSARY`, `WORK_ANNIVERSARY`, `CUSTOM`).
+   - `event_date` (original historic date) and `annual_recurrence`.
+2. **Deceased Contact Tracking on `Human`**:
+   Extend `human` with `death_date DATE` and formula properties `is_deceased` and `age_at_death` to distinguish active living contacts from remembered ones.
+3. **PostgreSQL Helper Functions**:
+   Introduce `next_annual_occurrence(date)` and `days_until_annual_occurrence(date)` supporting leap years (February 29 -> February 28 on non-leap years) and rolling over past events to next year with positive day countdowns.
+4. **Dedicated Events Hub (`/human-events`) & Dashboard Integration**:
+   - Provide an interactive hub with filter pills, countdown badges, and milestone labels.
+   - Aggregate top upcoming milestones into the Home Dashboard alert stream.
+5. **Seamless Backward Compatibility & Auto-Migration**:
+   Automatically migrate existing `human.birthday` values into initial `BIRTHDAY` events in `migration_2026-10-18_5.sql` and keep contact edits synchronized.

@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2g] - 2026-10-18
+
+### Added
+- Implemented the **Life Events, Anniversaries & Memorials System** (ADR 015):
+  - Created first-class `HumanEvent` entity and `EventType` enum supporting `BIRTHDAY`, `MEMORIAL`, `WEDDING_ANNIVERSARY`, `RELATIONSHIP_ANNIVERSARY`, `WORK_ANNIVERSARY`, and `CUSTOM`.
+  - Added support for couple/partner anniversaries linking primary and optional secondary contacts (`secondaryHuman`).
+  - Added `death_date` tracking on `Human` with derived `deceased` and `ageAtDeath` formulas.
+  - Implemented SQL helper functions `next_annual_occurrence(date)` and `days_until_annual_occurrence(date)` supporting leap years and year-rollover countdowns.
+  - Added dedicated **Events & Anniversaries Hub** at `/human-events` (`human-events.html`) with category filter pills, timeline countdown badges, milestone counters, and event creation modal.
+  - Enhanced Contact Directory (`/humans`) with deceased indicators, death date recording, and direct links to contact events.
+  - Enhanced Home Dashboard (`/`) with upcoming milestone notifications and direct navigation to events.
+  - Added `src/main/resources/migration_2026-10-18_5.sql` with automatic migration of existing `human.birthday` entries into initial `BIRTHDAY` events.
+  - Added unit test suite `HumanEventControllerTest` and Testcontainers integration test `HumanEventIT`.
+- Added `src/main/resources/migration_2026-10-18_4.sql` providing the DST-immune, leap-year safe `this_years_birthday(date)` helper function and geodesic air distance calculation triggers for legacy databases.
+- Added Section 6 "Database Migrations & Legacy Upgrades" to [`AGENTS.md`](AGENTS.md) codifying `tables.sql` authority and migration lifecycle protocols.
+
+### Changed
+- Synchronized authoritative baseline schema files across [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql):
+  - Fixed `this_years_birthday(date)` helper function using `make_date` to prevent 1-day shifts caused by timestamp arithmetic across Daylight Saving Time (DST) clock boundaries and safely handling February 29 leap days.
+  - Added `CREATE EXTENSION IF NOT EXISTS postgis;` and geodesic air distance calculation triggers to [`tables.sql`](src/main/resources/tables.sql).
+  - Deduplicated `platform` table definition in [`tables.sql`](src/main/resources/tables.sql).
+  - Added `category human_category` column to `human` table across all baseline schemas.
+
 ## [0.0.2f] - 2026-10-18
 
 ### Added
@@ -19,12 +42,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preserved full backward compatibility for `/sleep-times`, `/sleeptime-bb`, and `/api/sleeptimes` using transient compatibility accessors (`gotobed`, `getup`, `sleeptime`).
 - Added end-to-end integration tests in `SleepTimeIT` verifying `SleepSession` persistence, polymorphic session queries, and endpoint rendering against live PostgreSQL 18 Testcontainers.
 - Upgraded Jackson to Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`) with `jackson-annotations:2.22`.
-- Added `src/main/resources/migration_2026-10-18_4.sql` providing the DST-immune, leap-year safe `this_years_birthday(date)` helper function and geodesic air distance calculation triggers for legacy databases.
-- Synchronized authoritative baseline schema files across [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql):
-  - Fixed `this_years_birthday(date)` helper function using `make_date` to prevent 1-day shifts caused by timestamp arithmetic across Daylight Saving Time (DST) clock boundaries and safely handling February 29 leap days.
-  - Added `CREATE EXTENSION IF NOT EXISTS postgis;` and geodesic air distance calculation triggers to [`tables.sql`](src/main/resources/tables.sql).
-  - Deduplicated `platform` table definition in [`tables.sql`](src/main/resources/tables.sql).
-- Added Section 6 "Database Migrations & Legacy Upgrades" to [`AGENTS.md`](AGENTS.md) codifying `tables.sql` authority and migration lifecycle protocols.
 
 ### Changed
 - Overhauled and updated [`DECISIONS.md`](DECISIONS.md) into a comprehensive Architecture Decision Record suite containing 14 formalized ADRs (ADR 001 through ADR 014) synthesized from git history, architectural evaluations, and [`doc/plans/`](doc/plans/).
@@ -166,7 +183,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2e...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2g...HEAD
+[0.0.2g]: https://github.com/sidietz/slm/compare/v0.0.2f...v0.0.2g
+[0.0.2f]: https://github.com/sidietz/slm/compare/v0.0.2e...v0.0.2f
 [0.0.2e]: https://github.com/sidietz/slm/compare/v0.0.2d...v0.0.2e
 [0.0.2d]: https://github.com/sidietz/slm/compare/v0.0.2c...v0.0.2d
 [0.0.2c]: https://github.com/sidietz/slm/compare/v0.0.2b...v0.0.2c
@@ -175,3 +194,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 [0.0.2-SNAPSHOT]: https://github.com/sidietz/slm/compare/v0.0.1a-SNAPSHOT...v0.0.2-SNAPSHOT
 [0.0.1a-SNAPSHOT]: https://github.com/sidietz/slm/compare/v0.0.1-SNAPSHOT...v0.0.1a-SNAPSHOT
 [0.0.1-SNAPSHOT]: https://github.com/sidietz/slm/releases/tag/v0.0.1-SNAPSHOT
+
