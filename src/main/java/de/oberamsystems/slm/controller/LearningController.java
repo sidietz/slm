@@ -2,6 +2,7 @@ package de.oberamsystems.slm.controller;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -48,7 +49,7 @@ public class LearningController {
 		model.addAttribute("learningsessions", learningSessionRepo.findAll());
 		LearningItem li = rs.getLearningItem();
 		if (li != null) {
-			li.setLastUpdated(LocalDateTime.now());
+			li.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 			repo.save(li);
 		}
 		model.addAttribute("items", repo.findAll());
@@ -66,7 +67,7 @@ public class LearningController {
 		model.addAttribute("sources", SourceEnum.values());
 		model.addAttribute("statuss", StatusEnum.values());
 		LearningItem i = new LearningItem();
-		i.setLastUpdated(LocalDateTime.now());
+		i.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("learningitem", i);
 		return "learning-items";
 	}

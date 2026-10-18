@@ -2,6 +2,7 @@ package de.oberamsystems.slm.controller;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -132,8 +133,8 @@ public class SessionController {
 		list.sort(Comparator.comparing(CodingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
 		CodingSession cs = new CodingSession();
-		cs.setStart(LocalDateTime.now().minusHours(1));
-		cs.setEnd(LocalDateTime.now());
+		cs.setStart(LocalDateTime.now().minusHours(1).truncatedTo(ChronoUnit.MINUTES));
+		cs.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("codingSession", cs);
 		return "coding-sessions";
 	}
@@ -153,8 +154,8 @@ public class SessionController {
 		model.addAttribute("sessions", list);
 		model.addAttribute("employers", employerRepo.findAll());
 		WorkingSession ws = new WorkingSession();
-		ws.setStart(LocalDateTime.now().minusHours(2));
-		ws.setEnd(LocalDateTime.now());
+		ws.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
+		ws.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		ws.setBillable(true);
 		model.addAttribute("workingSession", ws);
 		return "working-sessions";
@@ -190,7 +191,7 @@ public class SessionController {
 		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
 		if (session.getLearningItem() != null && session.getLearningItem().getId() != null) {
 			learningItemRepo.findById(session.getLearningItem().getId()).ifPresent(item -> {
-				item.setLastUpdated(LocalDateTime.now());
+				item.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 				learningItemRepo.save(item);
 			});
 		}

@@ -17,7 +17,7 @@ public class LocalDateTimeConverter2 extends GenericConversionService
 
 	@Override
 	public Object convert(Object source, TypeDescriptor sourceType, TypeDescriptor targetType) {
-		return (Object) (((LocalDateTime) source).format(DateTimeFormatter.ofPattern("yyy-MM-dd HH:mm:ss")));
+		return (Object) (((LocalDateTime) source).format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm")));
 	}
 
 	@Override

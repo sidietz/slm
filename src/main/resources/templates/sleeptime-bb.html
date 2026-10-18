@@ -47,8 +47,8 @@
                     <tbody>
                         <tr th:each="e : ${sleeptimes}">
                             <td class="text-muted small" th:text="${e.id}">1</td>
-                            <td class="small" th:text="${e.gotobed}">2026-01-01T23:00</td>
-                            <td class="small" th:text="${e.getup}">2026-01-02T07:30</td>
+                            <td class="small" th:text="${#temporals.format(e.gotobed, 'dd.MM.yyyy HH:mm')}">01.01.2026 23:00</td>
+                            <td class="small" th:text="${#temporals.format(e.getup, 'dd.MM.yyyy HH:mm')}">02.01.2026 07:30</td>
                             <td>
                                 <span class="badge bg-success text-white" th:text="${{e.sleeptime}}">510 min</span>
                             </td>

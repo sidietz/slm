@@ -19,7 +19,7 @@ public class LocalDateTimeConverter implements Converter<LocalDateTime, String>,
 
 	@Override
 	public String convert(LocalDateTime source) {
-		return source.format(DateTimeFormatter.ofPattern("yyy-MM-dd HH:mm:ss"));
+		return source.format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm"));
 	}
 	
 	@Override

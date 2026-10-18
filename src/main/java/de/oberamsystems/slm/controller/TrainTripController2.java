@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -43,8 +44,8 @@ public class TrainTripController2 {
 		TrainLine l = lineRepo.getReferenceById(id);
 		tt.setLine(l);
 		model.addAttribute("lineId", id);
-		tt.setStart(LocalDateTime.now());
-		tt.setEnd(LocalDateTime.now());
+		tt.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		tt.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findByLines_Id(l.getId()));
 		model.addAttribute("lines", lineRepo.findAll());

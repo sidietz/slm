@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +31,8 @@ public class ActivityController {
 	@GetMapping("/activities")
 	public String addActivity(@RequestParam(required = false) Long id, Model model) {
 		Activity a = new Activity();
-		a.setStart(LocalDateTime.now());
-		a.setEnd(LocalDateTime.now());
+		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("activities", repo.findAll());
 		model.addAttribute("activity", a);
 		model.addAttribute("activityTypes", typeRepo.findAll());

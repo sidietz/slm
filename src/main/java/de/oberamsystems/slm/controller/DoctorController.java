@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -36,11 +37,11 @@ public class DoctorController {
 	@GetMapping("/appointments")
 	public String addAppointments(@RequestParam(required = false) Long id, Model model) {
 		Appointment a = new Appointment();
-		a.setStart(LocalDateTime.now());
-		a.setEnd(LocalDateTime.now());
-		a.setDeparture(LocalDateTime.now());
-		a.setArrival(LocalDateTime.now());
-		a.setArrivalHome(LocalDateTime.now());
+		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setDeparture(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
 		model.addAttribute("doctors", doctorRepo.findAll());
 		model.addAttribute("appointments", repo.findAll());
@@ -127,11 +128,11 @@ public class DoctorController {
 	@GetMapping("/add-appointment")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
 		Appointment a = new Appointment();
-		a.setStart(LocalDateTime.now());
-		a.setEnd(LocalDateTime.now());
-		a.setDeparture(LocalDateTime.now());
-		a.setArrival(LocalDateTime.now());
-		a.setArrivalHome(LocalDateTime.now());
+		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setDeparture(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
 		model.addAttribute("doctors", doctorRepo.findAll());
 		return "add-appointment";
