@@ -46,6 +46,7 @@
         .badge-reading { background-color: #06b6d4; color: white; }
         .badge-meditation { background-color: #10b981; color: white; }
         .badge-sport { background-color: #ef4444; color: white; }
+        .badge-sleep { background-color: #0d9488; color: white; }
         
         .nav-pills .nav-link {
             border-radius: 2rem;
@@ -148,6 +149,74 @@
             </div>
         </section>
 
+        <!-- Four Pillars Category Balance -->
+        <section class="row g-3 mb-4">
+            <div class="col-sm-6 col-lg-3">
+                <a th:href="@{/sessions?type=PRODUCTIVITY}" class="text-decoration-none">
+                    <div class="card metric-card p-3 bg-white border-start border-4 border-primary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-bold text-uppercase">Productivity</span>
+                                <h4 class="fw-bold mb-0 text-primary" th:text="${productivityDuration}">0m</h4>
+                                <span class="badge bg-primary-subtle text-primary mt-1" style="font-size: 0.7rem;">Code, Work, Learn, Read</span>
+                            </div>
+                            <div class="p-2 rounded-circle bg-primary-subtle text-primary">
+                                <i class="bi bi-lightning-charge-fill fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <a th:href="@{/sessions?type=SPORT}" class="text-decoration-none">
+                    <div class="card metric-card p-3 bg-white border-start border-4 border-danger">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-bold text-uppercase">Sport</span>
+                                <h4 class="fw-bold mb-0 text-danger" th:text="${sportDuration}">0m</h4>
+                                <span class="badge bg-danger-subtle text-danger mt-1" style="font-size: 0.7rem;">Fitness, Workouts, Cardio</span>
+                            </div>
+                            <div class="p-2 rounded-circle bg-danger-subtle text-danger">
+                                <i class="bi bi-activity fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <a th:href="@{/sessions?type=WELLNESS}" class="text-decoration-none">
+                    <div class="card metric-card p-3 bg-white border-start border-4" style="border-left-color: #0d9488 !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-bold text-uppercase">Wellness</span>
+                                <h4 class="fw-bold mb-0" style="color: #0d9488;" th:text="${wellnessDuration}">0m</h4>
+                                <span class="badge mt-1" style="font-size: 0.7rem; background-color: #ccfbf1; color: #0f766e;">Meditation &amp; Sleep</span>
+                            </div>
+                            <div class="p-2 rounded-circle" style="background-color: #ccfbf1; color: #0f766e;">
+                                <i class="bi bi-heart-pulse-fill fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-3">
+                <a th:href="@{/sessions?type=LEISURE}" class="text-decoration-none">
+                    <div class="card metric-card p-3 bg-white border-start border-4 border-warning">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="text-muted small fw-bold text-uppercase">Leisure</span>
+                                <h4 class="fw-bold mb-0 text-warning" th:text="${leisureDuration}">0m</h4>
+                                <span class="badge bg-warning-subtle text-warning mt-1" style="font-size: 0.7rem;">Gaming &amp; Recreation</span>
+                            </div>
+                            <div class="p-2 rounded-circle bg-warning-subtle text-warning">
+                                <i class="bi bi-controller fs-4"></i>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
         <!-- Filter Navigation Pills -->
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
             <ul class="nav nav-pills bg-white p-2 rounded-pill shadow-sm">
@@ -191,9 +260,17 @@
                         <i class="bi bi-activity me-1"></i> Sport
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'SLEEP'} ? 'active' : ''" href="/sessions?type=SLEEP">
+                        <i class="bi bi-moon-stars me-1"></i> Sleep
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex gap-2">
+                <a href="/sleeptime-bb" class="btn btn-sm btn-outline-success rounded-pill">
+                    <i class="bi bi-graph-up me-1"></i> Sleep Chart
+                </a>
                 <a href="/coding-sessions" class="btn btn-sm btn-outline-primary rounded-pill">
                     <i class="bi bi-code me-1"></i> Coding View
                 </a>
@@ -236,7 +313,8 @@
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Learning')} ? 'badge-learning' : 
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Gaming')} ? 'badge-gaming' : 
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Reading')} ? 'badge-reading' : 
-                                    (${#strings.contains(s.getClass().getSimpleName(), 'Meditation')} ? 'badge-meditation' : 'badge-sport'))))))"
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Meditation')} ? 'badge-meditation' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Sport')} ? 'badge-sport' : 'badge-sleep')))))))"
                                     th:text="${#strings.replace(s.getClass().getSimpleName(), 'Session', '')}">
                                     Session
                                 </span>
@@ -281,6 +359,16 @@
                                 <!-- Sport Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Sport')}">
                                     <strong th:text="${s.type != null ? s.type.name : 'Workout'}">Sport</strong>
+                                </div>
+                                <!-- Sleep Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Sleep')}">
+                                    <strong th:text="${s.isNap} ? 'Power Nap' : 'Night Sleep'">Sleep</strong>
+                                    <span th:if="${s.awakeCount != null and s.awakeCount > 0}" class="badge bg-secondary-subtle text-secondary ms-1" th:text="${s.awakeCount} + ' wake-ups'">Awake</span>
+                                    <div class="small text-muted" th:if="${s.deepSleepDuration != null or s.remSleepDuration != null}">
+                                        <span th:if="${s.deepSleepDuration != null}" th:text="'Deep: ' + ${{s.deepSleepDuration}}">Deep</span>
+                                        <span th:if="${s.deepSleepDuration != null and s.remSleepDuration != null}"> • </span>
+                                        <span th:if="${s.remSleepDuration != null}" th:text="'REM: ' + ${{s.remSleepDuration}}">REM</span>
+                                    </div>
                                 </div>
                             </td>
 
@@ -371,6 +459,9 @@
 
                             <input type="radio" class="btn-check" name="modalType" id="typeSport" value="sport" onchange="switchModalForm('sport')">
                             <label class="btn btn-outline-primary" for="typeSport"><i class="bi bi-activity me-1"></i> Sport</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeSleep" value="sleep" onchange="switchModalForm('sleep')">
+                            <label class="btn btn-outline-primary" for="typeSleep"><i class="bi bi-moon-stars me-1"></i> Sleep</label>
                         </div>
                     </div>
 
@@ -705,6 +796,61 @@
                             <button type="submit" class="btn btn-primary fw-bold">Save Sport Session</button>
                         </div>
                     </form>
+
+                    <!-- SLEEP FORM -->
+                    <form id="form-sleep" th:action="@{/sessions/sleep}" th:object="${sleepSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Bedtime (Start)</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Wake Up (End)</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Sleep Type</label>
+                                <select th:field="*{isNap}" class="form-select">
+                                    <option value="false" selected>Night Sleep</option>
+                                    <option value="true">Power Nap</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Deep Sleep (minutes)</label>
+                                <input type="number" name="deepSleepMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">REM Sleep (minutes)</label>
+                                <input type="number" name="remSleepMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Awakenings Count</label>
+                                <input type="number" th:field="*{awakeCount}" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Awake / Disruptions (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Sleep Quality Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5 - Excellent / Refreshed)</option>
+                                    <option value="4">★★★★☆ (4 - Good Rest)</option>
+                                    <option value="3" selected>★★★☆☆ (3 - Moderate)</option>
+                                    <option value="2">★★☆☆☆ (2 - Restless)</option>
+                                    <option value="1">★☆☆☆☆ (1 - Poor / Exhausted)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Sleep Notes / Dreams</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2" placeholder="Dream recall, sleep environment, disruptions"></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Sleep Session</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -712,7 +858,7 @@
 
     <script>
         function switchModalForm(type) {
-            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport'];
+            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep'];
             forms.forEach(f => {
                 const formEl = document.getElementById('form-' + f);
                 if (formEl) {

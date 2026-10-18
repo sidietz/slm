@@ -26,6 +26,7 @@ public class SessionControllerTest {
     private ReadingSessionRepository readingSessionRepo;
     private MeditationSessionRepository meditationSessionRepo;
     private SportSessionRepository sportSessionRepo;
+    private SleepSessionRepository sleepSessionRepo;
     private LearningItemRepository learningItemRepo;
     private GameRepository gameRepo;
     private DeviceRepository deviceRepo;
@@ -45,6 +46,7 @@ public class SessionControllerTest {
         readingSessionRepo = mock(ReadingSessionRepository.class);
         meditationSessionRepo = mock(MeditationSessionRepository.class);
         sportSessionRepo = mock(SportSessionRepository.class);
+        sleepSessionRepo = mock(SleepSessionRepository.class);
         learningItemRepo = mock(LearningItemRepository.class);
         gameRepo = mock(GameRepository.class);
         deviceRepo = mock(DeviceRepository.class);
@@ -60,6 +62,7 @@ public class SessionControllerTest {
         setField("readingSessionRepo", readingSessionRepo);
         setField("meditationSessionRepo", meditationSessionRepo);
         setField("sportSessionRepo", sportSessionRepo);
+        setField("sleepSessionRepo", sleepSessionRepo);
         setField("learningItemRepo", learningItemRepo);
         setField("gameRepo", gameRepo);
         setField("deviceRepo", deviceRepo);
@@ -226,6 +229,80 @@ public class SessionControllerTest {
         assertEquals("redirect:/sessions?type=SPORT", redirectSport);
         assertEquals(Duration.ofMinutes(5), ss.getBreakDuration());
         verify(sportSessionRepo).save(ss);
+
+        // Sleep
+        SleepSession sleep = new SleepSession();
+        String redirectSleep = controller.submitSleepSession(sleep, 15L, 90L, 80L);
+        assertEquals("redirect:/sessions?type=SLEEP", redirectSleep);
+        assertEquals(Duration.ofMinutes(15), sleep.getBreakDuration());
+        assertEquals(Duration.ofMinutes(90), sleep.getDeepSleepDuration());
+        assertEquals(Duration.ofMinutes(80), sleep.getRemSleepDuration());
+        verify(sleepSessionRepo).save(sleep);
+    }
+
+    @Test
+    public void testViewSessionsFourPillarsAndSleep() {
+        List<Session> mockList = new ArrayList<>();
+
+        CodingSession cs = new CodingSession();
+        cs.setStart(LocalDateTime.now().minusHours(2));
+        cs.setEnd(LocalDateTime.now().minusHours(1));
+        cs.setNetDuration(Duration.ofMinutes(60));
+        mockList.add(cs);
+
+        SportSession ss = new SportSession();
+        ss.setStart(LocalDateTime.now().minusHours(4));
+        ss.setEnd(LocalDateTime.now().minusHours(3));
+        ss.setNetDuration(Duration.ofMinutes(45));
+        mockList.add(ss);
+
+        SleepSession sl = new SleepSession();
+        sl.setStart(LocalDateTime.now().minusHours(12));
+        sl.setEnd(LocalDateTime.now().minusHours(4));
+        sl.setNetDuration(Duration.ofHours(8));
+        mockList.add(sl);
+
+        GamingSession gs = new GamingSession();
+        gs.setStart(LocalDateTime.now().minusHours(14));
+        gs.setEnd(LocalDateTime.now().minusHours(13));
+        gs.setNetDuration(Duration.ofMinutes(60));
+        mockList.add(gs);
+
+        when(sessionRepo.findAll()).thenReturn(mockList);
+
+        // Test Category Balances on ALL
+        ConcurrentModel modelAll = new ConcurrentModel();
+        controller.viewSessions("ALL", modelAll);
+        assertEquals("1h 00m", modelAll.getAttribute("productivityDuration"));
+        assertEquals("45m", modelAll.getAttribute("sportDuration"));
+        assertEquals("8h 00m", modelAll.getAttribute("wellnessDuration"));
+        assertEquals("1h 00m", modelAll.getAttribute("leisureDuration"));
+        assertNotNull(modelAll.getAttribute("sleepSession"));
+
+        // Test SPORT filter (separate pillar)
+        ConcurrentModel modelSport = new ConcurrentModel();
+        controller.viewSessions("SPORT", modelSport);
+        assertEquals(1, modelSport.getAttribute("totalSessionsCount"));
+
+        // Test WELLNESS filter (includes Sleep & Meditation)
+        ConcurrentModel modelWellness = new ConcurrentModel();
+        controller.viewSessions("WELLNESS", modelWellness);
+        assertEquals(1, modelWellness.getAttribute("totalSessionsCount"));
+
+        // Test SLEEP specific filter
+        ConcurrentModel modelSleep = new ConcurrentModel();
+        controller.viewSessions("SLEEP", modelSleep);
+        assertEquals(1, modelSleep.getAttribute("totalSessionsCount"));
+
+        // Test PRODUCTIVITY filter
+        ConcurrentModel modelProd = new ConcurrentModel();
+        controller.viewSessions("PRODUCTIVITY", modelProd);
+        assertEquals(1, modelProd.getAttribute("totalSessionsCount"));
+
+        // Test LEISURE filter
+        ConcurrentModel modelLeisure = new ConcurrentModel();
+        controller.viewSessions("LEISURE", modelLeisure);
+        assertEquals(1, modelLeisure.getAttribute("totalSessionsCount"));
     }
 
     @Test

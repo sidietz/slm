@@ -64,6 +64,9 @@ public class SessionController {
 	private SportTypeRepository sportTypeRepo;
 
 	@Autowired
+	private SleepSessionRepository sleepSessionRepo;
+
+	@Autowired
 	private EmployerRepository employerRepo;
 
 	@GetMapping("/sessions")
@@ -75,6 +78,23 @@ public class SessionController {
 		List<Session> filteredSessions;
 		if ("ALL".equalsIgnoreCase(type)) {
 			filteredSessions = allSessions;
+		} else if ("PRODUCTIVITY".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof CodingSession || s instanceof WorkingSession
+							|| s instanceof LearningSession || s instanceof ReadingSession)
+					.collect(Collectors.toList());
+		} else if ("SPORT".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof SportSession)
+					.collect(Collectors.toList());
+		} else if ("WELLNESS".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof MeditationSession || s instanceof SleepSession)
+					.collect(Collectors.toList());
+		} else if ("LEISURE".equalsIgnoreCase(type)) {
+			filteredSessions = allSessions.stream()
+					.filter(s -> s instanceof GamingSession)
+					.collect(Collectors.toList());
 		} else {
 			filteredSessions = allSessions.stream()
 					.filter(s -> {
@@ -107,12 +127,38 @@ public class SessionController {
 
 		double avgFocusRating = ratedCount > 0 ? (focusRatingSum / ratedCount) : 0.0;
 
+		// Calculate four pillars category balances across all sessions
+		Duration productivityDuration = Duration.ZERO;
+		Duration sportDuration = Duration.ZERO;
+		Duration wellnessDuration = Duration.ZERO;
+		Duration leisureDuration = Duration.ZERO;
+
+		for (Session s : allSessions) {
+			Duration d = s.getNetDuration() != null ? s.getNetDuration()
+					: (s.getDuration() != null ? s.getDuration() : Duration.ZERO);
+			if (s instanceof CodingSession || s instanceof WorkingSession
+					|| s instanceof LearningSession || s instanceof ReadingSession) {
+				productivityDuration = productivityDuration.plus(d);
+			} else if (s instanceof SportSession) {
+				sportDuration = sportDuration.plus(d);
+			} else if (s instanceof MeditationSession || s instanceof SleepSession) {
+				wellnessDuration = wellnessDuration.plus(d);
+			} else if (s instanceof GamingSession) {
+				leisureDuration = leisureDuration.plus(d);
+			}
+		}
+
 		model.addAttribute("sessions", filteredSessions);
 		model.addAttribute("activeType", type.toUpperCase());
 		model.addAttribute("totalSessionsCount", filteredSessions.size());
 		model.addAttribute("totalNetDuration", DurationFormatter.format(totalNetDuration));
 		model.addAttribute("totalBreakDuration", DurationFormatter.format(totalBreakDuration));
 		model.addAttribute("avgFocusRating", String.format(Locale.US, "%.1f", avgFocusRating));
+
+		model.addAttribute("productivityDuration", DurationFormatter.format(productivityDuration));
+		model.addAttribute("sportDuration", DurationFormatter.format(sportDuration));
+		model.addAttribute("wellnessDuration", DurationFormatter.format(wellnessDuration));
+		model.addAttribute("leisureDuration", DurationFormatter.format(leisureDuration));
 
 		// Reference items for the modal forms
 		populateReferenceData(model);
@@ -125,6 +171,7 @@ public class SessionController {
 		model.addAttribute("readingSession", new ReadingSession());
 		model.addAttribute("meditationSession", new MeditationSession());
 		model.addAttribute("sportSession", new SportSession());
+		model.addAttribute("sleepSession", new SleepSession());
 
 		return "sessions";
 	}
@@ -238,6 +285,22 @@ public class SessionController {
 		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
 		sportSessionRepo.save(session);
 		return "redirect:/sessions?type=SPORT";
+	}
+
+	@PostMapping("/sessions/sleep")
+	public String submitSleepSession(@ModelAttribute SleepSession session,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			@RequestParam(required = false, defaultValue = "0") Long deepSleepMinutes,
+			@RequestParam(required = false, defaultValue = "0") Long remSleepMinutes) {
+		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		if (deepSleepMinutes != null && deepSleepMinutes > 0) {
+			session.setDeepSleepDuration(DurationFormatter.fromMinutes(deepSleepMinutes));
+		}
+		if (remSleepMinutes != null && remSleepMinutes > 0) {
+			session.setRemSleepDuration(DurationFormatter.fromMinutes(remSleepMinutes));
+		}
+		sleepSessionRepo.save(session);
+		return "redirect:/sessions?type=SLEEP";
 	}
 
 	@PostMapping("/sessions/delete/{id}")
