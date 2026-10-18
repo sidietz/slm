@@ -111,9 +111,9 @@
                             <td class="small" th:text="${#temporals.format(s.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 20:00</td>
                             <td class="small" th:text="${#temporals.format(s.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 22:00</td>
                             <td>
-                                <span class="badge bg-warning text-dark" th:text="${s.netDuration != null ? s.netDuration : (s.duration != null ? s.duration : '-')}">2h 00m</span>
+                                <span class="badge bg-warning text-dark" th:text="${{s.netDuration != null ? s.netDuration : s.duration}}">02:00</span>
                             </td>
-                            <td class="small text-muted" th:text="${s.breakDuration != null ? s.breakDuration : '0m'}">0m</td>
+                            <td class="small text-muted" th:text="${{s.breakDuration}}">00:00</td>
                             <td>
                                 <span th:if="${s.focusRating != null and s.focusRating > 0}" class="star-rating">
                                     <span th:each="i : ${#numbers.sequence(1, s.focusRating)}">★</span>

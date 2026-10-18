@@ -13,18 +13,21 @@ public class DurationConverter implements Converter<Duration, String> {
 	
 	@Override
 	public String convert(Duration source) {
+		if (source == null) {
+			return "";
+		}
 		log.trace(source.toString());
-		String str = "";
-		long days = source.toDaysPart();
-		int hours = source.toHoursPart();
-		int minutes = source.toMinutesPart();
-		int seconds = source.toSecondsPart();
+		Duration abs = source.abs();
+		String str = source.isNegative() ? "-" : "";
+		long days = abs.toDaysPart();
+		int hours = abs.toHoursPart();
+		int minutes = abs.toMinutesPart();
 		
 		if (days != 0) {
-			str = str + String.valueOf(days) + "D ";
+			str = str + days + "D ";
 		}
 		
-		str = str + String.format("%02d", hours) + ":" + String.format("%02d", minutes)+ ":" + String.format("%02d", seconds);
+		str = str + String.format("%02d:%02d", hours, minutes);
 		return str;
 	}
 

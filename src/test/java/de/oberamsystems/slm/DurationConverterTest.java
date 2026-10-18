@@ -12,7 +12,7 @@ class DurationConverterTest {
         DurationConverter converter = new DurationConverter();
         Duration dur = Duration.ofDays(2).plusHours(5).plusMinutes(15).plusSeconds(30);
         String result = converter.convert(dur);
-        assertEquals("2D 05:15:30", result);
+        assertEquals("2D 05:15", result);
     }
 
     @Test
@@ -20,6 +20,12 @@ class DurationConverterTest {
         DurationConverter converter = new DurationConverter();
         Duration dur = Duration.ofHours(3).plusMinutes(5).plusSeconds(9);
         String result = converter.convert(dur);
-        assertEquals("03:05:09", result);
+        assertEquals("03:05", result);
+    }
+
+    @Test
+    void testConvertNull() {
+        DurationConverter converter = new DurationConverter();
+        assertEquals("", converter.convert(null));
     }
 }

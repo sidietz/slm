@@ -133,9 +133,9 @@
                             <td class="small" th:text="${#temporals.format(s.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 09:00</td>
                             <td class="small" th:text="${#temporals.format(s.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 17:00</td>
                             <td>
-                                <span class="badge text-white" style="background: #4338ca;" th:text="${s.netDuration != null ? s.netDuration : (s.duration != null ? s.duration : '-')}">8h 00m</span>
+                                <span class="badge text-white" style="background: #4338ca;" th:text="${{s.netDuration != null ? s.netDuration : s.duration}}">08:00</span>
                             </td>
-                            <td class="small text-muted" th:text="${s.breakDuration != null ? s.breakDuration : '0m'}">0m</td>
+                            <td class="small text-muted" th:text="${{s.breakDuration}}">00:00</td>
                             <td>
                                 <span th:if="${s.billable}" class="badge bg-success-subtle text-success border border-success-subtle">
                                     <i class="bi bi-check-circle me-1"></i>Billable
