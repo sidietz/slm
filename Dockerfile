@@ -1,10 +1,15 @@
-# the base image
-FROM amazoncorretto:25-alpine
+# Base runtime image matching Java 27
+FROM eclipse-temurin:27-jre
 
-# Copy the JAR file from the build context into the Docker image
-COPY build/libs/slm-0.0.1-SNAPSHOT.jar application.jar
+WORKDIR /app
 
-CMD apt-get update -y
+# Accept jar file as build argument, defaulting to the current release
+ARG JAR_FILE=build/libs/slm-0.0.2f.jar
 
-# Set the default command to run the Java application
-ENTRYPOINT ["java", "-Xmx2048M", "-jar", "/application.jar"]
+# Copy the built Spring Boot application JAR into the Docker image
+COPY ${JAR_FILE} application.jar
+
+EXPOSE 8080
+
+# Run the Spring Boot application
+ENTRYPOINT ["java", "-Xmx2048M", "-jar", "/app/application.jar"]
