@@ -32,9 +32,9 @@ public class LearningController {
 	
 	@GetMapping("/learning-sessions")
 	public String addLearningSessions(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("learningsessions", learningSessionRepo.findAll());
+		model.addAttribute("learningsessions", learningSessionRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "start")));
 		model.addAttribute("learningsession", new LearningSession());
-		model.addAttribute("items", repo.findAll());
+		model.addAttribute("items", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		return "learning-sessions";
 	}
 	
@@ -46,13 +46,13 @@ public class LearningController {
 	public String submitLearningSessions(@ModelAttribute LearningSession rs,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
 			Model model) {
-		model.addAttribute("learningsessions", learningSessionRepo.findAll());
+		model.addAttribute("learningsessions", learningSessionRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "start")));
 		LearningItem li = rs.getLearningItem();
 		if (li != null) {
 			li.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 			repo.save(li);
 		}
-		model.addAttribute("items", repo.findAll());
+		model.addAttribute("items", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		if (breakMinutes != null && breakMinutes > 0) {
 			rs.setBreakDuration(Duration.ofMinutes(breakMinutes));
 		}
@@ -63,7 +63,7 @@ public class LearningController {
 	
 	@GetMapping("/learning-items")
 	public String addLearningItems(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("items", repo.findAll());
+		model.addAttribute("items", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastUpdated")));
 		model.addAttribute("sources", SourceEnum.values());
 		model.addAttribute("statuss", StatusEnum.values());
 		LearningItem i = new LearningItem();
@@ -74,7 +74,7 @@ public class LearningController {
 	
 	@PostMapping("/learning-items")
 	public String submitLearningItems(@ModelAttribute LearningItem i, Model model) {
-		model.addAttribute("items", repo.findAll());
+		model.addAttribute("items", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "lastUpdated")));
 		model.addAttribute("sources", SourceEnum.values());
 		model.addAttribute("statuss", StatusEnum.values());
 		repo.save(i);

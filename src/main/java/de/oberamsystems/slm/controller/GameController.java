@@ -56,10 +56,10 @@ public class GameController {
 	
 	@GetMapping("/gaming-sessions")
 	public String addGamingSessions(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("gamingsessions", sessionRepo.findAll());
+		model.addAttribute("gamingsessions", sessionRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "start")));
 		GamingSession gs = new GamingSession();
-		model.addAttribute("devices", deviceRepo.findAll());
-		model.addAttribute("games", repo.findAll());
+		model.addAttribute("devices", deviceRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("games", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		model.addAttribute("gamingsession", gs);
 		return "gaming-sessions";
 	}
@@ -72,9 +72,9 @@ public class GameController {
 	public String submitGamingSessions(@ModelAttribute GamingSession gs,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
 			Model model) {
-		model.addAttribute("gamingsessions", sessionRepo.findAll());
-		model.addAttribute("devices", deviceRepo.findAll());
-		model.addAttribute("games", repo.findAll());
+		model.addAttribute("gamingsessions", sessionRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "start")));
+		model.addAttribute("devices", deviceRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("games", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		if (breakMinutes != null && breakMinutes > 0) {
 			gs.setBreakDuration(java.time.Duration.ofMinutes(breakMinutes));
 		}
@@ -85,9 +85,9 @@ public class GameController {
 	
 	@GetMapping("/games")
 	public String addGames(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("games", repo.findAll());
-		model.addAttribute("studios", studioRepo.findAll());
-		model.addAttribute("publishers", publisherRepo.findAll());
+		model.addAttribute("games", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
+		model.addAttribute("studios", studioRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("publishers", publisherRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		Game g = new Game();
 		model.addAttribute("game", g);
 		return "games";
@@ -95,9 +95,9 @@ public class GameController {
 	
 	@PostMapping("/games")
 	public String submitGames(@ModelAttribute Game g, Model model) {
-		model.addAttribute("games", repo.findAll());
-		model.addAttribute("studios", studioRepo.findAll());
-		model.addAttribute("publishers", publisherRepo.findAll());
+		model.addAttribute("games", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
+		model.addAttribute("studios", studioRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("publishers", publisherRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		repo.save(g);
 		model.addAttribute("game", g);
 		return "redirect:/games";
@@ -105,21 +105,21 @@ public class GameController {
 	
 	@GetMapping("/devices")
 	public String addDevices(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("devices", deviceRepo.findAll());
+		model.addAttribute("devices", deviceRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		Device d = new Device();
-		model.addAttribute("deviceTypes", deviceTypeRepo.findAll());
-		model.addAttribute("vendors", vendorRepo.findAll());
-		model.addAttribute("manufacturers", manufacturerRepo.findAll());
+		model.addAttribute("deviceTypes", deviceTypeRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("vendors", vendorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("manufacturers", manufacturerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		model.addAttribute("device",d);
 		return "devices";
 	}
 	
 	@PostMapping("/devices")
 	public String submitDevices(@ModelAttribute Device device, Model model) {
-		model.addAttribute("devices", deviceRepo.findAll());
-		model.addAttribute("deviceTypes", deviceTypeRepo.findAll());
-		model.addAttribute("vendors", vendorRepo.findAll());
-		model.addAttribute("manufacturers", manufacturerRepo.findAll());
+		model.addAttribute("devices", deviceRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("deviceTypes", deviceTypeRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("vendors", vendorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("manufacturers", manufacturerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		deviceRepo.save(device);
 		model.addAttribute("device", device);
 		return "redirect:/devices";
@@ -127,7 +127,7 @@ public class GameController {
 	
 	@GetMapping("/publishers")
 	public String addPublishers(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("publishers", publisherRepo.findAll());
+		model.addAttribute("publishers", publisherRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		Publisher p = new Publisher();
 		model.addAttribute("publisher",p);
 		return "publishers";
@@ -135,7 +135,7 @@ public class GameController {
 	
 	@PostMapping("/publishers")
 	public String submitPublishers(@ModelAttribute Publisher p, Model model) {
-		model.addAttribute("publishers", publisherRepo.findAll());
+		model.addAttribute("publishers", publisherRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		publisherRepo.save(p);
 		model.addAttribute("publisher", p);
 		return "redirect:/publishers";
@@ -143,7 +143,7 @@ public class GameController {
 	
 	@GetMapping("/studios")
 	public String addStudios(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("studios", studioRepo.findAll());
+		model.addAttribute("studios", studioRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		Studio s = new Studio();
 		model.addAttribute("studio",s);
 		return "studios";
@@ -151,7 +151,7 @@ public class GameController {
 	
 	@PostMapping("/studios")
 	public String submitStudios(@ModelAttribute Studio s, Model model) {
-		model.addAttribute("studios", studioRepo.findAll());
+		model.addAttribute("studios", studioRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		studioRepo.save(s);
 		model.addAttribute("studio", s);
 		return "redirect:/studios";
@@ -159,7 +159,7 @@ public class GameController {
 	
 	@GetMapping("/vendors")
 	public String addVendors(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("vendors", vendorRepo.findAll());
+		model.addAttribute("vendors", vendorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		Vendor v = new Vendor();
 		model.addAttribute("vendor",v);
 		return "vendors";
@@ -167,7 +167,7 @@ public class GameController {
 	
 	@PostMapping("/vendors")
 	public String submitVendors(@ModelAttribute Vendor v, Model model) {
-		model.addAttribute("vendors", vendorRepo.findAll());
+		model.addAttribute("vendors", vendorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		vendorRepo.save(v);
 		model.addAttribute("vendor", v);
 		return "redirect:/vendors";
@@ -175,7 +175,7 @@ public class GameController {
 	
 	@GetMapping("/manufacturers")
 	public String addManufacturers(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("manufacturers", manufacturerRepo.findAll());
+		model.addAttribute("manufacturers", manufacturerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		Manufacturer m = new Manufacturer();
 		model.addAttribute("manufacturer", m);
 		return "manufacturers";
@@ -183,7 +183,7 @@ public class GameController {
 	
 	@PostMapping("/manufacturers")
 	public String submitManufacturers(@ModelAttribute Manufacturer m, Model model) {
-		model.addAttribute("manufacturers", manufacturerRepo.findAll());
+		model.addAttribute("manufacturers", manufacturerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		manufacturerRepo.save(m);
 		model.addAttribute("manufacturer", m);
 		return "redirect:/manufacturers";

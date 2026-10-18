@@ -26,6 +26,7 @@ public class EmployerControllerTest {
         List<Employer> employers = new ArrayList<>();
         employers.add(new Employer(1L, "Acme Corp"));
         when(employerRepo.findAll()).thenReturn(employers);
+        when(employerRepo.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Sort.class))).thenReturn(employers);
 
         ConcurrentModel model = new ConcurrentModel();
 

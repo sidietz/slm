@@ -35,6 +35,7 @@ public class ContractControllerTest {
         c1.setFee(10.5f);
         contracts.add(c1);
         when(repo.findAll()).thenReturn(contracts);
+        when(repo.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Sort.class))).thenReturn(contracts);
         
         // contracts
         String view1 = controller.addContracts(1L, model);

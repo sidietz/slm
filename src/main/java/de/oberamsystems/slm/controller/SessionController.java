@@ -152,7 +152,7 @@ public class SessionController {
 		List<WorkingSession> list = workingSessionRepo.findAll();
 		list.sort(Comparator.comparing(WorkingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
-		model.addAttribute("employers", employerRepo.findAll());
+		model.addAttribute("employers", employerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		WorkingSession ws = new WorkingSession();
 		ws.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
 		ws.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
@@ -246,11 +246,11 @@ public class SessionController {
 	}
 
 	private void populateReferenceData(Model model) {
-		model.addAttribute("learningItems", learningItemRepo.findAll());
-		model.addAttribute("games", gameRepo.findAll());
-		model.addAttribute("devices", deviceRepo.findAll());
-		model.addAttribute("books", bookRepo.findAll());
-		model.addAttribute("sportTypes", sportTypeRepo.findAll());
-		model.addAttribute("employers", employerRepo.findAll());
+		model.addAttribute("learningItems", learningItemRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
+		model.addAttribute("games", gameRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
+		model.addAttribute("devices", deviceRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("books", bookRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
+		model.addAttribute("sportTypes", sportTypeRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("employers", employerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 	}
 }

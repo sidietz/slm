@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import de.oberamsystems.slm.model.DiaryEntry;
 import de.oberamsystems.slm.model.DiaryEntryRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class DiaryEntryController {
 
@@ -22,7 +24,7 @@ public class DiaryEntryController {
 	
 	@GetMapping("/diary")
 	public String addDiaryEntry(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("diaryentries", repo.findAll());
+		model.addAttribute("diaryentries", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		DiaryEntry g = new DiaryEntry();
 		g.setDate(LocalDate.now());
 		model.addAttribute("diaryentry", g);
@@ -31,7 +33,7 @@ public class DiaryEntryController {
 	
 	@PostMapping("/diary")
 	public String submitDiaryEntry(@ModelAttribute DiaryEntry DiaryEntry, Model model) {
-		model.addAttribute("diaryentries", repo.findAll());
+		model.addAttribute("diaryentries", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		repo.save(DiaryEntry);
 		model.addAttribute("diaryentries", DiaryEntry);
 		return "redirect:/diary";

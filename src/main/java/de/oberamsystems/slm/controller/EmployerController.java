@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import de.oberamsystems.slm.model.Employer;
 import de.oberamsystems.slm.model.EmployerRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class EmployerController {
 
@@ -19,7 +21,7 @@ public class EmployerController {
 
 	@GetMapping("/employers")
 	public String addEmployers(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("employers", employerRepo.findAll());
+		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("employer", new Employer());
 		return "employers";
 	}

@@ -41,11 +41,11 @@ public class BookController {
 	
 	@GetMapping("/books")
 	public String addBooks(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("books", repo.findAll());
+		model.addAttribute("books", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		Book p = new Book();
 		model.addAttribute("book", p);
-		model.addAttribute("authors", authorRepo.findAll());
-		model.addAttribute("presses", pressRepo.findAll());
+		model.addAttribute("authors", authorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "lastname").and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "firstname"))));
+		model.addAttribute("presses", pressRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		model.addAttribute("types", BookTypeEnum.values());
 		model.addAttribute("genres", BookGenreEnum.values());
 		return "books";
@@ -53,9 +53,9 @@ public class BookController {
 	
 	@PostMapping("/books")
 	public String submitBooks(@ModelAttribute Book tt, Model model) {
-		model.addAttribute("books", repo.findAll());
-		model.addAttribute("authors", authorRepo.findAll());
-		model.addAttribute("presses", pressRepo.findAll());
+		model.addAttribute("books", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
+		model.addAttribute("authors", authorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "lastname").and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "firstname"))));
+		model.addAttribute("presses", pressRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
 		model.addAttribute("types", BookTypeEnum.values());
 		model.addAttribute("genres", BookGenreEnum.values());
 		repo.save(tt);
@@ -65,14 +65,14 @@ public class BookController {
 	
 	@GetMapping("/authors")
 	public String addAuthors(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("authors", authorRepo.findAll());
+		model.addAttribute("authors", authorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "lastname").and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "firstname"))));
 		model.addAttribute("author", new Author());
 		return "authors";
 	}
 	
 	@PostMapping("/authors")
 	public String submitAuthors(@ModelAttribute Author a, Model model) {
-		model.addAttribute("authors", authorRepo.findAll());
+		model.addAttribute("authors", authorRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "lastname").and(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "firstname"))));
 		authorRepo.save(a);
 		model.addAttribute("author", a);
 		return "redirect:/authors";
@@ -80,9 +80,9 @@ public class BookController {
 	
 	@GetMapping("/reading-sessions")
 	public String addReadingSessions(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
+		model.addAttribute("readingsessions", readingSessionRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "start")));
 		model.addAttribute("readingsession", new ReadingSession());
-		model.addAttribute("books", repo.findAll());
+		model.addAttribute("books", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		return "reading-sessions";
 	}
 	
@@ -94,8 +94,8 @@ public class BookController {
 	public String submitReadingSessions(@ModelAttribute ReadingSession rs,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
 			Model model) {
-		model.addAttribute("readingsessions", readingSessionRepo.findAllByOrderByStart());
-		model.addAttribute("books", repo.findAll());
+		model.addAttribute("readingsessions", readingSessionRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "start")));
+		model.addAttribute("books", repo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
 		if (breakMinutes != null && breakMinutes > 0) {
 			rs.setBreakDuration(Duration.ofMinutes(breakMinutes));
 		}

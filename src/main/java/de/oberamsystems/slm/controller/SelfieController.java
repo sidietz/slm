@@ -21,6 +21,8 @@ import org.springframework.util.StringUtils;
 import de.oberamsystems.slm.model.Selfie;
 import de.oberamsystems.slm.model.SelfieRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class SelfieController {
 
@@ -29,7 +31,7 @@ public class SelfieController {
 
     @GetMapping("/selfies")
     public String listSelfies(Model model) {
-		model.addAttribute("selfies", selfieRepository.findAll());
+		model.addAttribute("selfies", selfieRepository.findAll(Sort.by(Sort.Direction.DESC, "date")));
 		model.addAttribute("selfie", new Selfie());
         return "selfies";
     }

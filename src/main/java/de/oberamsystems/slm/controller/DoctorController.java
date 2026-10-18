@@ -48,15 +48,15 @@ public class DoctorController {
 		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
-		model.addAttribute("doctors", doctorRepo.findAll());
-		model.addAttribute("appointments", repo.findAll());
+		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		model.addAttribute("appointments", repo.findAll(Sort.by(Sort.Direction.DESC, "departure")));
 		return "appointments";
 	}
 	
 	@PostMapping("/appointments")
 	public String submitAppointment(@ModelAttribute Appointment app, Model model) {
-		model.addAttribute("appointments", repo.findAll());
-		model.addAttribute("doctors", doctorRepo.findAll());
+		model.addAttribute("appointments", repo.findAll(Sort.by(Sort.Direction.DESC, "departure")));
+		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
 		repo.save(app);
 		model.addAttribute("appointment", app);
 		return "redirect:/appointments";
@@ -64,9 +64,9 @@ public class DoctorController {
 	
 	@GetMapping("/doctors")
 	public String addDoctors(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("specialities", specRepo.findAll());
-		model.addAttribute("doctors", doctorRepo.findAll());
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
 		Doctor d = new Doctor();
 		pointRepo.findFirstByIsHomeTrue().ifPresent(d::setBasePoint);
 		model.addAttribute("doctor", d);
@@ -75,9 +75,9 @@ public class DoctorController {
 	
 	@PostMapping("/doctors")
 	public String submitDoctors(@ModelAttribute Doctor doc, Model model) {
-		model.addAttribute("specialities", specRepo.findAll());
-		model.addAttribute("doctors", doctorRepo.findAll());
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
 		if (doc.getBasePoint() == null || doc.getBasePoint().getId() == null) {
 			pointRepo.findFirstByIsHomeTrue().ifPresent(doc::setBasePoint);
 		}
@@ -99,7 +99,7 @@ public class DoctorController {
 	@GetMapping("/specialities")
 	public String addSpecialities(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("speciality", new Speciality());
-		model.addAttribute("specialities", specRepo.findAll());
+		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
 		return "specialities";
 	}
 
@@ -107,7 +107,7 @@ public class DoctorController {
 	public String submitSpecialities(@ModelAttribute Speciality spec, Model model) {
 		specRepo.save(spec);
 		model.addAttribute("speciality", spec);
-		model.addAttribute("specialities", specRepo.findAll());
+		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
 		return "redirect:/specialities";
 	}
 
@@ -125,7 +125,7 @@ public class DoctorController {
 	    minDate = minDate == null ? LocalDateTime.now().minusDays(90) : minDate.minusDays(1); //fixes off by one bug
 	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
 
-		model.addAttribute("appointments", repo.findByStartBetween(fromDate, toDate.plusDays(1), Sort.by("start"))); // find getup time instead of gotobed
+		model.addAttribute("appointments", repo.findByStartBetween(fromDate, toDate.plusDays(1), Sort.by(Sort.Direction.DESC, "start"))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
 		model.addAttribute("minDate", minDate); //fixes off by one bug
@@ -135,14 +135,14 @@ public class DoctorController {
 	
 	@GetMapping({"/doctor.html", "/doctor"})
 	public String index(Model model) {
-		List<Doctor> docs = doctorRepo.findAll();
+		List<Doctor> docs = doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname")));
 		model.addAttribute("doctors", docs);
 		return "doctor";
 	}
 	
 	@GetMapping({"/speciality.html", "/speciality"})
 	public String speciality(Model model) {
-		List<Speciality> specs = specRepo.findAll();
+		List<Speciality> specs = specRepo.findAll(Sort.by(Sort.Direction.ASC, "title"));
 		model.addAttribute("specialities", specs);
 		return "speciality";
 	}
@@ -156,13 +156,13 @@ public class DoctorController {
 		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
-		model.addAttribute("doctors", doctorRepo.findAll());
+		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
 		return "add-appointment";
 	}
 	
 	@PostMapping("/add-appointment")
 	public String submitSport(@ModelAttribute Appointment app, Model model) {
-		model.addAttribute("appointments", doctorRepo.findAll());
+		model.addAttribute("appointments", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
 		repo.save(app);
 		model.addAttribute("appointment", app);
 		return "add-appointment";
@@ -170,8 +170,8 @@ public class DoctorController {
 	
 	@GetMapping("/add-doctor")
 	public String addDoctor(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("specialities", specRepo.findAll());
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
 		Doctor d = new Doctor();
 		pointRepo.findFirstByIsHomeTrue().ifPresent(d::setBasePoint);
 		model.addAttribute("doctor", d);
@@ -180,9 +180,9 @@ public class DoctorController {
 	
 	@PostMapping("/add-doctor")
 	public String submitDoctor(@ModelAttribute Doctor doc, Model model) {
-		model.addAttribute("specialities", specRepo.findAll());
-		model.addAttribute("doctors", doctorRepo.findAll());
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
 		if (doc.getBasePoint() == null || doc.getBasePoint().getId() == null) {
 			pointRepo.findFirstByIsHomeTrue().ifPresent(doc::setBasePoint);
 		}

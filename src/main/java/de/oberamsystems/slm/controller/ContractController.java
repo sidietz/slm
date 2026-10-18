@@ -15,6 +15,8 @@ import de.oberamsystems.slm.model.Contractor;
 import de.oberamsystems.slm.model.ContractorRepository;
 import de.oberamsystems.slm.model.Contract;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class ContractController {
 
@@ -28,7 +30,7 @@ public class ContractController {
 	
 	@GetMapping("/contracts")
 	public String addContracts(@RequestParam(required = false) Long id, Model model) {
-		List<Contract> contracts = repo.findAll();
+		List<Contract> contracts = repo.findAll(Sort.by(Sort.Direction.DESC, "startDate"));
 		float totalPrice = 0;
 		
 		for (Contract p : contracts) {
@@ -41,13 +43,13 @@ public class ContractController {
 		p.setStartDate(LocalDate.now());
 		p.setActive(true);
 		model.addAttribute("contract", p);
-		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "contracts";
 	}
 	
 	@PostMapping("/contracts")
 	public String submitContracts(@ModelAttribute Contract tt, Model model) {
-		List<Contract> contracts = repo.findAll();
+		List<Contract> contracts = repo.findAll(Sort.by(Sort.Direction.DESC, "startDate"));
 		float totalPrice = 0;
 		
 		for (Contract p : contracts) {
@@ -56,7 +58,7 @@ public class ContractController {
 
 		model.addAttribute("contracts", contracts);
 		model.addAttribute("totalFee", totalPrice);
-		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(tt);
 		model.addAttribute("contract", tt);
 		return "redirect:/contracts";
@@ -64,14 +66,14 @@ public class ContractController {
 	
 	@GetMapping("/contractors")
 	public String addContractors(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("contractor", new Contractor());
 		return "contractors";
 	}
 	
 	@PostMapping("/contractors")
 	public String submitContractors(@ModelAttribute Contractor ts, Model model) {
-		model.addAttribute("contractors", contractorRepo.findAll());
+		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		contractorRepo.save(ts);
 		model.addAttribute("contractor", ts);
 		return "redirect:/contractors";

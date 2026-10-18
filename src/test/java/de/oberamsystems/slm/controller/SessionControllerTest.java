@@ -157,6 +157,7 @@ public class SessionControllerTest {
     public void testWorkingSessionsViewAndSubmit() {
         when(workingSessionRepo.findAll()).thenReturn(new ArrayList<>());
         when(employerRepo.findAll()).thenReturn(new ArrayList<>());
+        when(employerRepo.findAll(any(org.springframework.data.domain.Sort.class))).thenReturn(new ArrayList<>());
 
         ConcurrentModel model = new ConcurrentModel();
         String view = controller.viewWorkingSessions(model);

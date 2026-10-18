@@ -36,9 +36,15 @@ public class TrainTripController2 {
 	@Autowired
 	private TrainLineRepository lineRepo;
 	
+	private List<TrainLine> getSortedLines() {
+		List<TrainLine> lines = lineRepo.findAll();
+		lines.sort(new de.oberamsystems.slm.util.TrainLineComparator());
+		return lines;
+	}
+
 	@GetMapping("/train-trips")
 	public String addTrainTrips(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("traintrips2", repo.findAll());
+		model.addAttribute("traintrips2", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		TrainTrip2 tt = new TrainTrip2();
 		id = id == null ? 0 : id;
 		TrainLine l = lineRepo.getReferenceById(id);
@@ -48,20 +54,20 @@ public class TrainTripController2 {
 		tt.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findByLines_Id(l.getId()));
-		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("lines", getSortedLines());
 		return "train-trips";
 	}
 	
 	@PostMapping("/train-trips")
 	public String submitTrainTrips(@RequestParam(required = false) Long id, @ModelAttribute TrainTrip2 tt, Model model) {
 		id = id == null ? 0 : id;
-		model.addAttribute("traintrips2", repo.findAll());
+		model.addAttribute("traintrips2", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		tt.setLine(lineRepo.getReferenceById(id));
 		model.addAttribute("lineId", id);
 		model.addAttribute("traintrip", tt);
-		model.addAttribute("traintrips", stationRepo.findAll());
-		model.addAttribute("lines", lineRepo.findAll());
-		model.addAttribute("stations", stationRepo.findAll());
+		model.addAttribute("traintrips", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("lines", getSortedLines());
+		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(tt);
 		model.addAttribute("traintrip", tt);
 		return "train-trips";
@@ -69,17 +75,17 @@ public class TrainTripController2 {
 	
 	@GetMapping("/train-stations")
 	public String addTrainStations(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("stations", stationRepo.findAll());
+		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("trainstation", new TrainStation2Dto());
 		model.addAttribute("lineId", 0);
-		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("lines", getSortedLines());
 		return "train-stations";
 	}
 	
 	@PostMapping("/train-stations")
 	public String submitTrainStations(@ModelAttribute TrainStation2Dto tsdto, Model model) {
-		model.addAttribute("stations", stationRepo.findAll());
-		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("lines", getSortedLines());
 		log.warn(String.format("lineId: %d", tsdto.getLineId()));
 		TrainStation2 ts = new TrainStation2(tsdto.getDs100(), tsdto.getName());
 		ts.addLine(lineRepo.getReferenceById(tsdto.getLineId()));
@@ -90,14 +96,14 @@ public class TrainTripController2 {
 	
 	@GetMapping("/train-lines")
 	public String addTrainLines(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("lines", getSortedLines());
 		model.addAttribute("trainline", new TrainLine());
 		return "train-lines";
 	}
 	
 	@PostMapping("/train-lines")
 	public String submitTrainLines(@ModelAttribute TrainLine line, Model model) {
-		model.addAttribute("lines", lineRepo.findAll());
+		model.addAttribute("lines", getSortedLines());
 		lineRepo.save(line);
 		model.addAttribute("trainline", new TrainLine());
 		return "redirect:/train-lines";

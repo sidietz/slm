@@ -16,6 +16,8 @@ import de.oberamsystems.slm.model.SportSessionRepository;
 import de.oberamsystems.slm.model.SportType;
 import de.oberamsystems.slm.model.SportTypeRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class SportController {
 
@@ -29,19 +31,19 @@ public class SportController {
 	
 	@GetMapping("/sports")
 	public String addSports(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("sports", repo.findAll());
+		model.addAttribute("sports", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		SportSession s = new SportSession();
 		s.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		s.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("sport", s);
-		model.addAttribute("sportTypes", typeRepo.findAll());
+		model.addAttribute("sportTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "sports";
 	}
 	
 	@PostMapping("/sports")
 	public String submitSports(@ModelAttribute SportSession sport, Model model) {
-		model.addAttribute("sports", repo.findAll());
-		model.addAttribute("sportTypes", typeRepo.findAll());
+		model.addAttribute("sports", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
+		model.addAttribute("sportTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(sport);
 		model.addAttribute("sport", sport);
 		return "redirect:/sports";
@@ -51,13 +53,13 @@ public class SportController {
 	public String addSportType(@RequestParam(required = false) Long id, Model model) {
 		SportType t = new SportType();
 		model.addAttribute("type", t);
-		model.addAttribute("types", typeRepo.findAll());
+		model.addAttribute("types", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "sport-types";
 	}
 	
 	@PostMapping("/sport-types")
 	public String submitSportType(@ModelAttribute SportType type, Model model) {
-		model.addAttribute("sports", typeRepo.findAll());
+		model.addAttribute("sports", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		typeRepo.save(type);
 		model.addAttribute("type", type);
 		return "redirect:/sport-types";

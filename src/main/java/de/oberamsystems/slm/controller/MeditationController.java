@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 import de.oberamsystems.slm.model.MeditationSession;
 import de.oberamsystems.slm.model.MeditationSessionRepository;
 
+import org.springframework.data.domain.Sort;
+
 @Controller
 public class MeditationController {
 
@@ -24,7 +26,7 @@ public class MeditationController {
 	
 	@GetMapping("/meditations")
 	public String addMeditations(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("meditations", repo.findAll());
+		model.addAttribute("meditations", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		MeditationSession ms = new MeditationSession();
 		ms.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		ms.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
@@ -35,7 +37,7 @@ public class MeditationController {
 	
 	@PostMapping("/meditations")
 	public String submitMeditations(@ModelAttribute MeditationSession meditation, Model model) {
-		model.addAttribute("meditations", repo.findAll());
+		model.addAttribute("meditations", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		repo.save(meditation);
 		model.addAttribute("meditation", meditation);
 		return "redirect:/meditations";

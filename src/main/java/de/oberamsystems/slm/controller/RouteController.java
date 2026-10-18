@@ -3,6 +3,7 @@ package de.oberamsystems.slm.controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -39,14 +40,13 @@ public class RouteController {
 	@Autowired
 	private ManufacturerRepository manufacturerRepo;
 	
-	
 	@Autowired
 	private VendorRepository vendorRepo;
 	
 	@GetMapping("/routes")
 	public String addBooks(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("routes", repo.findAll());
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("routes", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		Route r = new Route();
 		model.addAttribute("route", r);
 		return "routes";
@@ -54,8 +54,8 @@ public class RouteController {
 	
 	@PostMapping("/routes")
 	public String submitBooks(@ModelAttribute Route tt, Model model) {
-		model.addAttribute("routes", repo.findAll());
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("routes", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		if (tt.getStart() != null && tt.getEnd() != null && tt.getStart().getId() != null && tt.getEnd().getId() != null) {
 			try {
 				Double dist = repo.calculateAirDistance(tt.getStart().getId(), tt.getEnd().getId());
@@ -73,14 +73,14 @@ public class RouteController {
 	
 	@GetMapping("/points")
 	public String addPoints(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
 		model.addAttribute("point", new Point());
 		return "points";
 	}
 	
 	@PostMapping("/points")
 	public String submitPoints(@ModelAttribute Point a, Model model) {
-		model.addAttribute("points", pointRepo.findAll());
+		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
 		pointRepo.save(a);
 		model.addAttribute("point", a);
 		return "redirect:/points";
@@ -89,18 +89,18 @@ public class RouteController {
 	
 	@GetMapping("/car-trips")
 	public String addCarTrips(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("cartrips", carTripRepo.findAll());
-		model.addAttribute("routes", repo.findAll());
-		model.addAttribute("cars", carRepo.findAll());
+		model.addAttribute("cartrips", carTripRepo.findAll(Sort.by(Sort.Direction.DESC, "start")));
+		model.addAttribute("routes", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("cars", carRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("cartrip", new CarTrip());
 		return "car-trips";
 	}
 	
 	@PostMapping("/car-trips")
 	public String submitCarTrips(@ModelAttribute CarTrip rs, Model model) {
-		model.addAttribute("cartrips", carTripRepo.findAll());
-		model.addAttribute("routes", repo.findAll());
-		model.addAttribute("cars", carRepo.findAll());
+		model.addAttribute("cartrips", carTripRepo.findAll(Sort.by(Sort.Direction.DESC, "start")));
+		model.addAttribute("routes", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("cars", carRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		carTripRepo.save(rs);
 		model.addAttribute("cartrip", rs);
 		return "redirect:/car-trips";
@@ -108,18 +108,18 @@ public class RouteController {
 	
 	@GetMapping("/cars")
 	public String addCars(@RequestParam(required = false) Long id, Model model) {
-		model.addAttribute("cars", carRepo.findAll());
-		model.addAttribute("manufacturers", manufacturerRepo.findAll());
-		model.addAttribute("vendors", vendorRepo.findAll());
+		model.addAttribute("cars", carRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("manufacturers", manufacturerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("car", new Car());
 		return "cars";
 	}
 	
 	@PostMapping("/cars")
 	public String submitCars(@ModelAttribute Car rs, Model model) {
-		model.addAttribute("cars", repo.findAll());
-		model.addAttribute("manufacturers", manufacturerRepo.findAll());
-		model.addAttribute("vendors", vendorRepo.findAll());
+		model.addAttribute("cars", carRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("manufacturers", manufacturerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		carRepo.save(rs);
 		model.addAttribute("car", rs);
 		return "redirect:/cars";
