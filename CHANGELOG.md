@@ -19,6 +19,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Preserved full backward compatibility for `/sleep-times`, `/sleeptime-bb`, and `/api/sleeptimes` using transient compatibility accessors (`gotobed`, `getup`, `sleeptime`).
 - Added end-to-end integration tests in `SleepTimeIT` verifying `SleepSession` persistence, polymorphic session queries, and endpoint rendering against live PostgreSQL 18 Testcontainers.
 - Upgraded Jackson to Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`) with `jackson-annotations:2.22`.
+- Added `src/main/resources/migration_2026-10-18_4.sql` providing the DST-immune, leap-year safe `this_years_birthday(date)` helper function and geodesic air distance calculation triggers for legacy databases.
+- Synchronized authoritative baseline schema files across [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql):
+  - Fixed `this_years_birthday(date)` helper function using `make_date` to prevent 1-day shifts caused by timestamp arithmetic across Daylight Saving Time (DST) clock boundaries and safely handling February 29 leap days.
+  - Added `CREATE EXTENSION IF NOT EXISTS postgis;` and geodesic air distance calculation triggers to [`tables.sql`](src/main/resources/tables.sql).
+  - Deduplicated `platform` table definition in [`tables.sql`](src/main/resources/tables.sql).
+- Added Section 6 "Database Migrations & Legacy Upgrades" to [`AGENTS.md`](AGENTS.md) codifying `tables.sql` authority and migration lifecycle protocols.
 
 ### Changed
 - Overhauled and updated [`DECISIONS.md`](DECISIONS.md) into a comprehensive Architecture Decision Record suite containing 14 formalized ADRs (ADR 001 through ADR 014) synthesized from git history, architectural evaluations, and [`doc/plans/`](doc/plans/).

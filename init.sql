@@ -6,15 +6,24 @@ CREATE EXTENSION IF NOT EXISTS postgis;
 -- 1. Helper Functions
 CREATE OR REPLACE FUNCTION this_years_birthday(_dut date)
   RETURNS date
-  LANGUAGE plpgsql AS
+  LANGUAGE plpgsql STABLE AS
 $func$
 DECLARE
-   ret date;
+   cur_year int := EXTRACT(YEAR FROM current_date);
+   b_month int := EXTRACT(MONTH FROM _dut);
+   b_day int := EXTRACT(DAY FROM _dut);
 BEGIN
-   ret := date_trunc('year' , current_timestamp)
-       + (date_trunc('day'  , _dut)
-        - date_trunc('year' , _dut));
-   RETURN ret;
+   IF _dut IS NULL THEN
+      RETURN NULL;
+   END IF;
+   IF b_month = 2 AND b_day = 29 THEN
+      IF (cur_year % 4 = 0 AND (cur_year % 100 != 0 OR cur_year % 400 = 0)) THEN
+         RETURN make_date(cur_year, 2, 29);
+      ELSE
+         RETURN make_date(cur_year, 2, 28);
+      END IF;
+   END IF;
+   RETURN make_date(cur_year, b_month, b_day);
 END
 $func$;
 
