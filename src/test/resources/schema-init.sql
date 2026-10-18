@@ -1,6 +1,21 @@
 -- Test Schema Initialization for PostgreSQL 18 & PostGIS 3.6
 CREATE EXTENSION IF NOT EXISTS postgis;
 
+-- Helper Functions
+CREATE OR REPLACE FUNCTION this_years_birthday(_dut date)
+  RETURNS date
+  LANGUAGE plpgsql AS
+$func$
+DECLARE
+   ret date;
+BEGIN
+   ret := date_trunc('year' , current_timestamp)
+       + (date_trunc('day'  , _dut)
+        - date_trunc('year' , _dut));
+   RETURN ret;
+END
+$func$;
+
 -- 1. Enums
 CREATE TYPE book_genre AS ENUM ('ACTION', 'BIOGRAPHY', 'CHILDREN', 'CRIME', 'ESSAY', 'FANTASY',
 'FOODDRINK', 'GRAPHICNOVEL', 'GUIDE', 'HISTORICALFICTION', 'HISTORY', 'HORROR' ,'HUMANITIES',

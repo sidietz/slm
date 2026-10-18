@@ -21,6 +21,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Upgraded Jackson to Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`) with `jackson-annotations:2.22`.
 
 ### Changed
+- Fixed `docker-compose.yml` database service to use `postgis/postgis:18-3.6` image instead of standard `postgres`, ensuring PostGIS 3.6 spatial support for routes and doctor distances.
+- Added container healthcheck to `db` service (`pg_isready`) and configured `app` to wait for healthy database readiness before launching.
+- Updated root `init.sql` database initialization script to include `CREATE EXTENSION IF NOT EXISTS postgis;`, `this_years_birthday()` helper function, modern session hierarchy tables, and geospatial distance calculation triggers.
+- Updated `Dockerfile` runtime base image to `eclipse-temurin:27-jre` (matching Java 27) and modernized JAR artifact handling.
+- Migrated test framework to **JUnit 6** (`org.junit:junit-bom:6.1.3`), enforcing the JUnit 6 platform across all Jupiter and Platform testing dependencies and integrating with Spring Boot 4 and Testcontainers.
 - Decoupled Wellness (Meditation, Sleep), Sport, and Leisure sessions from **Net Focused Time** and **Avg Focus Rating** on the Sessions Hub (`/sessions`).
 - Net Focused Time now strictly aggregates intentional cognitive productivity sessions (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`), preventing biological sleep hours from inflating deep focus statistics.
 - Added adaptive KPI header titles across session categories (`kpiDurationTitle`, `kpiRatingTitle`, and disruption/break labels):
