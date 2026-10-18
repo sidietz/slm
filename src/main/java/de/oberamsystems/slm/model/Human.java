@@ -87,6 +87,10 @@ public class Human {
 		return full.isEmpty() ? "Unknown Contact" : full;
 	}
 
+	public String getName() {
+		return getFullName();
+	}
+
 	public Date getBirthday() {
 		return birthday;
 	}
@@ -104,11 +108,11 @@ public class Human {
 	}
 
 	public Boolean getDeceased() {
-		return deceased;
+		return deceased != null ? deceased : (deathDate != null);
 	}
 
 	public boolean isDeceased() {
-		return deceased != null && deceased;
+		return deceased != null ? deceased : (deathDate != null);
 	}
 
 	public Integer getAgeAtDeath() {

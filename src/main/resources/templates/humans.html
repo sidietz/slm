@@ -42,13 +42,13 @@
                                     </td>
                                     <td class="text-muted small">
                                         <span th:text="${human.birthday != null ? #dates.format(human.birthday, 'dd.MM.yyyy') : '—'}">01.01.1980</span>
-                                        <span th:if="${human.birthday != null and !human.deceased}" class="text-secondary small d-block" th:text="'(' + ${human.age} + ' yrs)'"></span>
+                                        <span th:if="${human.birthday != null and !human.isDeceased()}" class="text-secondary small d-block" th:text="'(' + ${human.age} + ' yrs)'"></span>
                                     </td>
                                     <td>
-                                        <span th:if="${human.deceased}" class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1">
+                                        <span th:if="${human.isDeceased()}" class="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1">
                                             <i class="bi bi-candle me-1"></i>Deceased <span th:if="${human.deathDate != null}" th:text="'(' + #dates.format(human.deathDate, 'dd.MM.yyyy') + ')'"></span>
                                         </span>
-                                        <span th:if="${!human.deceased}" class="badge bg-success-subtle text-success px-2 py-1">Living</span>
+                                        <span th:if="${!human.isDeceased()}" class="badge bg-success-subtle text-success px-2 py-1">Living</span>
                                     </td>
                                     <td>
                                         <span class="badge bg-light text-dark border px-2 py-1" th:text="${human.category}"></span>
