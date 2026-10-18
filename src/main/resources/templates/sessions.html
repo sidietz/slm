@@ -253,7 +253,7 @@
                                 <!-- Working Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Working')}">
                                     <strong th:text="${s.project}">Project</strong>
-                                    <span th:if="${s.client != null}" class="text-muted small" th:text="'(' + ${s.client.name} + ')'">Client</span>
+                                    <span th:if="${s.employer != null}" class="text-muted small" th:text="'(' + ${s.employer.name} + ')'">Employer</span>
                                     <div class="small">
                                         <span th:if="${s.billable}" class="badge bg-success-subtle text-success">Billable</span>
                                         <span th:if="${s.hourlyRate}" class="text-muted ms-1" th:text="'$' + ${s.hourlyRate} + '/h'">$100/h</span>
@@ -439,10 +439,10 @@
                     <form id="form-working" th:action="@{/sessions/working}" th:object="${workingSession}" method="post" style="display: none;">
                         <div class="row g-3">
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Client / Contractor</label>
-                                <select th:field="*{client}" class="form-select">
+                                <label class="form-label fw-semibold">Employer / Client</label>
+                                <select th:field="*{employer}" class="form-select">
                                     <option value="">-- Internal / No Client --</option>
-                                    <option th:each="c : ${contractors}" th:value="${c.id}" th:text="${c.name}"></option>
+                                    <option th:each="e : ${employers}" th:value="${e.id}" th:text="${e.name}"></option>
                                 </select>
                             </div>
                             <div class="col-md-6">

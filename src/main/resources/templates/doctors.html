@@ -29,6 +29,7 @@
                                     <th class="ps-3" style="width: 60px;">ID</th>
                                     <th>Name</th>
                                     <th>Speciality</th>
+                                    <th>Practice Location</th>
                                     <th>Address / Place</th>
                                     <th>City</th>
                                     <th>PLZ</th>
@@ -42,13 +43,17 @@
                                     <td>
                                         <span class="badge bg-light text-dark border px-2 py-1" th:text="${e.speciality != null ? e.speciality.title : '—'}"></span>
                                     </td>
+                                    <td>
+                                        <a th:if="${e.point != null}" th:href="@{/points}" class="badge bg-light text-primary border text-decoration-none px-2 py-1"><i class="bi bi-geo-alt me-1"></i><span th:text="${e.point.name}"></span></a>
+                                        <span th:unless="${e.point != null}" class="text-muted">—</span>
+                                    </td>
                                     <td class="text-muted small" th:text="${e.place}"></td>
                                     <td th:text="${e.city}"></td>
                                     <td class="font-monospace small" th:text="${e.plz}"></td>
                                     <td class="pe-3 fw-semibold text-primary" th:text="${e.airDistance != null ? e.airDistance + ' km' : '—'}"></td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(doctors)}">
-                                    <td colspan="7" class="text-center py-4 text-muted">No doctors registered yet.</td>
+                                    <td colspan="8" class="text-center py-4 text-muted">No doctors registered yet.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -78,6 +83,20 @@
                                 <input type="text" id="lastname" th:field="*{lastname}" class="form-control" placeholder="e.g. Weber" required>
                             </div>
                             <div class="mb-3">
+                                <label for="point" class="form-label">Practice Location Point</label>
+                                <select id="point" class="form-select" th:field="*{point}">
+                                    <option value="">— Select clinic location point —</option>
+                                    <option th:each="pt : ${points}" th:value="${pt.id}" th:text="${pt.name}"></option>
+                                </select>
+                                <div class="form-text small text-muted">Select an existing clinic location from <a href="/points">Points</a>.</div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="basePoint" class="form-label">Distance Origin (Home / Base)</label>
+                                <select id="basePoint" class="form-select" th:field="*{basePoint}">
+                                    <option th:each="pt : ${points}" th:value="${pt.id}" th:text="${pt.name + (pt.isHome ? ' [Home Base]' : '')}"></option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
                                 <label for="place" class="form-label">Street / Place <span class="text-danger">*</span></label>
                                 <input type="text" id="place" th:field="*{place}" class="form-control" placeholder="e.g. Hauptstraße 12" required>
                             </div>
@@ -91,9 +110,12 @@
                                     <input type="text" id="plz" th:field="*{plz}" class="form-control" placeholder="80331" required>
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <label for="airDistance" class="form-label">Air Distance (km) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.001" id="airDistance" th:field="*{airDistance}" class="form-control" placeholder="0.000" required>
+                            <div class="p-3 bg-light rounded-3 border mb-4">
+                                <div class="d-flex align-items-center gap-2 text-primary fw-semibold small mb-1">
+                                    <i class="bi bi-geo-alt-fill"></i>
+                                    <span>PostGIS Geodesic Air Distance</span>
+                                </div>
+                                <div class="text-muted small">Air distance is automatically calculated using PostGIS geodesic distance between the practice point and home base.</div>
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-2">
                                 <i class="bi bi-plus-circle me-1"></i> Register Doctor

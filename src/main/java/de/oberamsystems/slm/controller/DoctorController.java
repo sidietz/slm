@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -16,6 +17,8 @@ import de.oberamsystems.slm.model.Appointment;
 import de.oberamsystems.slm.model.AppointmentRepository;
 import de.oberamsystems.slm.model.Doctor;
 import de.oberamsystems.slm.model.DoctorRepository;
+import de.oberamsystems.slm.model.Point;
+import de.oberamsystems.slm.model.PointRepository;
 import de.oberamsystems.slm.model.Speciality;
 import de.oberamsystems.slm.model.SpecialityRepository;
 
@@ -33,14 +36,17 @@ public class DoctorController {
 	@Autowired
 	private SpecialityRepository specRepo;
 	
+	@Autowired
+	private PointRepository pointRepo;
+	
 	@GetMapping("/appointments")
 	public String addAppointments(@RequestParam(required = false) Long id, Model model) {
 		Appointment a = new Appointment();
-		a.setStart(LocalDateTime.now());
-		a.setEnd(LocalDateTime.now());
-		a.setDeparture(LocalDateTime.now());
-		a.setArrival(LocalDateTime.now());
-		a.setArrivalHome(LocalDateTime.now());
+		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setDeparture(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
 		model.addAttribute("doctors", doctorRepo.findAll());
 		model.addAttribute("appointments", repo.findAll());
@@ -60,7 +66,10 @@ public class DoctorController {
 	public String addDoctors(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("specialities", specRepo.findAll());
 		model.addAttribute("doctors", doctorRepo.findAll());
-		model.addAttribute("doctor", new Doctor());
+		model.addAttribute("points", pointRepo.findAll());
+		Doctor d = new Doctor();
+		pointRepo.findFirstByIsHomeTrue().ifPresent(d::setBasePoint);
+		model.addAttribute("doctor", d);
 		return "doctors";
 	}
 	
@@ -68,6 +77,20 @@ public class DoctorController {
 	public String submitDoctors(@ModelAttribute Doctor doc, Model model) {
 		model.addAttribute("specialities", specRepo.findAll());
 		model.addAttribute("doctors", doctorRepo.findAll());
+		model.addAttribute("points", pointRepo.findAll());
+		if (doc.getBasePoint() == null || doc.getBasePoint().getId() == null) {
+			pointRepo.findFirstByIsHomeTrue().ifPresent(doc::setBasePoint);
+		}
+		if (doc.getPoint() != null && doc.getPoint().getId() != null && doc.getBasePoint() != null && doc.getBasePoint().getId() != null) {
+			try {
+				Double dist = doctorRepo.calculateAirDistance(doc.getBasePoint().getId(), doc.getPoint().getId());
+				if (dist != null) {
+					doc.setAirDistance(dist);
+				}
+			} catch (Exception e) {
+				log.warn("Could not calculate doctor air distance via PostGIS: {}", e.getMessage());
+			}
+		}
 		doctorRepo.save(doc);
 		model.addAttribute("doctor", doc);
 		return "redirect:/doctors";
@@ -127,11 +150,11 @@ public class DoctorController {
 	@GetMapping("/add-appointment")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
 		Appointment a = new Appointment();
-		a.setStart(LocalDateTime.now());
-		a.setEnd(LocalDateTime.now());
-		a.setDeparture(LocalDateTime.now());
-		a.setArrival(LocalDateTime.now());
-		a.setArrivalHome(LocalDateTime.now());
+		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setDeparture(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
 		model.addAttribute("doctors", doctorRepo.findAll());
 		return "add-appointment";
@@ -148,7 +171,10 @@ public class DoctorController {
 	@GetMapping("/add-doctor")
 	public String addDoctor(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("specialities", specRepo.findAll());
-		model.addAttribute("doctor", new Doctor());
+		model.addAttribute("points", pointRepo.findAll());
+		Doctor d = new Doctor();
+		pointRepo.findFirstByIsHomeTrue().ifPresent(d::setBasePoint);
+		model.addAttribute("doctor", d);
 		return "add-doctor";
 	}
 	
@@ -156,6 +182,20 @@ public class DoctorController {
 	public String submitDoctor(@ModelAttribute Doctor doc, Model model) {
 		model.addAttribute("specialities", specRepo.findAll());
 		model.addAttribute("doctors", doctorRepo.findAll());
+		model.addAttribute("points", pointRepo.findAll());
+		if (doc.getBasePoint() == null || doc.getBasePoint().getId() == null) {
+			pointRepo.findFirstByIsHomeTrue().ifPresent(doc::setBasePoint);
+		}
+		if (doc.getPoint() != null && doc.getPoint().getId() != null && doc.getBasePoint() != null && doc.getBasePoint().getId() != null) {
+			try {
+				Double dist = doctorRepo.calculateAirDistance(doc.getBasePoint().getId(), doc.getPoint().getId());
+				if (dist != null) {
+					doc.setAirDistance(dist);
+				}
+			} catch (Exception e) {
+				log.warn("Could not calculate doctor air distance via PostGIS: {}", e.getMessage());
+			}
+		}
 		doctorRepo.save(doc);
 		model.addAttribute("doctor", doc);
 		return "add-doctor";

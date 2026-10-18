@@ -14,10 +14,10 @@
             <form th:action="@{/working-sessions}" th:object="${workingSession}" method="post">
                 <div class="row g-3">
                     <div class="col-md-4">
-                        <label class="form-label fw-semibold">Contractor / Client</label>
-                        <select th:field="*{contractor}" class="form-select">
+                        <label class="form-label fw-semibold">Employer / Client</label>
+                        <select th:field="*{employer}" class="form-select">
                             <option value="">-- Direct / Internal --</option>
-                            <option th:each="c : ${contractors}" th:value="${c.id}" th:text="${c.name}"></option>
+                            <option th:each="e : ${employers}" th:value="${e.id}" th:text="${e.name}"></option>
                         </select>
                     </div>
                     <div class="col-md-4">
@@ -122,8 +122,8 @@
                         <tr th:each="s : ${sessions}">
                             <td>
                                 <strong th:text="${s.project}">Project</strong>
-                                <div class="text-muted small" th:if="${s.contractor != null}">
-                                    <i class="bi bi-building me-1"></i><span th:text="${s.contractor.name}">Client</span>
+                                <div class="text-muted small" th:if="${s.employer != null}">
+                                    <i class="bi bi-briefcase me-1"></i><span th:text="${s.employer.name}">Employer</span>
                                 </div>
                             </td>
                             <td>
@@ -133,9 +133,9 @@
                             <td class="small" th:text="${#temporals.format(s.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 09:00</td>
                             <td class="small" th:text="${#temporals.format(s.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 17:00</td>
                             <td>
-                                <span class="badge text-white" style="background: #4338ca;" th:text="${s.netDuration != null ? s.netDuration : (s.duration != null ? s.duration : '-')}">8h 00m</span>
+                                <span class="badge text-white" style="background: #4338ca;" th:text="${{s.netDuration != null ? s.netDuration : s.duration}}">08:00</span>
                             </td>
-                            <td class="small text-muted" th:text="${s.breakDuration != null ? s.breakDuration : '0m'}">0m</td>
+                            <td class="small text-muted" th:text="${{s.breakDuration}}">00:00</td>
                             <td>
                                 <span th:if="${s.billable}" class="badge bg-success-subtle text-success border border-success-subtle">
                                     <i class="bi bi-check-circle me-1"></i>Billable

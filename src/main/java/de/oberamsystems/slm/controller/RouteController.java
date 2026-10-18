@@ -56,6 +56,16 @@ public class RouteController {
 	public String submitBooks(@ModelAttribute Route tt, Model model) {
 		model.addAttribute("routes", repo.findAll());
 		model.addAttribute("points", pointRepo.findAll());
+		if (tt.getStart() != null && tt.getEnd() != null && tt.getStart().getId() != null && tt.getEnd().getId() != null) {
+			try {
+				Double dist = repo.calculateAirDistance(tt.getStart().getId(), tt.getEnd().getId());
+				if (dist != null) {
+					tt.setAirDistance(dist);
+				}
+			} catch (Exception e) {
+				log.warn("Could not calculate air distance via PostGIS: {}", e.getMessage());
+			}
+		}
 		repo.save(tt);
 		model.addAttribute("route", tt);
 		return "redirect:/routes";

@@ -77,7 +77,7 @@
                                     <label for="doctorId" class="form-label">Doctor <span class="text-danger">*</span></label>
                                     <select id="doctorId" class="form-select" th:field="*{doctor}">
                                         <option th:each="p : ${doctors}" th:value="${p.id}"
-                                                th:text="${p.lastname + (p.speciality != null ? ' (' + p.speciality.title + ')' : '')}"></option>
+                                                th:text="${p.lastname + (p.speciality != null ? ' (' + p.speciality.title + ')' : '') + (p.airDistance != null ? ' [' + p.airDistance + ' km]' : '')}"></option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">

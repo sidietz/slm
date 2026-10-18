@@ -122,9 +122,9 @@
                             <td class="small" th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 14:00</td>
                             <td class="small" th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 15:00</td>
                             <td>
-                                <span class="badge bg-info-subtle text-info-emphasis" th:text="${e.netDuration != null ? e.netDuration : (e.duration != null ? e.duration : '-')}">1h 00m</span>
+                                <span class="badge bg-info-subtle text-info-emphasis" th:text="${{e.netDuration != null ? e.netDuration : e.duration}}">01:00</span>
                             </td>
-                            <td class="small text-muted" th:text="${e.breakDuration != null ? e.breakDuration : '0m'}">0m</td>
+                            <td class="small text-muted" th:text="${{e.breakDuration}}">00:00</td>
                             <td>
                                 <span th:if="${e.focusRating != null and e.focusRating > 0}" class="star-rating">
                                     <span th:each="i : ${#numbers.sequence(1, e.focusRating)}">★</span>

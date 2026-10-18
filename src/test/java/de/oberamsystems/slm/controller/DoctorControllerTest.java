@@ -22,6 +22,7 @@ public class DoctorControllerTest {
         AppointmentRepository repo = mock(AppointmentRepository.class);
         DoctorRepository doctorRepo = mock(DoctorRepository.class);
         SpecialityRepository specRepo = mock(SpecialityRepository.class);
+        PointRepository pointRepo = mock(PointRepository.class);
         
         java.lang.reflect.Field f1 = DoctorController.class.getDeclaredField("repo");
         f1.setAccessible(true);
@@ -34,6 +35,10 @@ public class DoctorControllerTest {
         java.lang.reflect.Field f3 = DoctorController.class.getDeclaredField("specRepo");
         f3.setAccessible(true);
         f3.set(controller, specRepo);
+
+        java.lang.reflect.Field f4 = DoctorController.class.getDeclaredField("pointRepo");
+        f4.setAccessible(true);
+        f4.set(controller, pointRepo);
         
         ConcurrentModel model = new ConcurrentModel();
         
@@ -54,6 +59,16 @@ public class DoctorControllerTest {
         Doctor doc = new Doctor();
         String view4 = controller.submitDoctors(doc, model);
         assertEquals("redirect:/doctors", view4);
+        
+        Point home = new Point(1L, "Home", "Home base", 49.28, 10.68, true);
+        Point practice = new Point(4L, "Practice", "Clinic", 49.30, 10.58, false);
+        Doctor docWithPoints = new Doctor();
+        docWithPoints.setPoint(practice);
+        docWithPoints.setBasePoint(home);
+        when(doctorRepo.calculateAirDistance(1L, 4L)).thenReturn(7.53);
+        String view4b = controller.submitDoctors(docWithPoints, model);
+        assertEquals("redirect:/doctors", view4b);
+        assertEquals(7.53, docWithPoints.getAirDistance());
         
         // GET /specialities
         String view5 = controller.addSpecialities(1L, model);

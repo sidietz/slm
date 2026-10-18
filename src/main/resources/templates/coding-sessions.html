@@ -27,7 +27,7 @@
                     </div>
                     <div class="col-md-2">
                         <label class="form-label fw-semibold">Ticket / Issue</label>
-                        <input type="text" th:field="*{ticketNumber}" class="form-control" placeholder="e.g. #42, JIRA-101" />
+                        <input type="text" th:field="*{ticket}" class="form-control" placeholder="e.g. #42, JIRA-101" />
                     </div>
 
                     <div class="col-md-3">
@@ -117,7 +117,7 @@
                             </td>
                             <td>
                                 <span th:if="${s.branch != null and !s.branch.empty}" class="code-pill me-1" th:text="${s.branch}">main</span>
-                                <span th:if="${s.ticketNumber != null and !s.ticketNumber.empty}" class="badge bg-secondary-subtle text-secondary" th:text="${s.ticketNumber}">#101</span>
+                                <span th:if="${s.ticket != null and !s.ticket.empty}" class="badge bg-secondary-subtle text-secondary" th:text="${s.ticket}">#101</span>
                             </td>
                             <td>
                                 <span th:if="${s.language != null and !s.language.empty}" class="badge bg-info-subtle text-info-emphasis" th:text="${s.language}">Java</span>
@@ -126,9 +126,9 @@
                             <td class="small" th:text="${#temporals.format(s.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 10:00</td>
                             <td class="small" th:text="${#temporals.format(s.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 12:00</td>
                             <td>
-                                <span class="badge bg-primary text-white" th:text="${s.netDuration != null ? s.netDuration : (s.duration != null ? s.duration : '-')}">2h 00m</span>
+                                <span class="badge bg-primary text-white" th:text="${{s.netDuration != null ? s.netDuration : s.duration}}">02:00</span>
                             </td>
-                            <td class="small text-muted" th:text="${s.breakDuration != null ? s.breakDuration : '0m'}">0m</td>
+                            <td class="small text-muted" th:text="${{s.breakDuration}}">00:00</td>
                             <td>
                                 <span th:if="${s.focusRating != null and s.focusRating > 0}" class="star-rating">
                                     <span th:each="i : ${#numbers.sequence(1, s.focusRating)}">★</span>

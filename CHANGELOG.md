@@ -5,7 +5,42 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.2b] - 2026-10-18
+
+### Added
+- Integrated `Doctor` entity with `Point` (`point_id`) and home base reference (`base_point_id`, `is_home` flag on `point`).
+- Automated geodesic air distance calculation for doctors using PostGIS `ST_Distance` on WGS 84 ellipsoid via database triggers and `DoctorRepository.calculateAirDistance()`.
+- Versioned database migration file `src/main/resources/migration_2026-10-18_2.sql` adding `is_home` to `point`, linking existing doctors to clinic points, and adding triggers.
+- PostGIS spatial integration with WGS 84 (`SRID 4326`) `geography(Point, 4326)` generated column and GIST index on `point`.
+- Automatic geodesic air distance calculation for routes using PostGIS `ST_Distance` on WGS 84 ellipsoid via database triggers and `RouteRepository.calculateAirDistance()`.
+- Versioned database migration file `src/main/resources/migration_2026-10-18.sql` parsing DMS/decimal strings to numeric degrees and generating spatial geography columns.
+
+### Changed
+- Converted `Doctor.airDistance` from primitive `float` to `Double`.
+- Removed manual `airDistance` required number input from `doctors.html`, replacing it with practice location point selection and PostGIS auto-calculation badge.
+- Added doctor air distance formatting in `appointments.html` doctor selection dropdown.
+- Converted `Point` entity `latitude` and `longitude` fields from `String` to `Double` with standard numeric degree inputs.
+- Removed manual `airDistance` required user input from `routes.html`, automatically calculating geodesic distances upon route creation or point coordinate updates.
+- Standardized Duration formatting to `HH:mm`, removing seconds from `DurationConverter` across all views (`sessions.html`, `appointments.html`, `car-trips.html`, etc.).
+- Fixed raw `PT...` ISO strings (e.g. `PT6H`) in category views (`gaming-sessions.html`, `working-sessions.html`, `coding-sessions.html`, `reading-sessions.html`, and `learning-sessions.html`) by routing net and break durations through Spring's ConversionService via double curly braces (`${{...}}`).
+
+## [0.0.2a] - 2026-10-18
+
+### Added
+- Dedicated `Employer` entity, repository, and table (`employer`) for professional working sessions and client billing.
+- Versioned database migration file `src/main/resources/migration_2026-10-17.sql` migrating `working_session.contractor_id` to `employer_id`.
+- `EmployerController` and `employers.html` directory and management view.
+- Added **Employers & Clients** action button to the Spend Management dashboard (`/spend-management`).
+
+### Changed
+- Standardized UI timestamp precision to minutes (`HH:mm`), removing second-level precision (`HH:mm:ss`) across form inputs and tables to align with Sessions.
+- Updated `LocalDateTimeConverter` and `LocalDateTimeConverter2` formatting to `yyyy-MM-dd'T'HH:mm` for clean HTML5 `datetime-local` input bindings without activating seconds pickers.
+- Removed `step="1"` attribute from `car-trips.html` inputs and aligned table timestamp formats to `dd.MM.yyyy HH:mm`.
+- Formatted `gotobed` and `getup` fields in `sleeptime-bb.html` with `#temporals.format(..., 'dd.MM.yyyy HH:mm')`.
+- Truncated initial controller `LocalDateTime.now()` defaults to minutes (`ChronoUnit.MINUTES`) across all entity logging forms.
+- Refactored `WorkingSession` to reference `Employer employer` (`employer_id`) instead of `Contractor`.
+- Disentangled `Contractor` to strictly model commercial service contracts, utilities, and insurers.
+- Updated `working-sessions.html` and Sessions Hub modal to select and display employers.
 
 ## [0.0.2-SNAPSHOT] - 2026-10-17
 
@@ -60,7 +95,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2-SNAPSHOT...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2b...HEAD
+[0.0.2b]: https://github.com/sidietz/slm/compare/v0.0.2a...v0.0.2b
+[0.0.2a]: https://github.com/sidietz/slm/compare/v0.0.2-SNAPSHOT...v0.0.2a
 [0.0.2-SNAPSHOT]: https://github.com/sidietz/slm/compare/v0.0.1a-SNAPSHOT...v0.0.2-SNAPSHOT
 [0.0.1a-SNAPSHOT]: https://github.com/sidietz/slm/compare/v0.0.1-SNAPSHOT...v0.0.1a-SNAPSHOT
 [0.0.1-SNAPSHOT]: https://github.com/sidietz/slm/releases/tag/v0.0.1-SNAPSHOT

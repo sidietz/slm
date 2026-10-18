@@ -54,6 +54,16 @@ public class RouteControllerTest {
         String view2 = controller.submitBooks(r, model);
         assertEquals("redirect:/routes", view2);
         
+        Point p1 = new Point(1L, "Start", "Start Desc", 49.0, 10.0);
+        Point p2 = new Point(2L, "End", "End Desc", 49.1, 10.1);
+        Route r2 = new Route();
+        r2.setStart(p1);
+        r2.setEnd(p2);
+        org.mockito.Mockito.when(repo.calculateAirDistance(1L, 2L)).thenReturn(13.45);
+        String view2b = controller.submitBooks(r2, model);
+        assertEquals("redirect:/routes", view2b);
+        assertEquals(13.45, r2.getAirDistance());
+        
         // points
         String view3 = controller.addPoints(1L, model);
         assertEquals("points", view3);

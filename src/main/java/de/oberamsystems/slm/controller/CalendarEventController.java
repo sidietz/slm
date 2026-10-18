@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,8 +49,8 @@ public class CalendarEventController {
 	@GetMapping("/add-event")
 	public String addEvent(@RequestParam(required = false) Long id, Model model) {
 		CalendarEvent e = new CalendarEvent();
-		e.setStart(LocalDateTime.now());
-		e.setEnd(LocalDateTime.now());
+		e.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		e.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("event", e);
 		return "add-event";
 	}

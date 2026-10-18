@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WorkingSessionRepository extends JpaRepository<WorkingSession, String> {
 
-	List<WorkingSession> findByClient(Contractor client);
+	List<WorkingSession> findByEmployer(Employer employer);
 
 	List<WorkingSession> findByProject(String project);
 

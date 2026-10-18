@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,8 +32,8 @@ public class SleepTimeController {
 	public String addSleepTimes(Model model) {
 		model.addAttribute("sleeptimes", repo.findAll());
 		SleepTime st = new SleepTime();
-		st.setGotobed(LocalDateTime.now().minusHours(9));
-		st.setGetup(LocalDateTime.now());
+		st.setGotobed(LocalDateTime.now().minusHours(9).truncatedTo(ChronoUnit.MINUTES));
+		st.setGetup(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("sleeptime", st);
 		return "sleep-times";
 	}

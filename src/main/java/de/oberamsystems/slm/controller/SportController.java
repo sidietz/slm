@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,8 +31,8 @@ public class SportController {
 	public String addSports(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("sports", repo.findAll());
 		SportSession s = new SportSession();
-		s.setStart(LocalDateTime.now());
-		s.setEnd(LocalDateTime.now());
+		s.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		s.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("sport", s);
 		model.addAttribute("sportTypes", typeRepo.findAll());
 		return "sports";
