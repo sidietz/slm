@@ -5,11 +5,13 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -110,7 +112,7 @@ public class SessionController {
 		model.addAttribute("totalSessionsCount", filteredSessions.size());
 		model.addAttribute("totalNetDuration", DurationFormatter.format(totalNetDuration));
 		model.addAttribute("totalBreakDuration", DurationFormatter.format(totalBreakDuration));
-		model.addAttribute("avgFocusRating", String.format(java.util.Locale.US, "%.1f", avgFocusRating));
+		model.addAttribute("avgFocusRating", String.format(Locale.US, "%.1f", avgFocusRating));
 
 		// Reference items for the modal forms
 		populateReferenceData(model);
@@ -152,7 +154,7 @@ public class SessionController {
 		List<WorkingSession> list = workingSessionRepo.findAll();
 		list.sort(Comparator.comparing(WorkingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
-		model.addAttribute("employers", employerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		WorkingSession ws = new WorkingSession();
 		ws.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
 		ws.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
@@ -246,11 +248,11 @@ public class SessionController {
 	}
 
 	private void populateReferenceData(Model model) {
-		model.addAttribute("learningItems", learningItemRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
-		model.addAttribute("games", gameRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
-		model.addAttribute("devices", deviceRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
-		model.addAttribute("books", bookRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "title")));
-		model.addAttribute("sportTypes", sportTypeRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
-		model.addAttribute("employers", employerRepo.findAll(org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.ASC, "name")));
+		model.addAttribute("learningItems", learningItemRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("games", gameRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("devices", deviceRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("books", bookRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("sportTypes", sportTypeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 	}
 }

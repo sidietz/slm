@@ -3,6 +3,7 @@ package de.oberamsystems.slm.controller;
 import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 import org.springframework.ui.ConcurrentModel;
 
 import java.time.Duration;
@@ -157,7 +158,7 @@ public class SessionControllerTest {
     public void testWorkingSessionsViewAndSubmit() {
         when(workingSessionRepo.findAll()).thenReturn(new ArrayList<>());
         when(employerRepo.findAll()).thenReturn(new ArrayList<>());
-        when(employerRepo.findAll(any(org.springframework.data.domain.Sort.class))).thenReturn(new ArrayList<>());
+        when(employerRepo.findAll(any(Sort.class))).thenReturn(new ArrayList<>());
 
         ConcurrentModel model = new ConcurrentModel();
         String view = controller.viewWorkingSessions(model);

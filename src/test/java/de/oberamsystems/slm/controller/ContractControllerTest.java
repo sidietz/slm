@@ -2,12 +2,15 @@ package de.oberamsystems.slm.controller;
 
 import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
+import org.springframework.data.domain.Sort;
 import org.springframework.ui.ConcurrentModel;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -20,11 +23,11 @@ public class ContractControllerTest {
         ContractRepository repo = mock(ContractRepository.class);
         ContractorRepository contractorRepo = mock(ContractorRepository.class);
         
-        java.lang.reflect.Field f1 = ContractController.class.getDeclaredField("repo");
+        Field f1 = ContractController.class.getDeclaredField("repo");
         f1.setAccessible(true);
         f1.set(controller, repo);
         
-        java.lang.reflect.Field f2 = ContractController.class.getDeclaredField("contractorRepo");
+        Field f2 = ContractController.class.getDeclaredField("contractorRepo");
         f2.setAccessible(true);
         f2.set(controller, contractorRepo);
         
@@ -35,7 +38,7 @@ public class ContractControllerTest {
         c1.setFee(10.5f);
         contracts.add(c1);
         when(repo.findAll()).thenReturn(contracts);
-        when(repo.findAll(org.mockito.ArgumentMatchers.any(org.springframework.data.domain.Sort.class))).thenReturn(contracts);
+        when(repo.findAll(any(Sort.class))).thenReturn(contracts);
         
         // contracts
         String view1 = controller.addContracts(1L, model);
