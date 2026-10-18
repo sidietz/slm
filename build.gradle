@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'de.oberamsystems'
-version = '0.0.2d'
+version = '0.0.2e'
 description = "simon's life manager"
 
 springBoot {
@@ -39,11 +39,15 @@ dependencies {
 	implementation 'org.apache.commons:commons-lang3:3.21.0' // fixes a CVE
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:junit-jupiter:1.21.3'
+	testImplementation 'org.testcontainers:postgresql:1.21.3'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
 	useJUnitPlatform()
+	include '**/*Test.class', '**/*IT.class'
 	finalizedBy jacocoTestReport
 }
 

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2e] - 2026-10-18
+
+### Added
+- Spring Boot Testcontainers integration test framework running PostgreSQL 18 with PostGIS 3.6 (`postgis/postgis:18-3.6`) using a shared singleton container pattern (`AbstractIntegrationTest`) and `@ServiceConnection`.
+- Comprehensive integration test suite ending in `IT` (`RouteSpatialIT`, `DoctorSpatialIT`, `SessionHierarchyIT`, `EmployerContractIT`, `SelfieControllerIT`) testing real PostGIS spatial calculations, database triggers, JPA joined inheritance, and MockMvc workflows.
+- Authoritative test schema initialization in `src/test/resources/schema-init.sql` consolidating `enums.sql`, `tables.sql`, and spatial triggers directly for fresh installations without legacy migration scripts.
+- Test dependencies: `spring-boot-testcontainers`, `testcontainers:postgresql`, and `testcontainers:junit-jupiter`.
+
+### Changed
+- Configured Gradle `test` task to execute both unit tests (`*Test.class`) and integration tests (`*IT.class`).
+
 ## [0.0.2d] - 2026-10-18
 
 ### Added
@@ -119,7 +130,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2d...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2e...HEAD
+[0.0.2e]: https://github.com/sidietz/slm/compare/v0.0.2d...v0.0.2e
 [0.0.2d]: https://github.com/sidietz/slm/compare/v0.0.2c...v0.0.2d
 [0.0.2c]: https://github.com/sidietz/slm/compare/v0.0.2b...v0.0.2c
 [0.0.2b]: https://github.com/sidietz/slm/compare/v0.0.2a...v0.0.2b
