@@ -61,7 +61,7 @@
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 
-    <script>
+    <script th:inline="none">
     function getData2() {
         let url = "/api/sleeptimes";
         fetch(url).then((response) => {
@@ -72,21 +72,37 @@
     }
 
     function parseDuration(rawDuration) {
-        if (!rawDuration) return 0;
-        let hourmins = rawDuration.slice(2);
-        if (hourmins.endsWith("S")) hourmins = hourmins.slice(0, -1);
-        if (hourmins.includes("H")) {
-            let parts = hourmins.split("H");
-            let hours = Number(parts[0]);
-            let minutes = parts[1] && parts[1].includes("M") ? Number(parts[1].replace("M", "")) : 0;
-            return hours + (minutes / 60);
-        } else if (hourmins.includes("M")) {
-            return Number(hourmins.replace("M", "")) / 60;
+        if (rawDuration === null || rawDuration === undefined || rawDuration === "") return 0;
+        if (typeof rawDuration === 'number') {
+            return +(rawDuration / 3600).toFixed(2);
         }
-        return Number(hourmins) || 0;
+        let str = String(rawDuration).trim();
+        if (!isNaN(str)) {
+            return +(Number(str) / 3600).toFixed(2);
+        }
+        if (str.startsWith("PT")) {
+            str = str.slice(2);
+            if (str.endsWith("S")) str = str.slice(0, -1);
+            let hours = 0;
+            let minutes = 0;
+            if (str.includes("H")) {
+                let parts = str.split("H");
+                hours = Number(parts[0]) || 0;
+                str = parts[1] || "";
+            }
+            if (str.includes("M")) {
+                minutes = Number(str.replace("M", "")) || 0;
+            }
+            return +(hours + (minutes / 60)).toFixed(2);
+        }
+        return Number(str) || 0;
     }
 
     function convertToBb(rawData) {
+        if (!rawData || rawData.length === 0) {
+            return;
+        }
+
         let x = ["x"];
         let result = ["Sleep Duration (h)"];
 
@@ -125,7 +141,7 @@
             colors: {
                 "Sleep Duration (h)": "#10b981"
             },
-            columns: [[]]
+            columns: []
         }
     });
 
