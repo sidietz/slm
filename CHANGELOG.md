@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Created non-destructive, atomic transactional migration script [`src/main/resources/migration_2026-10-19_1.sql`](src/main/resources/migration_2026-10-19_1.sql) (`BEGIN;` ... `COMMIT;`) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints with full rollback safety.
   - Synchronized authoritative baseline schemas [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
 
+### Fixed
+- Resolved Thymeleaf premature HTTP response commitment during deferred CSRF token evaluation:
+  - Configured `spring.thymeleaf.servlet.produce-partial-output-while-processing=false` in [`application.properties`](src/main/resources/application.properties), ensuring the entire template document is rendered in memory before flushing to the servlet response stream.
+  - Removed temporary `OncePerRequestFilter` from [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java), preserving the clean Spring Security filter chain and eliminating `IllegalStateException: Cannot create a session after the response has been committed` across all large table views.
+
 ## [0.0.2i] - 2026-10-19
 
 ### Added
