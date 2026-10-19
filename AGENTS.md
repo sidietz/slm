@@ -110,12 +110,17 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
   - Incremental scripts (`src/main/resources/migration_YYYY-MM-DD[_N].sql`) exist **solely to upgrade existing / legacy databases** (e.g. running developer or production instances) without data loss.
   - Migrations do not define the target architecture; they are non-destructive transitions bridging previous states to the current `tables.sql`.
 
+- **Mandatory Transactional DDL (`BEGIN;` ... `COMMIT;`)**:
+  - PostgreSQL supports transactional DDL for table alterations, constraint changes, index creation, and data transformations.
+  - All incremental migration scripts (`src/main/resources/migration_YYYY-MM-DD[_N].sql`) **must start with `BEGIN;` and terminate with `COMMIT;`**.
+  - Never author bare, non-transactional statements in migration scripts. This guarantees that multi-step migrations execute atomically and roll back automatically upon any error, preventing partial or corrupted schema states on developer and production databases.
+
 - **Protocol for Schema Alterations**:
   1. **Update Baseline Files First**: Apply table modifications, indices, functions, and triggers to:
      - [`src/main/resources/tables.sql`](src/main/resources/tables.sql)
      - [`init.sql`](init.sql)
      - [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql)
-  2. **Generate Migration Delta**: Create a new file [`src/main/resources/migration_YYYY-MM-DD[_N].sql`](src/main/resources/) containing only the statements needed to migrate legacy data and structures.
+  2. **Generate Transactional Migration Delta**: Create a new file [`src/main/resources/migration_YYYY-MM-DD[_N].sql`](src/main/resources/) enclosed in `BEGIN;` ... `COMMIT;` containing only the statements needed to safely migrate legacy data and structures.
   3. **Verification**: Verify that the migration script executes cleanly on a legacy database state and results in a schema equivalent to the fresh baseline.
 
 ---

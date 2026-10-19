@@ -1,5 +1,7 @@
 -- Migration 2026-10-19_1: Migrate Session Hierarchy and Related Foreign Keys from TEXT to native UUIDv7
 
+BEGIN;
+
 -- 1. Drop existing foreign key constraints referencing session(id) and lecture_session(id)
 ALTER TABLE IF EXISTS lecture_note DROP CONSTRAINT IF EXISTS lecture_note_lecture_session_id_fkey;
 ALTER TABLE IF EXISTS sport_session DROP CONSTRAINT IF EXISTS sport_session_id_fkey;
@@ -42,3 +44,5 @@ ALTER TABLE sleep_session ADD CONSTRAINT sleep_session_id_fkey FOREIGN KEY (id) 
 ALTER TABLE lecture_session ADD CONSTRAINT lecture_session_id_fkey FOREIGN KEY (id) REFERENCES session(id) ON DELETE CASCADE;
 
 ALTER TABLE lecture_note ADD CONSTRAINT lecture_note_lecture_session_id_fkey FOREIGN KEY (lecture_session_id) REFERENCES lecture_session(id) ON DELETE SET NULL;
+
+COMMIT;

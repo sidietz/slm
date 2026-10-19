@@ -687,7 +687,7 @@ Following the implementation of `LectureNote` with native `java.util.UUID` and P
 
 4. **Authoritative Baseline Schemas & Non-Destructive Migration**:
    - Updated baseline definitions in [`tables.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/tables.sql), [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql), and [`schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql) to `id UUID PRIMARY KEY DEFAULT uuidv7()`.
-   - Created incremental migration script [`src/main/resources/migration_2026-10-19_1.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-19_1.sql) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints.
+   - Created incremental migration script [`src/main/resources/migration_2026-10-19_1.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-19_1.sql) wrapped in an atomic transaction (`BEGIN;` ... `COMMIT;`) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints with full rollback guarantees.
 
 ### Consequences & Trade-offs
 - **Benefits**:

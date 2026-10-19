@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Updated [`SessionController`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) `/sessions/delete/{id}` endpoint to take `@PathVariable UUID id`.
   - Updated [`AcademicController`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java) `/courses/{courseId}/notes/new` and `/notes` endpoints to bind `@RequestParam(required = false) UUID sessionId`.
   - Updated Spring AI MCP Server session tools ([`McpSessionTools`](src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java), [`McpAcademicTools`](src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java)) to handle and return native UUIDs.
-  - Created non-destructive migration script [`src/main/resources/migration_2026-10-19_1.sql`](src/main/resources/migration_2026-10-19_1.sql) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints.
+  - Created non-destructive, atomic transactional migration script [`src/main/resources/migration_2026-10-19_1.sql`](src/main/resources/migration_2026-10-19_1.sql) (`BEGIN;` ... `COMMIT;`) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints with full rollback safety.
   - Synchronized authoritative baseline schemas [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
 
 ## [0.0.2i] - 2026-10-19
