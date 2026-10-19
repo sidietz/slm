@@ -108,14 +108,14 @@ public class AcademicController {
 
 	@GetMapping("/courses/{courseId}/notes/new")
 	public String newNoteForCourse(@PathVariable Long courseId,
-			@RequestParam(required = false) String sessionId,
+			@RequestParam(required = false) UUID sessionId,
 			Model model) {
 		Course course = courseRepo.findById(courseId).orElseThrow(() -> new IllegalArgumentException("Course not found: " + courseId));
 		LectureNote note = new LectureNote();
 		note.setCourse(course);
 		note.setLectureDate(LocalDate.now());
 
-		if (sessionId != null && !sessionId.isBlank()) {
+		if (sessionId != null) {
 			lectureSessionRepo.findById(sessionId).ifPresent(s -> {
 				note.setLectureSession(s);
 				note.setLectureNumber(s.getLectureNumber());
@@ -153,12 +153,12 @@ public class AcademicController {
 	}
 
 	@PostMapping("/notes")
-	public String saveNote(@ModelAttribute LectureNote note, @RequestParam(required = false) String sessionId) {
+	public String saveNote(@ModelAttribute LectureNote note, @RequestParam(required = false) UUID sessionId) {
 		if (note.getCourse() != null && note.getCourse().getId() != null) {
 			courseRepo.findById(note.getCourse().getId()).ifPresent(note::setCourse);
 		}
-		String sid = (sessionId != null && !sessionId.isBlank()) ? sessionId :
-				(note.getLectureSession() != null && note.getLectureSession().getId() != null && !note.getLectureSession().getId().isBlank()
+		UUID sid = (sessionId != null) ? sessionId :
+				(note.getLectureSession() != null && note.getLectureSession().getId() != null
 						? note.getLectureSession().getId() : null);
 		if (sid != null) {
 			lectureSessionRepo.findById(sid).ifPresent(note::setLectureSession);

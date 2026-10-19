@@ -20,11 +20,11 @@ public class SessionModelTest {
 		session.prePersist();
 
 		assertNotNull(session.getId());
-		UUID parsed = UUID.fromString(session.getId());
-		assertEquals(7, parsed.version(), "Generated UUID must be RFC 9562 Version 7");
+		assertInstanceOf(UUID.class, session.getId());
+		assertEquals(7, session.getId().version(), "Generated UUID must be RFC 9562 Version 7");
 
 		// If ID is already set, prePersist should not overwrite it
-		String existingId = "custom-id-123";
+		UUID existingId = UUID.fromString("0192e200-0000-7000-8000-000000000001");
 		session.setId(existingId);
 		session.prePersist();
 		assertEquals(existingId, session.getId());
@@ -43,8 +43,9 @@ public class SessionModelTest {
 		Duration breakDur = Duration.ofMinutes(15);
 		Duration grossDur = Duration.ofHours(2);
 		Duration netDur = Duration.ofMinutes(105);
+		UUID testUuid = UUID.fromString("0192e200-0000-7000-8000-000000000002");
 
-		session.setId("test-uuid");
+		session.setId(testUuid);
 		session.setStatus("IN_PROGRESS");
 		session.setStart(start);
 		session.setEnd(end);
@@ -55,7 +56,7 @@ public class SessionModelTest {
 		session.setComment("Deep focus work");
 		session.setOutcomeSummary("Implemented feature X");
 
-		assertEquals("test-uuid", session.getId());
+		assertEquals(testUuid, session.getId());
 		assertEquals("IN_PROGRESS", session.getStatus());
 		assertEquals(start, session.getStart());
 		assertEquals(end, session.getEnd());
@@ -65,6 +66,6 @@ public class SessionModelTest {
 		assertEquals(4, session.getFocusRating());
 		assertEquals("Deep focus work", session.getComment());
 		assertEquals("Implemented feature X", session.getOutcomeSummary());
-		assertTrue(session.toString().contains("test-uuid"));
+		assertTrue(session.toString().contains(testUuid.toString()));
 	}
 }

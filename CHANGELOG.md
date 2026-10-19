@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.2j] - 2026-10-19
+
+### Changed
+- Migrated **Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7** (ADR 018):
+  - Migrated root [`Session`](src/main/java/de/oberamsystems/slm/model/Session.java) and all 9 joined subclasses ([`CodingSession`](src/main/java/de/oberamsystems/slm/model/CodingSession.java), [`WorkingSession`](src/main/java/de/oberamsystems/slm/model/WorkingSession.java), [`LearningSession`](src/main/java/de/oberamsystems/slm/model/LearningSession.java), [`ReadingSession`](src/main/java/de/oberamsystems/slm/model/ReadingSession.java), [`GamingSession`](src/main/java/de/oberamsystems/slm/model/GamingSession.java), [`SportSession`](src/main/java/de/oberamsystems/slm/model/SportSession.java), [`MeditationSession`](src/main/java/de/oberamsystems/slm/model/MeditationSession.java), [`SleepSession`](src/main/java/de/oberamsystems/slm/model/SleepSession.java), [`LectureSession`](src/main/java/de/oberamsystems/slm/model/LectureSession.java)) from `String` / `TEXT` to native `java.util.UUID` / PostgreSQL `UUID`.
+  - Configured Hibernate 7 `@GeneratedValue @UuidGenerator(style = Style.VERSION_7)` on `Session.id`, backed by PostgreSQL 18 `DEFAULT uuidv7()`.
+  - Retained Java 27 `UUID.ofEpochMillis(...)` in `@PrePersist` to ensure version 7 ID generation in standalone unit tests without active persistence context.
+  - Migrated foreign key reference [`LectureNote.lectureSession`](src/main/java/de/oberamsystems/slm/model/LectureNote.java) (`lecture_note.lecture_session_id`) from `TEXT` to native `UUID`.
+  - Updated all 10 session repositories to `JpaRepository<T, UUID>` and updated [`LectureNoteRepository`](src/main/java/de/oberamsystems/slm/model/LectureNoteRepository.java) to define `findByLectureSessionId(UUID lectureSessionId)`.
+  - Updated [`SessionController`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) `/sessions/delete/{id}` endpoint to take `@PathVariable UUID id`.
+  - Updated [`AcademicController`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java) `/courses/{courseId}/notes/new` and `/notes` endpoints to bind `@RequestParam(required = false) UUID sessionId`.
+  - Updated Spring AI MCP Server session tools ([`McpSessionTools`](src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java), [`McpAcademicTools`](src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java)) to handle and return native UUIDs.
+  - Created non-destructive migration script [`src/main/resources/migration_2026-10-19_1.sql`](src/main/resources/migration_2026-10-19_1.sql) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints.
+  - Synchronized authoritative baseline schemas [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
+
 ## [0.0.2i] - 2026-10-19
 
 ### Added

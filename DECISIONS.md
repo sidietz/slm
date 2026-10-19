@@ -22,6 +22,8 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 014: Containerized Production Deployment with PostGIS 18-3.6 & Healthcheck Orchestration](#adr-014-containerized-production-deployment-with-postgis-18-36--healthcheck-orchestration)
 - [ADR 015: Unified Life Events, Anniversaries & Memorials Architecture](#adr-015-unified-life-events-anniversaries--memorials-architecture)
 - [ADR 016: Spring AI Model Context Protocol (MCP) Server Integration](#adr-016-spring-ai-model-context-protocol-mcp-server-integration)
+- [ADR 017: University Lectures, Academic Tracking & Native UUIDv7 Markdown Lecture Notes](#adr-017-university-lectures-academic-tracking--native-uuidv7-markdown-lecture-notes)
+- [ADR 018: Migration of Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7](#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)
 
 ---
 
@@ -645,5 +647,56 @@ Simon's Life Manager previously supported open-ended `LearningSession` entries, 
 ### Consequences & Trade-offs
 - **Benefits**: Complete academic lifecycle tracking seamlessly unified with personal life management; instant notes retrieval; Net Focused Time remains an accurate measure of cognitive work; optimal database clustering through UUIDv7.
 - **Constraints**: Requires PostgreSQL 18+ for native SQL `uuidv7()` defaults; client-side Markdown rendering requires `marked.js` in views.
+
+---
+
+## ADR 018: Migration of Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7
+
+### Status
+Accepted (v0.0.2j)
+
+### Context
+Following the implementation of `LectureNote` with native `java.util.UUID` and PostgreSQL 18 `DEFAULT uuidv7()` ([ADR 017](file:///home/simon/code/eclipse/slm/DECISIONS.md#adr-017-university-lectures-academic-tracking--native-uuidv7-markdown-lecture-notes)), an architectural inconsistency existed across the domain model:
+- `Session` and all 9 polymorphic joined subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`, `LectureSession`) stored UUIDv7 identifiers as canonical 36-character `TEXT` strings.
+- Foreign keys targeting sessions (such as `lecture_note.lecture_session_id`) were defined as `TEXT REFERENCES lecture_session(id)`.
+- Storing UUIDs as `TEXT` imposed a 36-byte storage overhead (compared to 16 bytes for native `uuid`), sub-optimal lexicographical B-tree comparison, and prevented Hibernate 7's direct `@UuidGenerator(style = Style.VERSION_7)` mapping on the root session entity.
+
+### Decision
+
+1. **Native Entity Identifier**:
+   - Updated root [`Session`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Session.java) entity to use `java.util.UUID` with Hibernate 7 `@UuidGenerator`:
+     ```java
+     @Id
+     @GeneratedValue
+     @UuidGenerator(style = Style.VERSION_7)
+     @Column(name = "id", columnDefinition = "uuid")
+     private UUID id;
+     ```
+   - Maintained `@PrePersist` fallback using Java 27 `UUID.ofEpochMillis(System.currentTimeMillis())` to guarantee instant version 7 UUID generation for unit tests executed outside an active persistence context.
+
+2. **Spring Data JPA Repositories**:
+   - Migrated all 10 session repositories to `JpaRepository<T, UUID>`:
+     - `SessionRepository`, `CodingSessionRepository`, `WorkingSessionRepository`, `LearningSessionRepository`, `ReadingSessionRepository`, `GamingSessionRepository`, `SportSessionRepository`, `MeditationSessionRepository`, `SleepSessionRepository`, `LectureSessionRepository`.
+   - Updated [`LectureNoteRepository`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/LectureNoteRepository.java) to define `findByLectureSessionId(UUID lectureSessionId)`.
+
+3. **Web Controllers & Spring AI MCP Server**:
+   - Updated [`SessionController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/SessionController.java) `/sessions/delete/{id}` endpoint to take `@PathVariable UUID id`.
+   - Updated [`AcademicController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/AcademicController.java) `/courses/{courseId}/notes/new` and `/notes` endpoints to bind `@RequestParam(required = false) UUID sessionId`.
+   - Thymeleaf templates seamlessly bind and render native `UUID` instances via `UUID.toString()`.
+   - MCP session logging tools ([`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java), [`McpAcademicTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java)) return native UUIDs serialized automatically to JSON.
+
+4. **Authoritative Baseline Schemas & Non-Destructive Migration**:
+   - Updated baseline definitions in [`tables.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/tables.sql), [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql), and [`schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql) to `id UUID PRIMARY KEY DEFAULT uuidv7()`.
+   - Created incremental migration script [`src/main/resources/migration_2026-10-19_1.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-19_1.sql) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Consistent type safety across the entire application domain.
+  - Over 55% reduction in identifier storage size (16 bytes vs 36+ bytes).
+  - Faster B-Tree index traversal and cache efficiency in PostgreSQL 18.
+  - Native alignment with PostgreSQL 18 `uuidv7()` and Hibernate 7 `@UuidGenerator`.
+- **Constraints**:
+  - Legacy databases require execution of `migration_2026-10-19_1.sql`. Any custom mock IDs in test databases must conform to standard RFC 9562 UUID format.
+
 
 

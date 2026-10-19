@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -364,7 +365,7 @@ public class SessionController {
 	}
 
 	@PostMapping("/sessions/delete/{id}")
-	public String deleteSession(@PathVariable String id,
+	public String deleteSession(@PathVariable UUID id,
 			@RequestParam(required = false, defaultValue = "ALL") String returnType) {
 		sessionRepo.deleteById(id);
 		return "redirect:/sessions?type=" + returnType;

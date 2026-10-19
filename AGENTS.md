@@ -125,9 +125,9 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 1. **JPA Model Entities Must NOT Be Java Records (ADR 002)**:
    - Entity classes in `de.oberamsystems.slm.model` must remain mutable JavaBeans with non-private no-arg constructors.
    - Do NOT convert `@Entity` classes to `record` (breaks Hibernate proxying, joined inheritance, and `WebDataBinder`).
-2. **Polymorphic Session Hierarchy (`InheritanceType.JOINED`) (ADR 001, ADR 011)**:
-   - Root `Session` entity defines `id TEXT PRIMARY KEY` (UUIDv7), `starttime`, `endtime`, `breakDuration`, `duration`, `netDuration`, and ratings.
-   - Subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`) must extend `Session`.
+2. **Polymorphic Session Hierarchy (`InheritanceType.JOINED`) (ADR 001, ADR 011, ADR 018)**:
+   - Root `Session` entity defines `id UUID PRIMARY KEY` (native UUIDv7 via Hibernate `@UuidGenerator` and PostgreSQL 18 `DEFAULT uuidv7()`), `starttime`, `endtime`, `breakDuration`, `duration`, `netDuration`, and ratings.
+   - Subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`, `LectureSession`) must extend `Session`.
 3. **Four Pillars Life Balance Model (ADR 011)**:
    - **Productivity**: Coding, Working, Learning, Reading.
    - **Sport**: Dedicated physical training, cardio, workouts. *(Must remain distinct from wellness).*

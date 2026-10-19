@@ -15,7 +15,7 @@ public interface LectureNoteRepository extends JpaRepository<LectureNote, UUID> 
 
 	List<LectureNote> findAllByOrderByCreatedAtDesc();
 
-	Optional<LectureNote> findByLectureSessionId(String lectureSessionId);
+	Optional<LectureNote> findByLectureSessionId(UUID lectureSessionId);
 
 	@Query("SELECT n FROM LectureNote n WHERE LOWER(n.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(n.contentMarkdown) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(n.keyConcepts) LIKE LOWER(CONCAT('%', :query, '%')) ORDER BY n.createdAt DESC")
 	List<LectureNote> searchNotes(@Param("query") String query);

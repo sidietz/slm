@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -326,8 +327,9 @@ public class SessionControllerTest {
 
     @Test
     public void testDeleteSession() {
-        String redirect = controller.deleteSession("0192e200-0000-7000-8000-000000000001", "CODING");
+        UUID id = UUID.fromString("0192e200-0000-7000-8000-000000000001");
+        String redirect = controller.deleteSession(id, "CODING");
         assertEquals("redirect:/sessions?type=CODING", redirect);
-        verify(sessionRepo).deleteById("0192e200-0000-7000-8000-000000000001");
+        verify(sessionRepo).deleteById(id);
     }
 }

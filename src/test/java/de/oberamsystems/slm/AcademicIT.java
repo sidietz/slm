@@ -92,7 +92,8 @@ public class AcademicIT extends AbstractIntegrationTest {
         lectureSession = lectureSessionRepository.saveAndFlush(lectureSession);
 
         assertNotNull(lectureSession.getId());
-        assertTrue(lectureSession.getId().contains("-"), "Session ID must be UUID format");
+        assertInstanceOf(UUID.class, lectureSession.getId());
+        assertEquals(7, lectureSession.getId().version(), "Session ID must be UUIDv7");
         assertEquals(Duration.ofMinutes(90), lectureSession.getDuration());
         assertEquals(Duration.ofMinutes(75), lectureSession.getNetDuration());
 
