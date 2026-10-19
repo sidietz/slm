@@ -11,14 +11,24 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import de.oberamsystems.slm.security.McpApiKeyAuthFilter;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+	@Autowired
+	private McpApiKeyAuthFilter mcpApiKeyAuthFilter;
+
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
-		http.cors(Customizer.withDefaults()).csrf(Customizer.withDefaults())
+		http.cors(Customizer.withDefaults())
+				.csrf(csrf -> csrf.ignoringRequestMatchers("/mcp/**", "/sse", "/api/**"))
+				.addFilterBefore(mcpApiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
 				.authorizeHttpRequests(authorize -> authorize.requestMatchers("/").permitAll()
 						.requestMatchers("/", "/index", "/index.html", "/login/*", "/error", "/webjars/**", "/css/**")
 						.permitAll()
@@ -65,8 +75,8 @@ public class SecurityConfig {
 								"/learningitem.html", "/add-learning-session", "/add-learningitem")
 						.permitAll()
 						.requestMatchers("/api/sleeptimes", "/api/moods").permitAll()
-						.requestMatchers("/doctor", "/add-doctor", "/appointment", "/add-appointment", "/speciality",
-								"/add-speciality")
+						.requestMatchers("/doctor", "/doctor.html", "/add-doctor", "/appointment", "/add-appointment",
+								"/speciality", "/speciality.html", "/add-speciality")
 						.permitAll()
 						.requestMatchers("/activity-management", "/book-management", "/human-management",
 								"/habit-management", "/spend-management", "/misc-management")
@@ -75,16 +85,21 @@ public class SecurityConfig {
 						.requestMatchers("/publishers", "/studios", "/vendors", "/manufacturers").permitAll()
 						.requestMatchers("/activities", "/sports", "/sleep-times", "/gaming-sessions").permitAll()
 						.requestMatchers("/books", "/authors", "/reading-sessions").permitAll()
-						.requestMatchers("/humans").permitAll()
+						.requestMatchers("/humans", "/human-events", "/human-events/**", "/events", "/events/**").permitAll()
 						.requestMatchers("/selfies").permitAll()
 						.requestMatchers("/appointments", "/doctors", "/specialities").permitAll()
 						.requestMatchers("/last-done-habit-entries").permitAll()
 						.requestMatchers("/train-trips", "/train-stations", "/train-lines").permitAll()
 						.requestMatchers("/purchases", "/contracts", "/contractors", "/employers").permitAll()
 						.requestMatchers("/learning-sessions", "/habits", "/meditations", "/gratitudes").permitAll()
-						.requestMatchers("/sessions", "/sessions/**", "/coding-sessions", "/working-sessions").permitAll()
+						.requestMatchers("/sessions", "/sessions/**", "/coding-sessions", "/working-sessions", "/lecture-sessions", "/lecture-sessions/**", "/lecture-session", "/lecture-session/**").permitAll()
+						.requestMatchers("/courses", "/courses/**", "/course", "/course/**", "/courses.html", "/course.html", "/course-detail", "/course-detail.html").permitAll()
+						.requestMatchers("/notes", "/notes/**", "/note", "/note/**", "/lecture-notes", "/lecture-notes/**", "/lecture-note", "/lecture-note/**").permitAll()
+						.requestMatchers("/academics", "/academics/**", "/academic", "/academic/**").permitAll()
+						.requestMatchers("/favicon.ico", "/favicon/**").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()
 						.requestMatchers("/points", "/routes", "/car-trips", "/cars").permitAll()
+						.requestMatchers("/mcp/**", "/sse").permitAll()
 						.requestMatchers("/api/**")
 						.authenticated().anyRequest().denyAll())
 				.formLogin(Customizer.withDefaults()).httpBasic(Customizer.withDefaults());

@@ -11,6 +11,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -33,6 +34,8 @@ public class SessionControllerTest {
     private BookRepository bookRepo;
     private SportTypeRepository sportTypeRepo;
     private EmployerRepository employerRepo;
+    private LectureSessionRepository lectureSessionRepo;
+    private CourseRepository courseRepo;
 
     @BeforeEach
     public void setup() throws Exception {
@@ -53,6 +56,8 @@ public class SessionControllerTest {
         bookRepo = mock(BookRepository.class);
         sportTypeRepo = mock(SportTypeRepository.class);
         employerRepo = mock(EmployerRepository.class);
+        lectureSessionRepo = mock(LectureSessionRepository.class);
+        courseRepo = mock(CourseRepository.class);
 
         setField("sessionRepo", sessionRepo);
         setField("codingSessionRepo", codingSessionRepo);
@@ -69,6 +74,8 @@ public class SessionControllerTest {
         setField("bookRepo", bookRepo);
         setField("sportTypeRepo", sportTypeRepo);
         setField("employerRepo", employerRepo);
+        setField("lectureSessionRepo", lectureSessionRepo);
+        setField("courseRepo", courseRepo);
     }
 
     private void setField(String fieldName, Object val) throws Exception {
@@ -232,11 +239,15 @@ public class SessionControllerTest {
 
         // Sleep
         SleepSession sleep = new SleepSession();
-        String redirectSleep = controller.submitSleepSession(sleep, 15L, 90L, 80L);
+        sleep.setStart(LocalDateTime.of(2026, 10, 18, 22, 0));
+        sleep.setEnd(LocalDateTime.of(2026, 10, 19, 6, 0));
+        org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap redirectAttributes = new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap();
+        String redirectSleep = controller.submitSleepSession(sleep, 15L, 90L, 80L, 295L, redirectAttributes);
         assertEquals("redirect:/sessions?type=SLEEP", redirectSleep);
         assertEquals(Duration.ofMinutes(15), sleep.getBreakDuration());
         assertEquals(Duration.ofMinutes(90), sleep.getDeepSleepDuration());
         assertEquals(Duration.ofMinutes(80), sleep.getRemSleepDuration());
+        assertEquals(Duration.ofMinutes(295), sleep.getLightSleepDuration());
         verify(sleepSessionRepo).save(sleep);
     }
 
@@ -320,8 +331,9 @@ public class SessionControllerTest {
 
     @Test
     public void testDeleteSession() {
-        String redirect = controller.deleteSession("0192e200-0000-7000-8000-000000000001", "CODING");
+        UUID id = UUID.fromString("0192e200-0000-7000-8000-000000000001");
+        String redirect = controller.deleteSession(id, "CODING");
         assertEquals("redirect:/sessions?type=CODING", redirect);
-        verify(sessionRepo).deleteById("0192e200-0000-7000-8000-000000000001");
+        verify(sessionRepo).deleteById(id);
     }
 }

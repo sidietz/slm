@@ -76,7 +76,7 @@ CREATE TYPE event_type AS ENUM ('BIRTHDAY', 'MEMORIAL', 'WEDDING_ANNIVERSARY', '
 CREATE TABLE sporttype(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 
 CREATE TABLE session(
-    id TEXT PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
     session_type TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'COMPLETED',
     starttime TIMESTAMP NOT NULL,
@@ -89,8 +89,8 @@ CREATE TABLE session(
     outcome_summary TEXT
 );
 
-CREATE TABLE sport_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, type BIGINT REFERENCES sporttype(id));
-CREATE TABLE meditation_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE);
+CREATE TABLE sport_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, type BIGINT REFERENCES sporttype(id));
+CREATE TABLE meditation_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE);
 
 CREATE TABLE human(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, birthday DATE, category human_category, death_date DATE);
 CREATE TABLE human_event (
@@ -166,21 +166,29 @@ CREATE TABLE route(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, description TEX
 CREATE TABLE car(id BIGSERIAL PRIMARY KEY, vin TEXT, name TEXT, model_name TEXT, key_number TEXT, manufacturer_id BIGINT NOT NULL REFERENCES manufacturer(id), vendor_id BIGINT NOT NULL REFERENCES vendor(id), purchase_date DATE, approval_date DATE, manufacturing_date DATE, purchase_price REAL, sell_price REAL, purchase_kilometers BIGINT, sell_kilometers BIGINT, price_per_100_km REAL);
 CREATE TABLE car_trip(id BIGSERIAL PRIMARY KEY, car_id BIGSERIAL NOT NULL REFERENCES car(id), route_id BIGSERIAL NOT NULL REFERENCES route(id), is_way_back BOOLEAN, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
-CREATE TABLE reading_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, book_id BIGINT REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL);
+CREATE TABLE reading_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, book_id BIGINT REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL);
 
 CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
-CREATE TABLE learning_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, learning_item_id BIGINT REFERENCES learning_item(id), units_completed INTEGER);
+CREATE TABLE learning_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, learning_item_id BIGINT REFERENCES learning_item(id), units_completed INTEGER);
 
 CREATE TABLE publisher(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
 CREATE TABLE studio(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
 
 CREATE TABLE game(id BIGSERIAL PRIMARY KEY, title TEXT, series TEXT, publisher_id BIGINT NOT NULL REFERENCES publisher(id), studio_id BIGINT NOT NULL REFERENCES studio(id), price REAL, release_date DATE, last_played DATE);
-CREATE TABLE gaming_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, game_id BIGINT NOT NULL REFERENCES game(id), device_id BIGINT REFERENCES device(id), game_mode TEXT);
-CREATE TABLE coding_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, project TEXT, repository TEXT, branch TEXT, ticket TEXT, language TEXT);
+CREATE TABLE gaming_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, game_id BIGINT NOT NULL REFERENCES game(id), device_id BIGINT REFERENCES device(id), game_mode TEXT);
+CREATE TABLE coding_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, project TEXT, repository TEXT, branch TEXT, ticket TEXT, language TEXT);
 
 CREATE TABLE employer(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
-CREATE TABLE working_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
-CREATE TABLE sleep_session(id TEXT PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
+CREATE TABLE working_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
+CREATE TABLE sleep_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, light_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
+CREATE TABLE course (id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, code TEXT, semester TEXT, ects_credits NUMERIC(3, 1), lecturer_id BIGINT REFERENCES human(id) ON DELETE SET NULL, default_room TEXT, meeting_link TEXT, syllabus TEXT, exam_date TIMESTAMP, exam_location TEXT, grade NUMERIC(3, 2), exam_passed BOOLEAN, status status_type DEFAULT 'IN_PROGRESS', created_at TIMESTAMP, last_updated TIMESTAMP);
+CREATE TABLE lecture_session (id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, course_id BIGINT REFERENCES course(id) ON DELETE SET NULL, lecture_number INTEGER, topic TEXT, room TEXT, recording_url TEXT, slides_url TEXT);
+CREATE TABLE lecture_note (id UUID PRIMARY KEY DEFAULT uuidv7(), course_id BIGINT REFERENCES course(id) ON DELETE CASCADE, lecture_session_id UUID REFERENCES lecture_session(id) ON DELETE SET NULL, title TEXT NOT NULL, lecture_number INTEGER, lecture_date DATE, content_markdown TEXT, key_concepts TEXT, summary TEXT, has_homework BOOLEAN DEFAULT FALSE, homework_todo TEXT, exam_relevance_rating INTEGER, created_at TIMESTAMP, last_updated TIMESTAMP);
+CREATE INDEX IF NOT EXISTS idx_course_lecturer ON course(lecturer_id);
+CREATE INDEX IF NOT EXISTS idx_course_semester ON course(semester);
+CREATE INDEX IF NOT EXISTS idx_lecture_session_course ON lecture_session(course_id);
+CREATE INDEX IF NOT EXISTS idx_lecture_note_course ON lecture_note(course_id);
+CREATE INDEX IF NOT EXISTS idx_lecture_note_session ON lecture_note(lecture_session_id);
 
 CREATE TABLE contractor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, end_date DATE, active BOOL);
@@ -282,3 +290,79 @@ CREATE TRIGGER trg_point_update_doctor_air_distance
 AFTER UPDATE OF latitude, longitude ON point
 FOR EACH ROW
 EXECUTE FUNCTION update_doctor_air_distances_on_point_change();
+
+CREATE OR REPLACE FUNCTION check_sleep_session_duration()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_starttime TIMESTAMP;
+    v_endtime TIMESTAMP;
+    v_break INTERVAL;
+    v_total INTERVAL;
+    v_sum INTERVAL;
+BEGIN
+    SELECT starttime, endtime, break_duration
+      INTO v_starttime, v_endtime, v_break
+      FROM session
+     WHERE id = NEW.id;
+
+    IF v_starttime IS NOT NULL AND v_endtime IS NOT NULL THEN
+        v_total := v_endtime - v_starttime;
+        v_sum := COALESCE(NEW.deep_sleep_duration, '0 seconds'::interval)
+               + COALESCE(NEW.rem_sleep_duration, '0 seconds'::interval)
+               + COALESCE(NEW.light_sleep_duration, '0 seconds'::interval)
+               + COALESCE(v_break, '0 seconds'::interval);
+
+        IF v_sum <> v_total THEN
+            RAISE EXCEPTION 'Sleep stages sum (%) does not equal total session duration (%) for sleep_session id %',
+                v_sum, v_total, NEW.id;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_sleep_session_duration ON sleep_session;
+CREATE TRIGGER trg_check_sleep_session_duration
+BEFORE INSERT OR UPDATE ON sleep_session
+FOR EACH ROW
+EXECUTE FUNCTION check_sleep_session_duration();
+
+CREATE OR REPLACE FUNCTION check_session_sleep_duration()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_deep INTERVAL;
+    v_rem INTERVAL;
+    v_light INTERVAL;
+    v_total INTERVAL;
+    v_sum INTERVAL;
+BEGIN
+    IF NEW.session_type = 'SLEEP' AND NEW.starttime IS NOT NULL AND NEW.endtime IS NOT NULL THEN
+        SELECT deep_sleep_duration, rem_sleep_duration, light_sleep_duration
+          INTO v_deep, v_rem, v_light
+          FROM sleep_session
+         WHERE id = NEW.id;
+
+        IF FOUND THEN
+            v_total := NEW.endtime - NEW.starttime;
+            v_sum := COALESCE(v_deep, '0 seconds'::interval)
+                   + COALESCE(v_rem, '0 seconds'::interval)
+                   + COALESCE(v_light, '0 seconds'::interval)
+                   + COALESCE(NEW.break_duration, '0 seconds'::interval);
+
+            IF v_sum <> v_total THEN
+                RAISE EXCEPTION 'Sleep stages sum (%) does not equal total session duration (%) for session id %',
+                    v_sum, v_total, NEW.id;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_session_sleep_duration ON session;
+CREATE TRIGGER trg_check_session_sleep_duration
+AFTER UPDATE OF starttime, endtime, break_duration ON session
+FOR EACH ROW
+EXECUTE FUNCTION check_session_sleep_duration();

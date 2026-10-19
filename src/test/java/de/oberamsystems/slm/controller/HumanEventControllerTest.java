@@ -73,7 +73,7 @@ public class HumanEventControllerTest {
 		Human h = new Human(1L, "Max", "Mustermann", new java.util.Date(), HumanCategory.FAMILY);
 		HumanEvent event = new HumanEvent(h, "25th Anniversary", EventType.WEDDING_ANNIVERSARY, LocalDate.of(2001, 6, 15));
 
-		String view = controller.saveEvent(event);
+		String view = controller.saveEvent(event, null, null);
 
 		assertEquals("redirect:/human-events", view);
 		verify(eventRepo).save(event);

@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -43,7 +44,8 @@ public class SessionHierarchyIT extends AbstractIntegrationTest {
         coding = codingSessionRepository.saveAndFlush(coding);
 
         assertNotNull(coding.getId());
-        assertTrue(coding.getId().contains("-"), "ID must be a UUIDv7 string");
+        assertInstanceOf(UUID.class, coding.getId());
+        assertEquals(7, coding.getId().version(), "ID must be a native UUIDv7");
 
         // 2. Meditation session: 20 mins gross, 0 break
         MeditationSession meditation = new MeditationSession();

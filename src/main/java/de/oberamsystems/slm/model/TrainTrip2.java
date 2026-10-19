@@ -20,9 +20,9 @@ public class TrainTrip2 {
 	private TrainLine line;
 
 	@ManyToOne
-	private TrainStation origin;
+	private TrainStation2 origin;
 	@ManyToOne
-	private TrainStation destination;
+	private TrainStation2 destination;
 	
 	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime start;
@@ -35,7 +35,7 @@ public class TrainTrip2 {
 	public TrainTrip2() {
 	}
 	
-	public TrainTrip2(Long id, TrainLine line, TrainStation origin, TrainStation destination, LocalDateTime start, LocalDateTime end,
+	public TrainTrip2(Long id, TrainLine line, TrainStation2 origin, TrainStation2 destination, LocalDateTime start, LocalDateTime end,
 			Duration duration) {
 		this.id = id;
 		this.line = line;
@@ -54,19 +54,19 @@ public class TrainTrip2 {
 		this.line = line;
 	}
 
-	public TrainStation getOrigin() {
+	public TrainStation2 getOrigin() {
 		return origin;
 	}
 
-	public void setOrigin(TrainStation origin) {
+	public void setOrigin(TrainStation2 origin) {
 		this.origin = origin;
 	}
 
-	public TrainStation getDestination() {
+	public TrainStation2 getDestination() {
 		return destination;
 	}
 
-	public void setDestination(TrainStation destination) {
+	public void setDestination(TrainStation2 destination) {
 		this.destination = destination;
 	}
 

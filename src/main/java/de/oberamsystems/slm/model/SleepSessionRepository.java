@@ -2,12 +2,13 @@ package de.oberamsystems.slm.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
-public interface SleepSessionRepository extends JpaRepository<SleepSession, String> {
+public interface SleepSessionRepository extends JpaRepository<SleepSession, UUID> {
 
 	public SleepSession findFirstByOrderByStartDesc();
 

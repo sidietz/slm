@@ -20,6 +20,10 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 012: Decoupling Biological Rest from Net Focused Time & Context-Adaptive KPIs](#adr-012-decoupling-biological-rest-from-net-focused-time--context-adaptive-kpis)
 - [ADR 013: Migration to JUnit 6 Testing Platform](#adr-013-migration-to-junit-6-testing-platform)
 - [ADR 014: Containerized Production Deployment with PostGIS 18-3.6 & Healthcheck Orchestration](#adr-014-containerized-production-deployment-with-postgis-18-36--healthcheck-orchestration)
+- [ADR 015: Unified Life Events, Anniversaries & Memorials Architecture](#adr-015-unified-life-events-anniversaries--memorials-architecture)
+- [ADR 016: Spring AI Model Context Protocol (MCP) Server Integration](#adr-016-spring-ai-model-context-protocol-mcp-server-integration)
+- [ADR 017: University Lectures, Academic Tracking & Native UUIDv7 Markdown Lecture Notes](#adr-017-university-lectures-academic-tracking--native-uuidv7-markdown-lecture-notes)
+- [ADR 018: Migration of Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7](#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)
 
 ---
 
@@ -522,3 +526,253 @@ Previously, contact date management was limited to a single `birthday: DATE` fie
    - Aggregate top upcoming milestones into the Home Dashboard alert stream.
 5. **Seamless Backward Compatibility & Auto-Migration**:
    Automatically migrate existing `human.birthday` values into initial `BIRTHDAY` events in `migration_2026-10-18_5.sql` and keep contact edits synchronized.
+
+---
+
+## ADR 016: Spring AI Model Context Protocol (MCP) Server Integration
+
+### Status
+Accepted (v0.0.2h)
+
+### Context
+Simon's Life Manager (SLM) serves as the central operational hub for personal tracking, deep work sessions, life balance, habits, medical appointments, and life milestones. Interacting with this data via external AI assistants (e.g. Claude Desktop, Gemini CLI, Cursor, Antigravity IDE) required exposing SLM's domain capabilities through a standardized protocol.
+
+The **Model Context Protocol (MCP)** by Anthropic is the industry standard for connecting AI agents to local/remote tools and data sources. Spring AI provides native MCP server support via `spring-ai-starter-mcp-server-webmvc`.
+
+Key architectural requirements:
+1. **Transport Protocol**: Server-Sent Events (SSE) over HTTP to allow concurrent external AI client connectivity while SLM runs as a web service.
+2. **Endpoint Standardization**: Rely on standard Spring AI WebMVC default endpoints (`/sse` handshake and `/mcp/message` JSON-RPC message endpoint) rather than custom non-standard paths.
+3. **Security Architecture**: Secure all MCP communications against unauthorized local network access using a dedicated API key authentication filter (`X-API-KEY` header, `?apiKey=` query parameter, or `Bearer` token) while bypassing CSRF protection for JSON-RPC operations.
+4. **Jackson Compatibility**: Seamlessly interoperate with SLM's Jackson 3 BOM platform (`tools.jackson:jackson-bom:3.2.3`).
+5. **Domain Breadth**: Expose a cohesive suite of tools spanning Life Events, Polymorphic Sessions & Four Pillars Balance, Wellness & Habits, and Medical Healthcare Appointments.
+
+### Decision
+
+1. **Spring AI WebMVC Dependency**:
+   Integrated `spring-ai-bom:2.0.1` and `spring-ai-starter-mcp-server-webmvc` into [`build.gradle`](file:///home/simon/code/eclipse/slm/build.gradle). This pulls `io.modelcontextprotocol.sdk:mcp-json-jackson3:2.0.0`, natively matching SLM's Jackson 3 architecture.
+2. **Default SSE Transport Endpoints**:
+   Maintained standard Spring AI default paths:
+   - `GET /sse`: Server-Sent Events handshake and event stream.
+   - `POST /mcp/message`: Inbound JSON-RPC protocol messages and tool invocation requests.
+3. **Dedicated API Key Security Layer**:
+   Implemented [`McpApiKeyAuthFilter`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/security/McpApiKeyAuthFilter.java) placed before `UsernamePasswordAuthenticationFilter`:
+   - Validates incoming requests to `/mcp/**` and `/sse`.
+   - Checks `X-API-KEY` header, `?apiKey=` URL query parameter, or `Authorization: Bearer <key>` against configurable property `slm.mcp.api-key` (default: `slm-mcp-secret-key-2026`).
+   - Returns clean HTTP 401 JSON error responses for unauthenticated requests.
+   - Configured [`SecurityConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/SecurityConfig.java) with `.ignoringRequestMatchers("/mcp/**", "/sse", "/api/**")` to prevent CSRF interference on state-changing tool executions.
+4. **Tool Suite Architecture (`de.oberamsystems.slm.mcp`)**:
+   Organized tool callbacks across 4 functional domains using `@Tool`:
+   - [`McpLifeEventTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpLifeEventTools.java): `getUpcomingEvents`, `getEventsForContact`, `createLifeEvent`.
+   - [`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java): `getDailyLifeBalance` (Productivity, Sport, Wellness, Leisure hours), `getRecentSessions`, `logCodingSession`, `logSleepSession`.
+   - [`McpWellnessTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpWellnessTools.java): `getHabitsStatus`, `recordHabitCompleted`, `logDailyMood`, `logGratitude`.
+   - [`McpMedicalTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpMedicalTools.java): `getUpcomingAppointments`, `searchDoctors`, `scheduleAppointment`.
+   - Configured [`McpServerConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpServerConfig.java) providing a `ToolCallbackProvider` bean with `MethodToolCallbackProvider`.
+5. **Live Integration Testing**:
+   Created [`McpServerIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/McpServerIT.java) extending `AbstractIntegrationTest`:
+   - Verifies HTTP 401 rejection on `/sse` and `/mcp/message` without API key.
+   - Verifies successful SSE connection with valid `X-API-KEY`.
+   - Validates live JSON-RPC `tools/call` invocations against the shared singleton PostGIS Testcontainer.
+
+### Consequences & Trade-offs
+- **Benefits**: Any MCP-compliant agent can query and modify SLM schedule, balance, and health state directly via SSE.
+- **Security**: Direct API key authentication isolates AI agent interactions from browser session state without requiring form login or session cookies.
+- **Constraints**: Standard `/sse` and `/mcp/message` paths must remain unmapped and exempt from CSRF checks.
+
+---
+
+## ADR 017: University Lectures, Academic Tracking & Native UUIDv7 Markdown Lecture Notes
+
+### Status
+Accepted (v0.0.2i)
+
+### Context
+Simon's Life Manager previously supported open-ended `LearningSession` entries, but lacked dedicated infrastructure for university studies and academic courses:
+1. **Curricular Context**: Courses require academic attributes such as semester (e.g. `WS 2026/27`), ECTS credits, assigned lecturers (modeled via [`Human`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Human.java) with `HumanCategory.LECTURER`), default lecture halls/meeting links, syllabi, and exam schedules (`LocalDateTime examDate` with exam locations).
+2. **Cognitive Focus Tracking**: Attending a lecture is an intentional cognitive deep work activity. Under the **Four Pillars Life Balance Model** ([ADR 011](DECISIONS.md#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model)), it belongs to the **Productivity** pillar alongside Coding, Working, Learning, and Reading sessions, and must contribute to **Net Focused Time** ([ADR 012](DECISIONS.md#adr-012-decoupling-biological-rest-from-net-focused-time--context-adaptive-kpis)).
+3. **Lecture Notes & Knowledge Retention**: Lecture notes require chronological sequencing per course, rich Markdown formatting, key concepts, executive takeaway summaries, homework tracking, and exam relevance ratings (1–5).
+4. **Identifier Architecture**: Notes benefit from time-ordered identifiers for sequential B-tree clustering, distributed generation, and tamper-resistant URL routing. PostgreSQL 18 introduced native `uuidv7()` and Hibernate 7 natively provides `@UuidGenerator(style = Style.VERSION_7)`.
+
+### Decision
+
+1. **First-Class Academic Course Entity (`course` table)**:
+   - Modeled via [`Course`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Course.java) with `title`, `code`, `semester`, `ectsCredits` (`NUMERIC(3,1)`), `syllabus`, `defaultRoom`, `meetingLink`, `examDate` (`LocalDateTime` / `TIMESTAMP`), `examLocation`, `grade`, `examPassed`, and `status`.
+   - Links to [`Human`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Human.java) lecturer (`category = 'LECTURER'`).
+   - Managed via [`AcademicController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/AcademicController.java) at `/courses` and `/courses/{id}`.
+
+2. **Joined Polymorphic `LectureSession` Entity (`lecture_session` table)**:
+   - Extends [`Session`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Session.java) with joined inheritance (`@DiscriminatorValue("LECTURE")`).
+   - Links to [`Course`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Course.java) with `lectureNumber`, `topic`, `room`, and standard `start`, `end`, `breakDuration`, `focusRating`, and `comment`.
+   - Included under the **Productivity** pillar in `/sessions` filtering, dashboard balance metrics, and Net Focused Time aggregation.
+
+3. **First-Class `LectureNote` with Native UUIDv7 (`lecture_note` table)**:
+   - Primary key is native UUIDv7:
+     ```sql
+     CREATE TABLE lecture_note (
+         id UUID PRIMARY KEY DEFAULT uuidv7(),
+         course_id BIGINT REFERENCES course(id) ON DELETE CASCADE,
+         lecture_session_id TEXT REFERENCES lecture_session(id) ON DELETE SET NULL,
+         title TEXT NOT NULL,
+         lecture_number INTEGER,
+         lecture_date DATE,
+         content_markdown TEXT,
+         key_concepts TEXT,
+         summary TEXT,
+         has_homework BOOLEAN DEFAULT FALSE,
+         homework_todo TEXT,
+         exam_relevance_rating INTEGER,
+         created_at TIMESTAMP,
+         last_updated TIMESTAMP
+     );
+     ```
+   - In JPA:
+     ```java
+     @Id
+     @GeneratedValue
+     @UuidGenerator(style = Style.VERSION_7)
+     @Column(name = "id", columnDefinition = "uuid")
+     private UUID id;
+     ```
+   - Features a split-screen Markdown editor with live preview via `marked.js`, snippet insertion toolbar (formulas, code, callouts, tables), key concepts, and exam relevance stars.
+   - Global keyword search across Markdown content, titles, and concept tags via `LectureNoteRepository.searchNotes()`.
+
+4. **Spring AI Model Context Protocol (MCP) Expansion**:
+   - Implemented [`McpAcademicTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java) providing `getCourses`, `getCourseDetails`, `logLectureSession`, `saveLectureNote`, and `searchLectureNotes`.
+   - Integrated into [`McpServerConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpServerConfig.java) callback provider.
+   - Updated [`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java) to factor `LectureSession` into daily Productivity balance.
+
+5. **Schema Synchronization & Migration**:
+   - Synchronized baseline schema artifacts: [`tables.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/tables.sql), [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql), and [`schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql).
+   - Generated non-destructive incremental migration [`migration_2026-10-18_6.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-18_6.sql) for upgrading existing local / production databases.
+
+### Consequences & Trade-offs
+- **Benefits**: Complete academic lifecycle tracking seamlessly unified with personal life management; instant notes retrieval; Net Focused Time remains an accurate measure of cognitive work; optimal database clustering through UUIDv7.
+- **Constraints**: Requires PostgreSQL 18+ for native SQL `uuidv7()` defaults; client-side Markdown rendering requires `marked.js` in views.
+
+---
+
+## ADR 018: Migration of Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7
+
+### Status
+Accepted (v0.0.3-rc1)
+
+### Context
+Following the implementation of `LectureNote` with native `java.util.UUID` and PostgreSQL 18 `DEFAULT uuidv7()` ([ADR 017](file:///home/simon/code/eclipse/slm/DECISIONS.md#adr-017-university-lectures-academic-tracking--native-uuidv7-markdown-lecture-notes)), an architectural inconsistency existed across the domain model:
+- `Session` and all 9 polymorphic joined subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`, `LectureSession`) stored UUIDv7 identifiers as canonical 36-character `TEXT` strings.
+- Foreign keys targeting sessions (such as `lecture_note.lecture_session_id`) were defined as `TEXT REFERENCES lecture_session(id)`.
+- Storing UUIDs as `TEXT` imposed a 36-byte storage overhead (compared to 16 bytes for native `uuid`), sub-optimal lexicographical B-tree comparison, and prevented Hibernate 7's direct `@UuidGenerator(style = Style.VERSION_7)` mapping on the root session entity.
+
+### Decision
+
+1. **Native Entity Identifier**:
+   - Updated root [`Session`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Session.java) entity to use `java.util.UUID` with Hibernate 7 `@UuidGenerator`:
+     ```java
+     @Id
+     @GeneratedValue
+     @UuidGenerator(style = Style.VERSION_7)
+     @Column(name = "id", columnDefinition = "uuid")
+     private UUID id;
+     ```
+   - Maintained `@PrePersist` fallback using Java 27 `UUID.ofEpochMillis(System.currentTimeMillis())` to guarantee instant version 7 UUID generation for unit tests executed outside an active persistence context.
+
+2. **Spring Data JPA Repositories**:
+   - Migrated all 10 session repositories to `JpaRepository<T, UUID>`:
+     - `SessionRepository`, `CodingSessionRepository`, `WorkingSessionRepository`, `LearningSessionRepository`, `ReadingSessionRepository`, `GamingSessionRepository`, `SportSessionRepository`, `MeditationSessionRepository`, `SleepSessionRepository`, `LectureSessionRepository`.
+   - Updated [`LectureNoteRepository`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/LectureNoteRepository.java) to define `findByLectureSessionId(UUID lectureSessionId)`.
+
+3. **Web Controllers & Spring AI MCP Server**:
+   - Updated [`SessionController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/SessionController.java) `/sessions/delete/{id}` endpoint to take `@PathVariable UUID id`.
+   - Updated [`AcademicController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/AcademicController.java) `/courses/{courseId}/notes/new` and `/notes` endpoints to bind `@RequestParam(required = false) UUID sessionId`.
+   - Thymeleaf templates seamlessly bind and render native `UUID` instances via `UUID.toString()`.
+   - MCP session logging tools ([`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java), [`McpAcademicTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java)) return native UUIDs serialized automatically to JSON.
+
+4. **Authoritative Baseline Schemas & Non-Destructive Migration**:
+   - Updated baseline definitions in [`tables.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/tables.sql), [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql), and [`schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql) to `id UUID PRIMARY KEY DEFAULT uuidv7()`.
+   - Created incremental migration script [`src/main/resources/migration_2026-10-19_1.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-19_1.sql) wrapped in an atomic transaction (`BEGIN;` ... `COMMIT;`) to safely drop foreign keys, alter columns with `USING id::uuid`, set default to `uuidv7()`, and restore constraints with full rollback guarantees.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Consistent type safety across the entire application domain.
+  - Over 55% reduction in identifier storage size (16 bytes vs 36+ bytes).
+  - Faster B-Tree index traversal and cache efficiency in PostgreSQL 18.
+  - Native alignment with PostgreSQL 18 `uuidv7()` and Hibernate 7 `@UuidGenerator`.
+- **Constraints**:
+  - Legacy databases require execution of `migration_2026-10-19_1.sql`. Any custom mock IDs in test databases must conform to standard RFC 9562 UUID format.
+
+---
+
+## ADR 019: Sleep Architecture Tracking, Light Sleep & Cross-Table Duration Invariant Enforcement
+
+### Status
+Accepted (v0.0.3-rc1)
+
+### Context
+In SLM, restorative wellness practices are tracked under the Wellness pillar (ADR 011). Previously, `SleepSession` only tracked `deep_sleep_duration`, `rem_sleep_duration`, and `awake_count` (with interruptions stored in `session.break_duration`). This left three gaps:
+1. **Missing Light Sleep**: Standard sleep cycles consist of Awake, Deep, REM, and Light sleep. Without `light_sleep_duration`, complete sleep architecture could not be represented.
+2. **Missing Duration Auto-Calculation**: Users with untracked sleep or wearables reporting only 2 stages had no way to automatically deduce the missing duration without manual arithmetic.
+3. **Lack of Sum Consistency & Validation**: No constraint existed to ensure `deep + rem + light + awake` equaled `endtime - starttime`. Users could enter contradictory durations, and the database did not enforce cross-table consistency.
+
+### Decision
+1. **Model & Schema Addition**:
+   - Added `light_sleep_duration INTERVAL` to `sleep_session` table and `SleepSession.java` entity (mapped with `@Type(PostgreSQLIntervalType.class)`).
+2. **Auto-Calculation & Input Validation Rules**:
+   - **All 3 stages empty**: Defaults the entire net sleep duration (`endtime - starttime - break_duration`) to Light Sleep (`deep = 0`, `rem = 0`).
+   - **Exactly 1 stage missing**: Automatically solves for the missing stage: $\text{missing} = \text{net\_duration} - \sum(\text{entered stages})$.
+   - **All 3 stages provided**: Validates that $\text{deep} + \text{rem} + \text{light} + \text{break} = \text{endtime} - \text{starttime}$.
+   - **Invalid inputs**: Rejects mismatched or ambiguous combinations with user-facing validation error flash messages (`errorMessage`).
+3. **Cross-Table PostgreSQL Database Triggers**:
+   - Implemented `trg_check_sleep_session_duration` (`BEFORE INSERT OR UPDATE ON sleep_session`) and `trg_check_session_sleep_duration` (`AFTER UPDATE ON session`) raising a PostgreSQL exception if sleep stages plus awake disruptions do not equal total gross session duration.
+4. **Migration & Baselines**:
+   - Authored atomic transactional migration `migration_2026-10-19_2.sql` (`BEGIN;` ... `COMMIT;`) backfilling legacy records (`light = duration - break - deep - rem`) and establishing triggers.
+   - Synchronized `tables.sql`, `init.sql`, and `schema-init.sql`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Full polysomnographic sleep architecture representation.
+  - Frictionless UI experience: users can log simple sleep with 0 stage inputs (auto-defaults to Light Sleep) or enter 2 stages (third auto-calculates).
+  - Absolute data integrity guaranteed at the PostgreSQL database level across all entry channels.
+- **Constraints**:
+  - Direct SQL scripts and external integrations must satisfy `deep + rem + light + break = end - start`.
+
+---
+
+## ADR 020: Comprehensive Controller Integration Testing Architecture & Model Alignment
+
+### Status
+Accepted (v0.0.3-rc1)
+
+### Context
+While isolated unit tests with Mockito verified individual controller methods in isolation, real runtime interactions across Spring Security, CSRF token handling, Spring MVC `DomainClassConverter` parameter binding, Hibernate joined inheritance, PostGIS geodesic distance functions, and Thymeleaf template rendering required live integration verification. Additionally, prior integration tests only covered academic workflows, leaving 31 controllers without automated full-stack verification against PostgreSQL.
+
+### Decision
+
+1. **Singleton Shared Testcontainers Architecture**:
+   - Enforced [`AbstractIntegrationTest`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/AbstractIntegrationTest.java) base class across all integration tests (`*IT.java`).
+   - Utilizes a shared singleton `postgis/postgis:18-3.6` container managed via Spring Boot `@ServiceConnection` and initialized with `src/test/resources/schema-init.sql`.
+   - Enforced class-level `@Transactional` across all test classes to guarantee automatic rollback after every test, preventing database mutation pollution across test classes.
+
+2. **Domain-Cohesive Test Suite Partitioning**:
+   - Partitioned the 33 controllers into domain-specific, high-cohesion integration test classes:
+     - [`DashboardAndManagementIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DashboardAndManagementIT.java): Index, Imprint, and the 6 domain management hubs.
+     - [`SessionHubIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/SessionHubIT.java): Unified sessions hub, polymorphic session subclasses, 4 pillars KPI aggregation, and UUIDv7 deletion.
+     - [`ActivitiesAndMediaIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/ActivitiesAndMediaIT.java): Activities, sports, learning, meditation, games, and books.
+     - [`DoctorControllerIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DoctorControllerIT.java): Doctors, specialities, appointments, and PostGIS air distance calculation.
+     - [`WellnessAndHabitsIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java): Habits, daily mood tracking, REST APIs, and sleep times.
+     - [`SocialAndPeopleIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/SocialAndPeopleIT.java): Human contacts, automated birthday/event synchronization, and calendar event timelines.
+     - [`PersonalJournalIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/PersonalJournalIT.java): Diary entries with date filtering and gratitude logging.
+     - [`FinanceManagementIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/FinanceManagementIT.java): Employers, recurring contracts/subscriptions, and purchase logging.
+     - [`TransitAndMobilityIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java): GPS Points, Routes with PostGIS geodesic distance, Car trips, TrainLines, TrainStations, and TrainTrips.
+
+3. **Entity Model Alignment**:
+   - Fixed [`TrainTrip2`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainTrip2.java) entity associations: aligned `origin` and `destination` fields to [`TrainStation2`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainStation2.java), fixing foreign key violations with `trainstation2(id)`.
+
+4. **Spring Security Route Permissibility**:
+   - Hardened [`SecurityConfig.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/SecurityConfig.java) with explicit matchers for `/doctor.html` and `/speciality.html`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - 100% of Spring MVC and REST controllers are covered by automated integration tests executing against a real PostgreSQL 18 + PostGIS database.
+  - Runtime errors in template rendering, parameter converters, and database foreign keys are caught before deployment.
+  - Sub-35 second test execution across the entire 131-test suite due to singleton Testcontainers container reuse.
+- **Constraints**:
+  - Tests must include `.with(csrf())` on state-mutating requests (`POST`, `PUT`, `DELETE`).
+  - Class-level `@Transactional` must be maintained on all integration tests modifying database state.

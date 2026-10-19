@@ -47,6 +47,7 @@
         .badge-meditation { background-color: #10b981; color: white; }
         .badge-sport { background-color: #ef4444; color: white; }
         .badge-sleep { background-color: #0d9488; color: white; }
+        .badge-lecture { background-color: #0284c7; color: white; }
         
         .nav-pills .nav-link {
             border-radius: 2rem;
@@ -267,9 +268,17 @@
                         <i class="bi bi-moon-stars me-1"></i> Sleep
                     </a>
                 </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${activeType == 'LECTURE'} ? 'active' : ''" href="/sessions?type=LECTURE">
+                        <i class="bi bi-mortarboard-fill me-1"></i> Lecture
+                    </a>
+                </li>
             </ul>
 
             <div class="d-flex gap-2">
+                <a href="/courses" class="btn btn-sm btn-outline-info rounded-pill">
+                    <i class="bi bi-mortarboard me-1"></i> Academics
+                </a>
                 <a href="/sleeptime-bb" class="btn btn-sm btn-outline-success rounded-pill">
                     <i class="bi bi-graph-up me-1"></i> Sleep Chart
                 </a>
@@ -280,6 +289,13 @@
                     <i class="bi bi-currency-dollar me-1"></i> Billing View
                 </a>
             </div>
+        </div>
+
+        <!-- Validation Error Message Alert -->
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <span th:text="${errorMessage}">Validation error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
 
         <!-- Sessions Data Table -->
@@ -316,7 +332,8 @@
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Gaming')} ? 'badge-gaming' : 
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Reading')} ? 'badge-reading' : 
                                     (${#strings.contains(s.getClass().getSimpleName(), 'Meditation')} ? 'badge-meditation' : 
-                                    (${#strings.contains(s.getClass().getSimpleName(), 'Sport')} ? 'badge-sport' : 'badge-sleep')))))))"
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Sport')} ? 'badge-sport' : 
+                                    (${#strings.contains(s.getClass().getSimpleName(), 'Lecture')} ? 'badge-lecture' : 'badge-sleep'))))))))"
                                     th:text="${#strings.replace(s.getClass().getSimpleName(), 'Session', '')}">
                                     Session
                                 </span>
@@ -366,11 +383,20 @@
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Sleep')}">
                                     <strong th:text="${s.isNap} ? 'Power Nap' : 'Night Sleep'">Sleep</strong>
                                     <span th:if="${s.awakeCount != null and s.awakeCount > 0}" class="badge bg-secondary-subtle text-secondary ms-1" th:text="${s.awakeCount} + ' wake-ups'">Awake</span>
-                                    <div class="small text-muted" th:if="${s.deepSleepDuration != null or s.remSleepDuration != null}">
-                                        <span th:if="${s.deepSleepDuration != null}" th:text="'Deep: ' + ${{s.deepSleepDuration}}">Deep</span>
-                                        <span th:if="${s.deepSleepDuration != null and s.remSleepDuration != null}"> • </span>
-                                        <span th:if="${s.remSleepDuration != null}" th:text="'REM: ' + ${{s.remSleepDuration}}">REM</span>
+                                    <div class="small text-muted" th:if="${s.deepSleepDuration != null or s.remSleepDuration != null or s.lightSleepDuration != null}">
+                                        <span th:if="${s.deepSleepDuration != null and s.deepSleepDuration.seconds > 0}" th:text="'Deep: ' + ${{s.deepSleepDuration}}">Deep</span>
+                                        <span th:if="${s.deepSleepDuration != null and s.deepSleepDuration.seconds > 0 and ((s.remSleepDuration != null and s.remSleepDuration.seconds > 0) or (s.lightSleepDuration != null and s.lightSleepDuration.seconds > 0))}"> • </span>
+                                        <span th:if="${s.remSleepDuration != null and s.remSleepDuration.seconds > 0}" th:text="'REM: ' + ${{s.remSleepDuration}}">REM</span>
+                                        <span th:if="${s.remSleepDuration != null and s.remSleepDuration.seconds > 0 and s.lightSleepDuration != null and s.lightSleepDuration.seconds > 0}"> • </span>
+                                        <span th:if="${s.lightSleepDuration != null and s.lightSleepDuration.seconds > 0}" th:text="'Light: ' + ${{s.lightSleepDuration}}">Light</span>
                                     </div>
+                                </div>
+                                <!-- Lecture Details -->
+                                <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Lecture')}">
+                                    <strong th:text="${s.course != null ? (s.course.code != null ? s.course.code + ' - ' : '') + s.course.title : 'University Lecture'}">Course</strong>
+                                    <span th:if="${s.lectureNumber != null}" class="badge bg-info-subtle text-info ms-1" th:text="'Lecture ' + ${s.lectureNumber}">Lecture 1</span>
+                                    <div class="small text-muted" th:if="${s.topic != null and !s.topic.empty}" th:text="${s.topic}">Topic</div>
+                                    <div class="small text-muted" th:if="${s.room != null and !s.room.empty}"><i class="bi bi-geo-alt me-1"></i><span th:text="${s.room}">Room</span></div>
                                 </div>
                             </td>
 
@@ -464,6 +490,9 @@
 
                             <input type="radio" class="btn-check" name="modalType" id="typeSleep" value="sleep" onchange="switchModalForm('sleep')">
                             <label class="btn btn-outline-primary" for="typeSleep"><i class="bi bi-moon-stars me-1"></i> Sleep</label>
+
+                            <input type="radio" class="btn-check" name="modalType" id="typeLecture" value="lecture" onchange="switchModalForm('lecture')">
+                            <label class="btn btn-outline-primary" for="typeLecture"><i class="bi bi-mortarboard me-1"></i> Lecture</label>
                         </div>
                     </div>
 
@@ -804,11 +833,11 @@
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Bedtime (Start)</label>
-                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                                <input type="datetime-local" th:field="*{start}" id="sleep-start" class="form-control" required>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Wake Up (End)</label>
-                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                                <input type="datetime-local" th:field="*{end}" id="sleep-end" class="form-control" required>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Sleep Type</label>
@@ -818,22 +847,42 @@
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label">Deep Sleep (minutes)</label>
-                                <input type="number" name="deepSleepMinutes" class="form-control" value="0" min="0">
-                            </div>
-                            <div class="col-md-4">
-                                <label class="form-label">REM Sleep (minutes)</label>
-                                <input type="number" name="remSleepMinutes" class="form-control" value="0" min="0">
-                            </div>
-                            <div class="col-md-4">
                                 <label class="form-label">Awakenings Count</label>
                                 <input type="number" th:field="*{awakeCount}" class="form-control" value="0" min="0">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Awake / Disruptions (minutes)</label>
-                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                                <input type="number" name="breakMinutes" id="sleep-break" class="form-control" value="0" min="0">
                             </div>
-                            <div class="col-md-4">
+
+                            <!-- Sleep Stages Container -->
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold text-secondary small text-uppercase">Sleep Stages Breakdown</span>
+                                        <span id="sleep-stage-summary" class="badge bg-secondary-subtle text-secondary">Stages: 0m / Bedtime: 0m</span>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Deep Sleep (min)</label>
+                                            <input type="number" name="deepSleepMinutes" id="sleep-deep" class="form-control" placeholder="Optional" min="0">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">REM Sleep (min)</label>
+                                            <input type="number" name="remSleepMinutes" id="sleep-rem" class="form-control" placeholder="Optional" min="0">
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small text-muted">Light Sleep (min)</label>
+                                            <input type="number" name="lightSleepMinutes" id="sleep-light" class="form-control" placeholder="Optional" min="0">
+                                        </div>
+                                    </div>
+                                    <div id="sleep-stage-hint" class="small text-muted mt-2">
+                                        <i class="bi bi-info-circle me-1"></i> Leave all 3 stages empty to default entirely to light sleep, or leave 1 stage empty to auto-calculate it.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
                                 <label class="form-label">Sleep Quality Rating</label>
                                 <select th:field="*{focusRating}" class="form-select">
                                     <option value="5">★★★★★ (5 - Excellent / Refreshed)</option>
@@ -853,6 +902,69 @@
                             <button type="submit" class="btn btn-primary fw-bold">Save Sleep Session</button>
                         </div>
                     </form>
+
+                    <!-- LECTURE FORM -->
+                    <form id="form-lecture" th:action="@{/sessions/lecture}" th:object="${lectureSession}" method="post" style="display: none;">
+                        <div class="row g-3">
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Course / Module</label>
+                                <select name="courseId" class="form-select" required>
+                                    <option value="">-- Select University Course --</option>
+                                    <option th:each="c : ${courses}" th:value="${c.id}" th:text="${(c.code != null ? c.code + ' - ' : '') + c.title + ' (' + c.semester + ')'}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Lecture Number</label>
+                                <input type="number" th:field="*{lectureNumber}" class="form-control" placeholder="e.g. 1, 2, 3..." min="1">
+                            </div>
+                            <div class="col-md-8">
+                                <label class="form-label fw-semibold">Lecture Topic</label>
+                                <input type="text" th:field="*{topic}" class="form-control" placeholder="e.g. Relational Calculus &amp; Optimization">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label fw-semibold">Room / Location</label>
+                                <input type="text" th:field="*{room}" class="form-control" placeholder="e.g. Audimax II / Zoom">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Recording URL</label>
+                                <input type="url" th:field="*{recordingUrl}" class="form-control" placeholder="https://stream.university.edu/...">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Slides / Materials URL</label>
+                                <input type="url" th:field="*{slidesUrl}" class="form-control" placeholder="https://course.university.edu/slides01.pdf">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Start Time</label>
+                                <input type="datetime-local" th:field="*{start}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">End Time</label>
+                                <input type="datetime-local" th:field="*{end}" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Break / Pause Duration (minutes)</label>
+                                <input type="number" name="breakMinutes" class="form-control" value="0" min="0">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Attention / Focus Rating</label>
+                                <select th:field="*{focusRating}" class="form-select">
+                                    <option value="5">★★★★★ (5 - Excellent Focus)</option>
+                                    <option value="4" selected>★★★★☆ (4 - Good Focus)</option>
+                                    <option value="3">★★★☆☆ (3 - Moderate)</option>
+                                    <option value="2">★★☆☆☆ (2 - Distracted)</option>
+                                    <option value="1">★☆☆☆☆ (1 - Low Focus)</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Notes &amp; Key Takeaways</label>
+                                <textarea th:field="*{comment}" class="form-control" rows="2" placeholder="Summary notes, important exam hints from lecturer..."></textarea>
+                            </div>
+                        </div>
+                        <div class="mt-4 text-end">
+                            <button type="button" class="btn btn-secondary me-2" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary fw-bold">Save Lecture Session</button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -860,14 +972,116 @@
 
     <script>
         function switchModalForm(type) {
-            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep'];
+            const forms = ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep', 'lecture'];
             forms.forEach(f => {
                 const formEl = document.getElementById('form-' + f);
                 if (formEl) {
                     formEl.style.display = (f === type) ? 'block' : 'none';
                 }
             });
+            if (type === 'sleep') {
+                updateSleepStagesCalculation();
+            }
         }
+
+        function updateSleepStagesCalculation() {
+            const startInput = document.getElementById('sleep-start');
+            const endInput = document.getElementById('sleep-end');
+            const breakInput = document.getElementById('sleep-break');
+            const deepInput = document.getElementById('sleep-deep');
+            const remInput = document.getElementById('sleep-rem');
+            const lightInput = document.getElementById('sleep-light');
+            const summaryBadge = document.getElementById('sleep-stage-summary');
+            const hintEl = document.getElementById('sleep-stage-hint');
+
+            if (!summaryBadge || !hintEl) return;
+            if (!startInput || !endInput || !startInput.value || !endInput.value) {
+                summaryBadge.textContent = 'Set Bedtime & Wake Up';
+                summaryBadge.className = 'badge bg-secondary-subtle text-secondary';
+                return;
+            }
+
+            const startTime = new Date(startInput.value);
+            const endTime = new Date(endInput.value);
+            const totalMs = endTime - startTime;
+            if (totalMs <= 0) {
+                summaryBadge.textContent = 'Wake up must be after Bedtime';
+                summaryBadge.className = 'badge bg-danger-subtle text-danger';
+                return;
+            }
+
+            const totalMin = Math.round(totalMs / 60000);
+            const awakeMin = parseInt(breakInput ? breakInput.value : 0, 10) || 0;
+            const sleepMin = Math.max(0, totalMin - awakeMin);
+
+            const dVal = deepInput ? deepInput.value.trim() : '';
+            const rVal = remInput ? remInput.value.trim() : '';
+            const lVal = lightInput ? lightInput.value.trim() : '';
+
+            const d = dVal !== '' ? parseInt(dVal, 10) : null;
+            const r = rVal !== '' ? parseInt(rVal, 10) : null;
+            const l = lVal !== '' ? parseInt(lVal, 10) : null;
+
+            const providedCount = (d !== null ? 1 : 0) + (r !== null ? 1 : 0) + (l !== null ? 1 : 0);
+
+            const formatHhMm = (m) => {
+                const hrs = Math.floor(m / 60);
+                const mins = m % 60;
+                return hrs > 0 ? `${hrs}h ${mins}m` : `${mins}m`;
+            };
+
+            if (providedCount === 0) {
+                summaryBadge.textContent = `Auto-fill: 100% Light Sleep (${formatHhMm(sleepMin)})`;
+                summaryBadge.className = 'badge bg-primary-subtle text-primary';
+                hintEl.innerHTML = `<i class="bi bi-check-circle-fill text-primary me-1"></i> Leaving all 3 stages empty will default the entire <strong>${formatHhMm(sleepMin)}</strong> net sleep time to Light Sleep.`;
+            } else if (providedCount === 2) {
+                let missingName = '';
+                const accounted = (d || 0) + (r || 0) + (l || 0);
+                const missingVal = sleepMin - accounted;
+
+                if (d === null) missingName = 'Deep Sleep';
+                else if (r === null) missingName = 'REM Sleep';
+                else missingName = 'Light Sleep';
+
+                if (missingVal >= 0) {
+                    summaryBadge.textContent = `Auto-calculating ${missingName}: ${formatHhMm(missingVal)}`;
+                    summaryBadge.className = 'badge bg-success-subtle text-success';
+                    hintEl.innerHTML = `<i class="bi bi-calculator text-success me-1"></i> <strong>${missingName}</strong> will be auto-calculated as <strong>${formatHhMm(missingVal)}</strong> (${sleepMin}m sleep - ${accounted}m entered).`;
+                } else {
+                    summaryBadge.textContent = `Stages Exceed Bedtime by ${formatHhMm(Math.abs(missingVal))}`;
+                    summaryBadge.className = 'badge bg-danger-subtle text-danger';
+                    hintEl.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Entered stages (${formatHhMm(accounted)}) exceed available sleep time (${formatHhMm(sleepMin)}).`;
+                }
+            } else if (providedCount === 3) {
+                const totalStages = d + r + l;
+                const totalGross = totalStages + awakeMin;
+                if (totalGross === totalMin) {
+                    summaryBadge.textContent = `Balanced: ${formatHhMm(totalGross)} / ${formatHhMm(totalMin)}`;
+                    summaryBadge.className = 'badge bg-success-subtle text-success';
+                    hintEl.innerHTML = `<i class="bi bi-check-circle-fill text-success me-1"></i> Perfect balance! Deep (${d}m) + REM (${r}m) + Light (${l}m) + Awake (${awakeMin}m) = <strong>${formatHhMm(totalMin)}</strong>.`;
+                } else {
+                    const diff = totalGross - totalMin;
+                    summaryBadge.textContent = `Mismatch: ${formatHhMm(totalGross)} vs Bedtime ${formatHhMm(totalMin)}`;
+                    summaryBadge.className = 'badge bg-danger-subtle text-danger';
+                    hintEl.innerHTML = `<i class="bi bi-exclamation-triangle-fill text-danger me-1"></i> Stages sum (${formatHhMm(totalGross)}) does not equal bedtime (${formatHhMm(totalMin)}). Difference: <strong>${formatHhMm(Math.abs(diff))}</strong>.`;
+                }
+            } else {
+                summaryBadge.textContent = `1 Stage Entered (Need 0 or 2+)`;
+                summaryBadge.className = 'badge bg-warning-subtle text-warning';
+                hintEl.innerHTML = `<i class="bi bi-info-circle text-warning me-1"></i> Please specify at least 2 stages so the 3rd can be calculated, or clear all stages to default to Light Sleep.`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const sleepInputs = ['sleep-start', 'sleep-end', 'sleep-break', 'sleep-deep', 'sleep-rem', 'sleep-light'];
+            sleepInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('input', updateSleepStagesCalculation);
+                    el.addEventListener('change', updateSleepStagesCalculation);
+                }
+            });
+        });
     </script>
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

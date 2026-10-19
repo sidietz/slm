@@ -99,6 +99,7 @@ public class SleepTimeIT extends AbstractIntegrationTest {
         ss.setBreakDuration(Duration.ofMinutes(15));
         ss.setDeepSleepDuration(Duration.ofMinutes(95));
         ss.setRemSleepDuration(Duration.ofMinutes(85));
+        ss.setLightSleepDuration(Duration.ofMinutes(315));
         ss.setAwakeCount(2);
         ss.setIsNap(false);
         ss.setFocusRating(4);

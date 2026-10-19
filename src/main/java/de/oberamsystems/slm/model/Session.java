@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+import org.hibernate.annotations.UuidGenerator.Style;
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.Type;
 import org.hibernate.generator.EventType;
@@ -18,8 +20,10 @@ import jakarta.persistence.*;
 public abstract class Session {
 
 	@Id
-	@Column(name = "id", columnDefinition = "TEXT")
-	private String id;
+	@GeneratedValue
+	@UuidGenerator(style = Style.VERSION_7)
+	@Column(name = "id", columnDefinition = "uuid")
+	private UUID id;
 
 	@Column(name = "status", columnDefinition = "TEXT")
 	private String status = "COMPLETED";
@@ -56,7 +60,7 @@ public abstract class Session {
 	public Session() {
 	}
 
-	public Session(String id, String status, LocalDateTime start, LocalDateTime end, Duration breakDuration,
+	public Session(UUID id, String status, LocalDateTime start, LocalDateTime end, Duration breakDuration,
 			Duration duration, Duration netDuration, Integer focusRating, String comment, String outcomeSummary) {
 		this.id = id;
 		this.status = status;
@@ -72,16 +76,16 @@ public abstract class Session {
 
 	@PrePersist
 	public void prePersist() {
-		if (this.id == null || this.id.isBlank()) {
-			this.id = UUID.ofEpochMillis(System.currentTimeMillis()).toString();
+		if (this.id == null) {
+			this.id = UUID.ofEpochMillis(System.currentTimeMillis());
 		}
 	}
 
-	public String getId() {
+	public UUID getId() {
 		return id;
 	}
 
-	public void setId(String id) {
+	public void setId(UUID id) {
 		this.id = id;
 	}
 

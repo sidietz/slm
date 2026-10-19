@@ -110,12 +110,17 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
   - Incremental scripts (`src/main/resources/migration_YYYY-MM-DD[_N].sql`) exist **solely to upgrade existing / legacy databases** (e.g. running developer or production instances) without data loss.
   - Migrations do not define the target architecture; they are non-destructive transitions bridging previous states to the current `tables.sql`.
 
+- **Mandatory Transactional DDL (`BEGIN;` ... `COMMIT;`)**:
+  - PostgreSQL supports transactional DDL for table alterations, constraint changes, index creation, and data transformations.
+  - All incremental migration scripts (`src/main/resources/migration_YYYY-MM-DD[_N].sql`) **must start with `BEGIN;` and terminate with `COMMIT;`**.
+  - Never author bare, non-transactional statements in migration scripts. This guarantees that multi-step migrations execute atomically and roll back automatically upon any error, preventing partial or corrupted schema states on developer and production databases.
+
 - **Protocol for Schema Alterations**:
   1. **Update Baseline Files First**: Apply table modifications, indices, functions, and triggers to:
      - [`src/main/resources/tables.sql`](src/main/resources/tables.sql)
      - [`init.sql`](init.sql)
      - [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql)
-  2. **Generate Migration Delta**: Create a new file [`src/main/resources/migration_YYYY-MM-DD[_N].sql`](src/main/resources/) containing only the statements needed to migrate legacy data and structures.
+  2. **Generate Transactional Migration Delta**: Create a new file [`src/main/resources/migration_YYYY-MM-DD[_N].sql`](src/main/resources/) enclosed in `BEGIN;` ... `COMMIT;` containing only the statements needed to safely migrate legacy data and structures.
   3. **Verification**: Verify that the migration script executes cleanly on a legacy database state and results in a schema equivalent to the fresh baseline.
 
 ---
@@ -125,9 +130,9 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 1. **JPA Model Entities Must NOT Be Java Records (ADR 002)**:
    - Entity classes in `de.oberamsystems.slm.model` must remain mutable JavaBeans with non-private no-arg constructors.
    - Do NOT convert `@Entity` classes to `record` (breaks Hibernate proxying, joined inheritance, and `WebDataBinder`).
-2. **Polymorphic Session Hierarchy (`InheritanceType.JOINED`) (ADR 001, ADR 011)**:
-   - Root `Session` entity defines `id TEXT PRIMARY KEY` (UUIDv7), `starttime`, `endtime`, `breakDuration`, `duration`, `netDuration`, and ratings.
-   - Subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`) must extend `Session`.
+2. **Polymorphic Session Hierarchy (`InheritanceType.JOINED`) (ADR 001, ADR 011, ADR 018)**:
+   - Root `Session` entity defines `id UUID PRIMARY KEY` (native UUIDv7 via Hibernate `@UuidGenerator` and PostgreSQL 18 `DEFAULT uuidv7()`), `starttime`, `endtime`, `breakDuration`, `duration`, `netDuration`, and ratings.
+   - Subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`, `LectureSession`) must extend `Session`.
 3. **Four Pillars Life Balance Model (ADR 011)**:
    - **Productivity**: Coding, Working, Learning, Reading.
    - **Sport**: Dedicated physical training, cardio, workouts. *(Must remain distinct from wellness).*
