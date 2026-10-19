@@ -75,8 +75,8 @@ public class SecurityConfig {
 								"/learningitem.html", "/add-learning-session", "/add-learningitem")
 						.permitAll()
 						.requestMatchers("/api/sleeptimes", "/api/moods").permitAll()
-						.requestMatchers("/doctor", "/add-doctor", "/appointment", "/add-appointment", "/speciality",
-								"/add-speciality")
+						.requestMatchers("/doctor", "/doctor.html", "/add-doctor", "/appointment", "/add-appointment",
+								"/speciality", "/speciality.html", "/add-speciality")
 						.permitAll()
 						.requestMatchers("/activity-management", "/book-management", "/human-management",
 								"/habit-management", "/spend-management", "/misc-management")

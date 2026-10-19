@@ -271,7 +271,7 @@ gantt
     Full Test Suite & Health :m10, 9, 10
 ```
 
-1. **Milestone 1**: Author `DashboardAndManagementIT` & `SessionHubIT` (covers core entry points, polymorphic sessions, and dashboards).
-2. **Milestone 2**: Author `ActivitiesAndMediaIT`, `DoctorControllerIT`, and `WellnessAndHabitsIT` (covers physical activity, media tracking, medical appointments, habits, mood, and sleep).
-3. **Milestone 3**: Author `SocialAndPeopleIT`, `PersonalJournalIT`, `FinanceManagementIT`, and `TransitAndMobilityIT` (covers relationships, milestones, diary, finance, and mobility).
-4. **Milestone 4**: Full test suite execution (`./gradlew test -x jacocoTestReport -x compileAotTestJava -x processTestAot`) and documentation update in `CHANGELOG.md` and `DECISIONS.md`.
+1. **Milestone 1**: Author `DashboardAndManagementIT` & `SessionHubIT` (covers core entry points, polymorphic sessions, and dashboards). **[COMPLETED]**
+2. **Milestone 2**: Author `ActivitiesAndMediaIT`, `DoctorControllerIT`, and `WellnessAndHabitsIT` (covers physical activity, media tracking, medical appointments, habits, mood, and sleep). **[COMPLETED]**
+3. **Milestone 3**: Author `SocialAndPeopleIT`, `PersonalJournalIT`, `FinanceManagementIT`, and `TransitAndMobilityIT` (covers relationships, milestones, diary, finance, and mobility). **[COMPLETED]**
+4. **Milestone 4**: Full test suite execution (`./gradlew test -x jacocoTestReport -x compileAotTestJava -x processTestAot`) and documentation update in `CHANGELOG.md` and `DECISIONS.md`. **[COMPLETED - All 131 tests passing]**

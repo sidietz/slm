@@ -653,7 +653,7 @@ Simon's Life Manager previously supported open-ended `LearningSession` entries, 
 ## ADR 018: Migration of Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7
 
 ### Status
-Accepted (v0.0.2j)
+Accepted (v0.0.3-rc1)
 
 ### Context
 Following the implementation of `LectureNote` with native `java.util.UUID` and PostgreSQL 18 `DEFAULT uuidv7()` ([ADR 017](file:///home/simon/code/eclipse/slm/DECISIONS.md#adr-017-university-lectures-academic-tracking--native-uuidv7-markdown-lecture-notes)), an architectural inconsistency existed across the domain model:
@@ -703,7 +703,7 @@ Following the implementation of `LectureNote` with native `java.util.UUID` and P
 ## ADR 019: Sleep Architecture Tracking, Light Sleep & Cross-Table Duration Invariant Enforcement
 
 ### Status
-Accepted (v0.0.2j)
+Accepted (v0.0.3-rc1)
 
 ### Context
 In SLM, restorative wellness practices are tracked under the Wellness pillar (ADR 011). Previously, `SleepSession` only tracked `deep_sleep_duration`, `rem_sleep_duration`, and `awake_count` (with interruptions stored in `session.break_duration`). This left three gaps:
@@ -732,3 +732,47 @@ In SLM, restorative wellness practices are tracked under the Wellness pillar (AD
   - Absolute data integrity guaranteed at the PostgreSQL database level across all entry channels.
 - **Constraints**:
   - Direct SQL scripts and external integrations must satisfy `deep + rem + light + break = end - start`.
+
+---
+
+## ADR 020: Comprehensive Controller Integration Testing Architecture & Model Alignment
+
+### Status
+Accepted (v0.0.3-rc1)
+
+### Context
+While isolated unit tests with Mockito verified individual controller methods in isolation, real runtime interactions across Spring Security, CSRF token handling, Spring MVC `DomainClassConverter` parameter binding, Hibernate joined inheritance, PostGIS geodesic distance functions, and Thymeleaf template rendering required live integration verification. Additionally, prior integration tests only covered academic workflows, leaving 31 controllers without automated full-stack verification against PostgreSQL.
+
+### Decision
+
+1. **Singleton Shared Testcontainers Architecture**:
+   - Enforced [`AbstractIntegrationTest`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/AbstractIntegrationTest.java) base class across all integration tests (`*IT.java`).
+   - Utilizes a shared singleton `postgis/postgis:18-3.6` container managed via Spring Boot `@ServiceConnection` and initialized with `src/test/resources/schema-init.sql`.
+   - Enforced class-level `@Transactional` across all test classes to guarantee automatic rollback after every test, preventing database mutation pollution across test classes.
+
+2. **Domain-Cohesive Test Suite Partitioning**:
+   - Partitioned the 33 controllers into domain-specific, high-cohesion integration test classes:
+     - [`DashboardAndManagementIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DashboardAndManagementIT.java): Index, Imprint, and the 6 domain management hubs.
+     - [`SessionHubIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/SessionHubIT.java): Unified sessions hub, polymorphic session subclasses, 4 pillars KPI aggregation, and UUIDv7 deletion.
+     - [`ActivitiesAndMediaIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/ActivitiesAndMediaIT.java): Activities, sports, learning, meditation, games, and books.
+     - [`DoctorControllerIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DoctorControllerIT.java): Doctors, specialities, appointments, and PostGIS air distance calculation.
+     - [`WellnessAndHabitsIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java): Habits, daily mood tracking, REST APIs, and sleep times.
+     - [`SocialAndPeopleIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/SocialAndPeopleIT.java): Human contacts, automated birthday/event synchronization, and calendar event timelines.
+     - [`PersonalJournalIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/PersonalJournalIT.java): Diary entries with date filtering and gratitude logging.
+     - [`FinanceManagementIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/FinanceManagementIT.java): Employers, recurring contracts/subscriptions, and purchase logging.
+     - [`TransitAndMobilityIT`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java): GPS Points, Routes with PostGIS geodesic distance, Car trips, TrainLines, TrainStations, and TrainTrips.
+
+3. **Entity Model Alignment**:
+   - Fixed [`TrainTrip2`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainTrip2.java) entity associations: aligned `origin` and `destination` fields to [`TrainStation2`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainStation2.java), fixing foreign key violations with `trainstation2(id)`.
+
+4. **Spring Security Route Permissibility**:
+   - Hardened [`SecurityConfig.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/SecurityConfig.java) with explicit matchers for `/doctor.html` and `/speciality.html`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - 100% of Spring MVC and REST controllers are covered by automated integration tests executing against a real PostgreSQL 18 + PostGIS database.
+  - Runtime errors in template rendering, parameter converters, and database foreign keys are caught before deployment.
+  - Sub-35 second test execution across the entire 131-test suite due to singleton Testcontainers container reuse.
+- **Constraints**:
+  - Tests must include `.with(csrf())` on state-mutating requests (`POST`, `PUT`, `DELETE`).
+  - Class-level `@Transactional` must be maintained on all integration tests modifying database state.
