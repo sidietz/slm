@@ -17,8 +17,11 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
@@ -45,6 +48,9 @@ public class AcademicIT extends AbstractIntegrationTest {
 
     @Autowired
     private WebApplicationContext context;
+
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
 
     @Test
     public void testCourseAndLectureHierarchyAndUuidv7Note() {
@@ -194,5 +200,112 @@ public class AcademicIT extends AbstractIntegrationTest {
         // Non-permitted endpoints should trigger authentication challenge (HTTP 401 Unauthorized)
         mockMvc.perform(get("/unauthorized-academic-endpoint"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void testDeleteLectureNoteWorkflow() throws Exception {
+        MockMvc mockMvc = webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+
+        // 1. Setup course and note
+        Course course = new Course();
+        course.setTitle("Database Internals");
+        course.setSemester("SS 2027");
+        course = courseRepository.saveAndFlush(course);
+
+        LectureNote note = new LectureNote();
+        note.setCourse(course);
+        note.setTitle("B+ Trees & LSM Trees");
+        note.setContentMarkdown("## Storage Engine Architecture");
+        note = lectureNoteRepository.saveAndFlush(note);
+
+        UUID noteId = note.getId();
+        Long courseId = course.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+        assertTrue(lectureNoteRepository.existsById(noteId));
+
+        // 2. Perform POST /notes/{id}/delete with CSRF
+        mockMvc.perform(post("/notes/" + noteId + "/delete")
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/courses/" + courseId));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 3. Verify note is deleted, course remains intact
+        assertFalse(lectureNoteRepository.existsById(noteId));
+        assertTrue(courseRepository.existsById(courseId));
+    }
+
+    @Test
+    void testDeleteCourseWorkflow() throws Exception {
+        MockMvc mockMvc = webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+
+        // 1. Setup Lecturer, Course, LectureSession, and LectureNote
+        Human lecturer = new Human();
+        lecturer.setFirstname("Leslie");
+        lecturer.setLastname("Lamport");
+        lecturer.setCategory(HumanCategory.LECTURER);
+        lecturer.setBirthday(java.sql.Date.valueOf("1941-02-07"));
+        lecturer = humanRepository.saveAndFlush(lecturer);
+
+        Course course = new Course();
+        course.setTitle("Formal Verification & TLA+");
+        course.setCode("CS-901");
+        course.setSemester("WS 2026/27");
+        course.setLecturer(lecturer);
+        course = courseRepository.saveAndFlush(course);
+
+        LectureSession session = new LectureSession();
+        session.setCourse(course);
+        session.setLectureNumber(1);
+        session.setTopic("Temporal Logic of Actions");
+        session.setStart(LocalDateTime.of(2026, 11, 2, 10, 0));
+        session.setEnd(LocalDateTime.of(2026, 11, 2, 11, 30));
+        session = lectureSessionRepository.saveAndFlush(session);
+
+        LectureNote note = new LectureNote();
+        note.setCourse(course);
+        note.setLectureSession(session);
+        note.setLectureNumber(1);
+        note.setTitle("Introduction to TLA+");
+        note.setContentMarkdown("Specifying state machines and safety properties");
+        note = lectureNoteRepository.saveAndFlush(note);
+
+        Long courseId = course.getId();
+        UUID sessionId = session.getId();
+        UUID noteId = note.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(courseRepository.existsById(courseId));
+        assertTrue(lectureNoteRepository.existsById(noteId));
+        assertTrue(lectureSessionRepository.existsById(sessionId));
+
+        // 2. Perform POST /courses/{id}/delete with CSRF
+        mockMvc.perform(post("/courses/" + courseId + "/delete")
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/courses"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 3. Verify course is deleted
+        assertFalse(courseRepository.existsById(courseId));
+        // Verify lecture note cascaded (deleted)
+        assertFalse(lectureNoteRepository.existsById(noteId));
+        // Verify lecture session is preserved with course set to null
+        assertTrue(lectureSessionRepository.existsById(sessionId));
+        assertNull(lectureSessionRepository.findById(sessionId).orElseThrow().getCourse());
+        // Verify lecturer is preserved
+        assertTrue(humanRepository.existsById(lecturer.getId()));
     }
 }

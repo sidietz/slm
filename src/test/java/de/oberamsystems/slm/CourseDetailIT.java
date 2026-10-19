@@ -386,4 +386,45 @@ public class CourseDetailIT extends AbstractIntegrationTest {
                 .andExpect(content().string(containsString("action=\"/courses\"")))
                 .andExpect(content().string(containsString("name=\"_csrf\"")));
     }
+
+    @Test
+    void testDeleteLectureNoteWorkflow() throws Exception {
+        Course course = new Course();
+        course.setTitle("Cloud Computing Systems");
+        course.setCode("CS-601");
+        course.setSemester("SS 2027");
+        course = courseRepository.saveAndFlush(course);
+
+        LectureNote note = new LectureNote();
+        note.setCourse(course);
+        note.setTitle("Kubernetes & Container Orchestration");
+        note.setContentMarkdown("## Pods, Deployments & Services");
+        note = lectureNoteRepository.saveAndFlush(note);
+
+        UUID noteId = note.getId();
+        Long courseId = course.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertTrue(lectureNoteRepository.existsById(noteId));
+
+        // Delete note via POST /notes/{id}/delete
+        mockMvc.perform(post("/notes/" + noteId + "/delete")
+                        .with(csrf()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/courses/" + courseId));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // Note is removed from database
+        assertFalse(lectureNoteRepository.existsById(noteId));
+
+        // Subsequent GET on course-detail reflects empty notes list
+        mockMvc.perform(get("/courses/" + courseId))
+                .andExpect(status().isOk())
+                .andExpect(view().name("course-detail"))
+                .andExpect(content().string(containsString("No lecture notes saved for this course yet.")));
+    }
 }
