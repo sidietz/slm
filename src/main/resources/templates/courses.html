@@ -186,7 +186,7 @@
                         </div>
 
                         <div class="border-top pt-3 mt-3 d-flex justify-content-between align-items-center">
-                            <span th:class="'badge ' + (${c.status.name() == 'COMPLETED'} ? 'bg-success' : 'bg-info')" th:text="${c.status}">IN_PROGRESS</span>
+                            <span th:class="'badge ' + (${c.status != null and c.status.name() == 'COMPLETED'} ? 'bg-success' : 'bg-info')" th:text="${c.status}">IN_PROGRESS</span>
                             <a th:href="@{'/courses/' + ${c.id}}" class="btn btn-sm btn-outline-primary fw-semibold">
                                 View Details &rarr;
                             </a>

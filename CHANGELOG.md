@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Verified input validation rejection of mismatched stage sums and ambiguous inputs.
   - Verified PostgreSQL database trigger rejection of raw SQL invariant violations.
   - Verified Power Nap submission, UI deletion, and CSRF protection.
+- Added comprehensive end-to-end Course Details integration tests in [`CourseDetailIT.java`](src/test/java/de/oberamsystems/slm/CourseDetailIT.java):
+  - Verified Course Details rendering with rich metadata, lecturer, attached lecture sessions timeline, and lecture notes list.
+  - Verified empty state rendering for courses without attached sessions or notes.
+  - Verified modal course editing (`POST /courses/{id}/edit`) with CSRF protection and subsequent HTML rendering.
+  - Verified clearing/disassociating lecturer on course update.
+  - Verified course deletion (`POST /courses/{id}/delete`) with CSRF protection, ensuring notes are cascaded and lecture sessions are detached (`SET NULL`).
+  - Verified note creation workflow from course detail (`GET /courses/{courseId}/notes/new` with `sessionId`) and view rendering (`GET /notes/{id}`).
+  - Verified university courses hub (`GET /courses`) with KPI metrics, semester filtering, and modal enrollment form.
+- Fixed and hardened Thymeleaf template rendering across academic views:
+  - Corrected double-brace duration formatting expression in [`course-detail.html`](src/main/resources/templates/course-detail.html) to invoke Spring ConversionService.
+  - Safeguarded `examRelevanceRating` and `focusRating` star sequence generation in [`course-detail.html`](src/main/resources/templates/course-detail.html) and [`lecture-note-view.html`](src/main/resources/templates/lecture-note-view.html) against null/non-positive values.
+  - Safeguarded course status badge null checks in [`courses.html`](src/main/resources/templates/courses.html).
 
 ### Changed
 - Migrated **Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7** (ADR 018):

@@ -117,7 +117,7 @@
                     <span class="text-muted small fw-bold text-uppercase d-block mb-1">Executive Summary</span>
                     <p class="mb-0 fw-medium text-dark" th:text="${note.summary}">Summary takeaway</p>
                 </div>
-                <div class="col-md-4 text-md-end" th:if="${note.examRelevanceRating != null}">
+                <div class="col-md-4 text-md-end" th:if="${note.examRelevanceRating != null and note.examRelevanceRating > 0}">
                     <span class="text-muted small fw-bold text-uppercase d-block mb-1">Exam Relevance</span>
                     <span class="star-rating fs-5">
                         <span th:each="i : ${#numbers.sequence(1, note.examRelevanceRating)}">★</span>
