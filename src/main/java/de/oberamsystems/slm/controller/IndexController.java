@@ -77,13 +77,23 @@ public class IndexController {
 		}
 
 		if (m != null) {
-			Duration diff2 = Duration.between(m.getEnd(), LocalDateTime.now());
-			msgs.add(String.format("Last meditation was at %s and was %s ago.", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
+			LocalDateTime refTime = m.getEnd() != null ? m.getEnd() : m.getStart();
+			Duration diff2 = Duration.between(refTime, LocalDateTime.now());
+			if (m.getEnd() != null) {
+				msgs.add(String.format("Last meditation was at %s and was %s ago.", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
+			} else {
+				msgs.add(String.format("Meditation in progress since %s (started %s ago).", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
+			}
 		}
 
 		if (rs != null) {
-			Duration diff3 = Duration.between(rs.getEnd(), LocalDateTime.now());
-			msgs.add(String.format("Last reading session was at %s and was %s ago.", Utils.LocalDateTimeToString(rs.getStart()), Utils.DurationToString(diff3)));
+			LocalDateTime refTime = rs.getEnd() != null ? rs.getEnd() : rs.getStart();
+			Duration diff3 = Duration.between(refTime, LocalDateTime.now());
+			if (rs.getEnd() != null) {
+				msgs.add(String.format("Last reading session was at %s and was %s ago.", Utils.LocalDateTimeToString(rs.getStart()), Utils.DurationToString(diff3)));
+			} else {
+				msgs.add(String.format("Reading session in progress since %s (started %s ago).", Utils.LocalDateTimeToString(rs.getStart()), Utils.DurationToString(diff3)));
+			}
 		}
 
 		model.addAttribute("msgs", msgs);

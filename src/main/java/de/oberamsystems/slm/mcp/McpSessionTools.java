@@ -204,6 +204,156 @@ public class McpSessionTools {
 		return res;
 	}
 
+	@Tool(description = "Retrieve all currently active ongoing sessions (without end time set)")
+	public List<Map<String, Object>> getActiveSessions() {
+		List<Session> active = sessionRepo.findByEndIsNullOrderByStartDesc();
+		List<Map<String, Object>> result = new ArrayList<>();
+		LocalDateTime now = LocalDateTime.now();
+
+		for (Session s : active) {
+			Map<String, Object> map = new HashMap<>();
+			map.put("id", s.getId().toString());
+			map.put("type", getSessionTypeName(s));
+			map.put("start", s.getStart() != null ? s.getStart().toString() : null);
+			if (s.getStart() != null) {
+				map.put("elapsedMinutes", Duration.between(s.getStart(), now).toMinutes());
+			}
+			map.put("status", s.getStatus());
+			if (s instanceof CodingSession cs) {
+				map.put("project", cs.getProject());
+				map.put("ticket", cs.getTicket());
+			} else if (s instanceof WorkingSession ws) {
+				map.put("project", ws.getProject());
+			} else if (s instanceof ReadingSession rs && rs.getBook() != null) {
+				map.put("book", rs.getBook().getTitle());
+			}
+			result.add(map);
+		}
+		return result;
+	}
+
+	@Tool(description = "Start a new ongoing session without an end time (status set to IN_PROGRESS)")
+	public Map<String, Object> startSession(
+			@ToolParam(description = "Session type: CODING, WORKING, LEARNING, READING, SPORT, MEDITATION, SLEEP, GAMING, LECTURE") String sessionType,
+			@ToolParam(description = "Project name, activity description, or title", required = false) String titleOrProject,
+			@ToolParam(description = "Optional notes or reflections", required = false) String comment) {
+
+		String type = (sessionType != null ? sessionType.trim().toUpperCase() : "WORKING");
+		LocalDateTime now = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+		Session s;
+
+		switch (type) {
+			case "CODING" -> {
+				CodingSession cs = new CodingSession();
+				cs.setProject(titleOrProject != null ? titleOrProject : "General Coding");
+				s = cs;
+			}
+			case "WORKING" -> {
+				WorkingSession ws = new WorkingSession();
+				ws.setProject(titleOrProject != null ? titleOrProject : "General Work");
+				ws.setBillable(true);
+				s = ws;
+			}
+			case "LEARNING" -> {
+				LearningSession ls = new LearningSession();
+				ls.setOutcomeSummary(titleOrProject);
+				s = ls;
+			}
+			case "READING" -> {
+				ReadingSession rs = new ReadingSession();
+				rs.setStartPageCount(0);
+				rs.setEndPageCount(0);
+				s = rs;
+			}
+			case "SPORT" -> {
+				SportSession sp = new SportSession();
+				sp.setComment(titleOrProject);
+				s = sp;
+			}
+			case "MEDITATION" -> {
+				MeditationSession ms = new MeditationSession();
+				s = ms;
+			}
+			case "SLEEP" -> {
+				SleepSession sl = new SleepSession();
+				sl.setDeepSleepDuration(Duration.ZERO);
+				sl.setRemSleepDuration(Duration.ZERO);
+				sl.setLightSleepDuration(Duration.ZERO);
+				s = sl;
+			}
+			case "GAMING" -> {
+				GamingSession gs = new GamingSession();
+				s = gs;
+			}
+			default -> {
+				WorkingSession ws = new WorkingSession();
+				ws.setProject(titleOrProject != null ? titleOrProject : "General Work");
+				s = ws;
+			}
+		}
+
+		s.setStart(now);
+		s.setEnd(null);
+		s.setStatus("IN_PROGRESS");
+		s.setComment(comment);
+		s.setBreakDuration(Duration.ZERO);
+		sessionRepo.save(s);
+
+		Map<String, Object> res = new HashMap<>();
+		res.put("id", s.getId().toString());
+		res.put("type", getSessionTypeName(s));
+		res.put("start", s.getStart().toString());
+		res.put("status", "IN_PROGRESS");
+		return res;
+	}
+
+	@Tool(description = "Stop an active ongoing session by setting its end time, computing durations, and recording ratings")
+	public Map<String, Object> stopSession(
+			@ToolParam(description = "Session UUID (optional, if omitted stops the latest active session)", required = false) String sessionId,
+			@ToolParam(description = "Break duration in minutes (default 0)", required = false) Integer breakMinutes,
+			@ToolParam(description = "Focus/quality rating from 1 to 5", required = false) Integer focusRating,
+			@ToolParam(description = "Outcome summary or achievements", required = false) String outcomeSummary,
+			@ToolParam(description = "Comments or reflection notes", required = false) String comment) {
+
+		Session session;
+		if (sessionId != null && !sessionId.isBlank()) {
+			session = sessionRepo.findById(java.util.UUID.fromString(sessionId))
+					.orElseThrow(() -> new IllegalArgumentException("Session not found with ID: " + sessionId));
+		} else {
+			session = sessionRepo.findFirstByEndIsNullOrderByStartDesc()
+					.orElseThrow(() -> new IllegalStateException("No active ongoing session found to stop"));
+		}
+
+		LocalDateTime now = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+		Duration brk = breakMinutes != null ? Duration.ofMinutes(breakMinutes) : Duration.ZERO;
+		session.stop(now, brk, focusRating, outcomeSummary, comment);
+
+		if (session instanceof SleepSession ss) {
+			Duration net = Duration.between(session.getStart(), now).minus(brk);
+			Duration deep = ss.getDeepSleepDuration() != null ? ss.getDeepSleepDuration() : Duration.ZERO;
+			Duration rem = ss.getRemSleepDuration() != null ? ss.getRemSleepDuration() : Duration.ZERO;
+			Duration light = ss.getLightSleepDuration() != null ? ss.getLightSleepDuration() : Duration.ZERO;
+			if (deep.isZero() && rem.isZero() && light.isZero()) {
+				ss.setLightSleepDuration(net.isNegative() ? Duration.ZERO : net);
+			} else if (light.isZero() && !deep.plus(rem).equals(net)) {
+				Duration remaining = net.minus(deep).minus(rem);
+				if (!remaining.isNegative()) {
+					ss.setLightSleepDuration(remaining);
+				}
+			}
+		}
+
+		sessionRepo.save(session);
+
+		Map<String, Object> res = new HashMap<>();
+		res.put("id", session.getId().toString());
+		res.put("type", getSessionTypeName(session));
+		res.put("start", session.getStart().toString());
+		res.put("end", session.getEnd().toString());
+		res.put("status", "COMPLETED");
+		return res;
+	}
+
 	private String getSessionTypeName(Session s) {
 		if (s instanceof CodingSession) return "CODING";
 		if (s instanceof WorkingSession) return "WORKING";
