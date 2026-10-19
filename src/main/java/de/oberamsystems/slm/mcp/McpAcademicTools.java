@@ -1,7 +1,9 @@
 package de.oberamsystems.slm.mcp;
 
 import de.oberamsystems.slm.model.*;
+import de.oberamsystems.slm.util.CourseComparator;
 import de.oberamsystems.slm.util.DurationFormatter;
+import de.oberamsystems.slm.util.SemesterComparator;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -26,13 +28,21 @@ public class McpAcademicTools {
 	@Autowired
 	private HumanRepository humanRepo;
 
+	@Tool(description = "Retrieve all distinct academic semesters, sorted chronologically descending (most recent semester first)")
+	public List<String> getSemesters() {
+		List<String> semesters = new ArrayList<>(courseRepo.findDistinctSemesters());
+		semesters.sort(SemesterComparator.DESCENDING);
+		return semesters;
+	}
+
 	@Tool(description = "Retrieve list of university courses, optionally filtered by semester (e.g. 'WS 2026/27')")
 	public List<Map<String, Object>> getCourses(
 			@ToolParam(description = "Semester filter (e.g. 'WS 2026/27', 'SS 2027', or null for all)", required = false) String semester) {
 
 		List<Course> list = (semester != null && !semester.isBlank() && !"ALL".equalsIgnoreCase(semester))
-				? courseRepo.findAllBySemesterOrderByTitleAsc(semester)
-				: courseRepo.findAllByOrderByCreatedAtDesc();
+				? new ArrayList<>(courseRepo.findAllBySemesterOrderByTitleAsc(semester))
+				: new ArrayList<>(courseRepo.findAll());
+		list.sort(CourseComparator.INSTANCE);
 
 		return list.stream().map(c -> {
 			Map<String, Object> m = new HashMap<>();

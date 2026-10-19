@@ -1,6 +1,8 @@
 package de.oberamsystems.slm.controller;
 
 import de.oberamsystems.slm.model.*;
+import de.oberamsystems.slm.util.CourseComparator;
+import de.oberamsystems.slm.util.SemesterComparator;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -31,13 +33,16 @@ public class AcademicController {
 
 	@GetMapping("/courses")
 	public String listCourses(@RequestParam(required = false) String semester, Model model) {
-		List<String> semesters = courseRepo.findDistinctSemesters();
+		List<String> semesters = new ArrayList<>(courseRepo.findDistinctSemesters());
+		semesters.sort(SemesterComparator.DESCENDING);
+
 		List<Course> courses;
 		if (semester != null && !semester.isBlank() && !"ALL".equalsIgnoreCase(semester)) {
-			courses = courseRepo.findAllBySemesterOrderByTitleAsc(semester);
+			courses = new ArrayList<>(courseRepo.findAllBySemesterOrderByTitleAsc(semester));
 		} else {
-			courses = courseRepo.findAllByOrderByCreatedAtDesc();
+			courses = new ArrayList<>(courseRepo.findAll());
 		}
+		courses.sort(CourseComparator.INSTANCE);
 
 		BigDecimal totalEcts = courses.stream()
 				.map(Course::getEctsCredits)

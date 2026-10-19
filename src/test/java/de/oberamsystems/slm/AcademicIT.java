@@ -5,6 +5,7 @@ import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
@@ -307,5 +308,99 @@ public class AcademicIT extends AbstractIntegrationTest {
         assertNull(lectureSessionRepository.findById(sessionId).orElseThrow().getCourse());
         // Verify lecturer is preserved
         assertTrue(humanRepository.existsById(lecturer.getId()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void testCourseSortingConsistencyBetweenAllAndSemesterFilter() throws Exception {
+        MockMvc mockMvc = webAppContextSetup(context)
+                .apply(springSecurity())
+                .build();
+
+        // 1. Create courses where createdAt order is the REVERSE of title ASC
+        // Course A: "Distributed Systems" created at T0 (earlier)
+        // Course B: "Applied Cryptography" created at T1 (later)
+        LocalDateTime t0 = LocalDateTime.now().minusDays(5);
+        LocalDateTime t1 = LocalDateTime.now().minusDays(1);
+
+        Course c1 = new Course();
+        c1.setTitle("Distributed Systems");
+        c1.setCode("CS-601");
+        c1.setSemester("WiSe 2026/27");
+        c1.setCreatedAt(t0);
+        courseRepository.saveAndFlush(c1);
+
+        Course c2 = new Course();
+        c2.setTitle("Applied Cryptography");
+        c2.setCode("CS-602");
+        c2.setSemester("WiSe 2026/27");
+        c2.setCreatedAt(t1);
+        courseRepository.saveAndFlush(c2);
+
+        // Older semester course
+        Course c3 = new Course();
+        c3.setTitle("Linear Algebra");
+        c3.setCode("MATH-101");
+        c3.setSemester("SoSe 2026");
+        c3.setCreatedAt(t0);
+        courseRepository.saveAndFlush(c3);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        // 2. Fetch "ALL" courses via GET /courses
+        MvcResult allResult = mockMvc.perform(get("/courses"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<Course> allCourses = (List<Course>) allResult.getModelAndView().getModel().get("courses");
+        assertNotNull(allCourses);
+        // Find WiSe 2026/27 courses
+        List<Course> wiseCoursesInAll = allCourses.stream()
+                .filter(c -> "WiSe 2026/27".equals(c.getSemester()))
+                .toList();
+        assertEquals(2, wiseCoursesInAll.size());
+        assertEquals("Applied Cryptography", wiseCoursesInAll.get(0).getTitle());
+        assertEquals("Distributed Systems", wiseCoursesInAll.get(1).getTitle());
+
+        // Verify semester tabs sorting: WiSe 2026/27 must be before SoSe 2026
+        List<String> distinctSemesters = (List<String>) allResult.getModelAndView().getModel().get("semesters");
+        assertNotNull(distinctSemesters);
+        int idxWise = distinctSemesters.indexOf("WiSe 2026/27");
+        int idxSose = distinctSemesters.indexOf("SoSe 2026");
+        assertTrue(idxWise != -1 && idxSose != -1);
+        assertTrue(idxWise < idxSose, "WiSe 2026/27 must be listed before SoSe 2026");
+
+        // 3. Fetch single semester via GET /courses?semester=WiSe+2026/27
+        MvcResult wiseResult = mockMvc.perform(get("/courses").param("semester", "WiSe 2026/27"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        List<Course> wiseFilteredCourses = (List<Course>) wiseResult.getModelAndView().getModel().get("courses");
+        assertNotNull(wiseFilteredCourses);
+        assertEquals(2, wiseFilteredCourses.size());
+        // Verify EXACT SAME order as within "ALL": Applied Cryptography first, Distributed Systems second
+        assertEquals("Applied Cryptography", wiseFilteredCourses.get(0).getTitle());
+        assertEquals("Distributed Systems", wiseFilteredCourses.get(1).getTitle());
+
+        // 4. Verify McpAcademicTools consistency
+        List<Map<String, Object>> mcpAll = mcpAcademicTools.getCourses(null);
+        List<Map<String, Object>> mcpWiseInAll = mcpAll.stream()
+                .filter(m -> "WiSe 2026/27".equals(m.get("semester")))
+                .toList();
+        assertEquals("Applied Cryptography", mcpWiseInAll.get(0).get("title"));
+        assertEquals("Distributed Systems", mcpWiseInAll.get(1).get("title"));
+
+        List<Map<String, Object>> mcpWise = mcpAcademicTools.getCourses("WiSe 2026/27");
+        assertEquals("Applied Cryptography", mcpWise.get(0).get("title"));
+        assertEquals("Distributed Systems", mcpWise.get(1).get("title"));
+
+        // 5. Verify McpAcademicTools.getSemesters() sorted chronologically descending
+        List<String> mcpSemesters = mcpAcademicTools.getSemesters();
+        assertNotNull(mcpSemesters);
+        int mcpIdxWise = mcpSemesters.indexOf("WiSe 2026/27");
+        int mcpIdxSose = mcpSemesters.indexOf("SoSe 2026");
+        assertTrue(mcpIdxWise != -1 && mcpIdxSose != -1);
+        assertTrue(mcpIdxWise < mcpIdxSose, "McpAcademicTools.getSemesters() must return WiSe 2026/27 before SoSe 2026");
     }
 }
