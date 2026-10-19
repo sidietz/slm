@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc2] - 2026-10-19
+
+### Added
+- Implemented **Universal Active Sessions (Start & Stop Later)** across the Polymorphic Session Hierarchy (ADR 021):
+  - Added support for starting ongoing sessions without an end time (`endtime = NULL`), setting `status = 'IN_PROGRESS'` across all session types (`CodingSession`, `WorkingSession`, `LearningSession`, `ReadingSession`, `GamingSession`, `SportSession`, `MeditationSession`, `SleepSession`, `LectureSession`).
+  - Added domain lifecycle helper methods `isInProgress()` and `stop(LocalDateTime, Duration, Integer, String, String)` directly on root [`Session`](src/main/java/de/oberamsystems/slm/model/Session.java).
+  - Added query methods `findByStatusOrderByStartDesc`, `findByEndIsNullOrderByStartDesc`, and `findFirstByEndIsNullOrderByStartDesc` to [`SessionRepository`](src/main/java/de/oberamsystems/slm/model/SessionRepository.java).
+  - Implemented shared polymorphic `POST /sessions/{id}/stop` in [`SessionController`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) allowing any ongoing session to be stopped at any time with optional break duration, focus rating (1-5), outcome summary, and reflections.
+  - Added automated calculation of missing sleep stages upon stopping an ongoing `SleepSession` to maintain PostgreSQL cross-table invariant triggers.
+  - Added **Active Session Hero Banner** in [`sessions.html`](src/main/resources/templates/sessions.html) with pulsing status badge, real-time ticking elapsed timer, 1-click **Quick Stop**, and **Finish with Review** modal.
+  - Enhanced session table with live `IN_PROGRESS` badges, `live-row-timer` real-time elapsed tickers, and inline stop action buttons.
+  - Removed strict `required` constraint on session end datetimes across [`sessions.html`](src/main/resources/templates/sessions.html), [`working-sessions.html`](src/main/resources/templates/working-sessions.html), and [`coding-sessions.html`](src/main/resources/templates/coding-sessions.html).
+  - Safeguarded [`IndexController`](src/main/java/de/oberamsystems/slm/controller/IndexController.java) against null end datetimes when rendering recent activity messages.
+  - Exposed Spring AI MCP server tools `getActiveSessions`, `startSession`, and `stopSession` in [`McpSessionTools`](src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java).
+  - Added comprehensive automated integration tests in [`SessionHubIT.java`](src/test/java/de/oberamsystems/slm/SessionHubIT.java) covering start, stop, polymorphic subclasses, and UI banner rendering.
+
 ## [0.0.3-rc1] - 2026-10-19
 
 ### Added
@@ -294,7 +310,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc1...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc2...HEAD
+[0.0.3-rc2]: https://github.com/sidietz/slm/compare/v0.0.3-rc1...v0.0.3-rc2
 [0.0.3-rc1]: https://github.com/sidietz/slm/compare/v0.0.2i...v0.0.3-rc1
 [0.0.2i]: https://github.com/sidietz/slm/compare/v0.0.2h...v0.0.2i
 [0.0.2h]: https://github.com/sidietz/slm/compare/v0.0.2g...v0.0.2h
