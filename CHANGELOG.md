@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.2j] - 2026-10-19
 
+### Added
+- Added comprehensive end-to-end UI integration tests in [`SleepSessionUIIT.java`](src/test/java/de/oberamsystems/slm/SleepSessionUIIT.java):
+  - Verified modal form rendering with CSRF token on `GET /sessions?type=SLEEP`.
+  - Verified submitting Night Sleep sessions via UI `POST /sessions/sleep` with CSRF protection, native UUIDv7 persistence, PostgreSQL generated columns (`duration`, `net_duration`), and UI table rendering.
+  - Verified submitting Power Nap sessions (`isNap = true`) via UI with duration computation and UI rendering.
+  - Verified deleting sleep sessions via UI `POST /sessions/delete/{id}` and cascade deletion from joined polymorphic tables.
+  - Verified rejection of submissions without valid CSRF tokens (`HTTP 403 Forbidden`).
+
 ### Changed
 - Migrated **Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7** (ADR 018):
   - Migrated root [`Session`](src/main/java/de/oberamsystems/slm/model/Session.java) and all 9 joined subclasses ([`CodingSession`](src/main/java/de/oberamsystems/slm/model/CodingSession.java), [`WorkingSession`](src/main/java/de/oberamsystems/slm/model/WorkingSession.java), [`LearningSession`](src/main/java/de/oberamsystems/slm/model/LearningSession.java), [`ReadingSession`](src/main/java/de/oberamsystems/slm/model/ReadingSession.java), [`GamingSession`](src/main/java/de/oberamsystems/slm/model/GamingSession.java), [`SportSession`](src/main/java/de/oberamsystems/slm/model/SportSession.java), [`MeditationSession`](src/main/java/de/oberamsystems/slm/model/MeditationSession.java), [`SleepSession`](src/main/java/de/oberamsystems/slm/model/SleepSession.java), [`LectureSession`](src/main/java/de/oberamsystems/slm/model/LectureSession.java)) from `String` / `TEXT` to native `java.util.UUID` / PostgreSQL `UUID`.
