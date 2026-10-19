@@ -67,7 +67,11 @@ A polymorphic time-tracking system built around a four pillars life balance mode
 - **Contracts & Employers (`/contracts`, `/employers`)**: Manage client relationships, employment contracts, and terms.
 - **Spend Management (`/purchases`)**: Log expenses, purchase categories, and vendor relationships.
 
-### 5. Logistics, Spatial GIS & Travel
+### 5. Logistics, Spatial GIS, Vehicles & Fuel Economy
+- **Vehicles & Refuelings (`/cars`, `/refuelings`)**: Fleet management, odometer readings, and refueling records with automated consumption (`L/100km`) and price per liter calculation.
+- **Fuel & EV Charging Stations (`/stations`)**: Polymorphic station directory supporting Gas Stations (with TankenTanken UUID) and EV Charging Stations (with 1:N Charging Point stalls, power in kW, and European plug standards like CCS2 and Type 2).
+- **Spritmonitor CSV Import**: One-click import for Spritmonitor CSV exports (`1676970_fuelings.csv`) with German decimal parsing, ISO country normalization, and station auto-provisioning.
+- **Interactive Refueling Analytics**: Billboard.js time-series trend chart switchable dynamically between Consumption (`L/100km`), Trip Distance (`km`), and Fuel Price (`€/L`).
 - **Train Trips (`/train-trips`)**: Detailed rail journey logs with lines, train stations, and connection tracking.
 - **Spatial Routes & Points (`/routes`, `/points`)**: PostGIS-powered geospatial coordinate tracking and distance calculations.
 - **Human Management (`/humans`)**: Personal CRM for organizing contacts, friends, and relationships.
@@ -89,7 +93,7 @@ Comprehensive tracking for university coursework, lecture notes, syllabus manage
 ### 8. Model Context Protocol (MCP) Server
 SLM embeds a [Spring AI](https://spring.io/projects/spring-ai) Model Context Protocol (MCP) server providing external AI assistants (e.g. Claude Desktop, Antigravity IDE, custom autonomous agents) with direct, structured, read-write access to life tracking data via Server-Sent Events (SSE) at `/sse` and message handling at `/mcp/message`, secured with API Key authentication (`X-API-KEY` or `?apiKey=...`).
 
-The server exposes 23 domain tools organized across 5 specialized controllers:
+The server exposes 27 domain tools organized across 6 specialized controllers:
 
 #### 1. Academic & University Management (`McpAcademicTools`)
 - **`getSemesters()`**: Retrieve all distinct academic semesters, sorted chronologically descending (most recent semester first via `SemesterComparator.DESCENDING`).
@@ -123,6 +127,12 @@ The server exposes 23 domain tools organized across 5 specialized controllers:
 - **`getUpcomingLifeEvents(daysAhead)`**: Retrieve upcoming life events, anniversaries, birthdays, memorials, and milestones sorted by days until occurrence.
 - **`getContactLifeEvents(contactId)`**: Retrieve all life events and anniversaries recorded for a specific contact.
 - **`createLifeEvent(contactId, type, dateStr, title, notes, secondaryContactId)`**: Create a new milestone or anniversary for a contact.
+
+#### 6. Vehicles, Refuelings & Stations (`McpVehicleTools`)
+- **`getRefuelings(carId, limit)`**: Query refueling history with volume in liters, fuel price per liter, total costs, odometer, and consumption.
+- **`logRefueling(...)`**: Record a new refueling entry linked to a vehicle and gas station.
+- **`getStations(stationType, country)`**: List gas stations (with TankenTanken UUID) and EV charging stations (with power in kW and plug types).
+- **`createStation(...)`**: Provision a new gas or EV charging station.
 
 ---
 

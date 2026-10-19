@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/layout :: standard-head('Fuel & Charging Stations')}">
+    <title>Fuel & Charging Stations</title>
+</head>
+<body class="bg-light">
+
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Fuel & Charging Stations', 'Manage gas stations, TankenTanken IDs, and EV charging points', 'bi bi-ev-station', 'theme-cars', '/misc-management', 'Misc Dashboard')}"></header>
+
+    <main class="container my-5">
+        <!-- Quick Nav -->
+        <div class="d-flex gap-2 mb-4 flex-wrap">
+            <a href="/cars" class="btn btn-outline-secondary btn-sm"><i class="bi bi-car-front me-1"></i> Vehicles</a>
+            <a href="/refuelings" class="btn btn-outline-secondary btn-sm"><i class="bi bi-fuel-pump me-1"></i> Refuelings</a>
+            <a href="/stations" class="btn btn-outline-primary btn-sm active"><i class="bi bi-ev-station me-1"></i> Stations</a>
+            <a href="/car-trips" class="btn btn-outline-secondary btn-sm"><i class="bi bi-sign-turn-right me-1"></i> Trips</a>
+            <a href="/routes" class="btn btn-outline-secondary btn-sm"><i class="bi bi-map me-1"></i> Routes</a>
+            <a href="/points" class="btn btn-outline-secondary btn-sm"><i class="bi bi-geo-alt me-1"></i> Points</a>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Tab Pills & Action Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+            <ul class="nav nav-pills" id="stationTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4" id="gas-tab" data-bs-toggle="pill" data-bs-target="#gas" type="button" role="tab"
+                            th:classappend="${activeTab == 'gas'} ? 'active' : ''">
+                        <i class="bi bi-fuel-pump me-2"></i> Gas Stations
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-2" th:text="${#lists.size(gasStations)}">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link rounded-pill px-4 ms-2" id="charging-tab" data-bs-toggle="pill" data-bs-target="#charging" type="button" role="tab"
+                            th:classappend="${activeTab == 'charging'} ? 'active' : ''">
+                        <i class="bi bi-lightning-charge me-2"></i> EV Charging Stations
+                        <span class="badge bg-secondary-subtle text-secondary rounded-pill ms-2" th:text="${#lists.size(chargingStations)}">0</span>
+                    </button>
+                </li>
+            </ul>
+
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGasStationModal">
+                    <i class="bi bi-plus-lg me-1"></i> Add Gas Station
+                </button>
+                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#addChargingStationModal">
+                    <i class="bi bi-lightning-charge me-1"></i> Add Charging Station
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="stationTabContent">
+
+            <!-- Gas Stations Tab Pane -->
+            <div class="tab-pane fade" id="gas" role="tabpanel" aria-labelledby="gas-tab"
+                 th:classappend="${activeTab == 'gas'} ? 'show active' : ''">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-fuel-pump me-2 text-primary"></i>Gas Stations</h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(gasStations)} + ' stations'">0 stations</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table slm-table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Name</th>
+                                    <th>Brand</th>
+                                    <th>City & Address</th>
+                                    <th>Country</th>
+                                    <th>TankenTanken UUID</th>
+                                    <th>Note</th>
+                                    <th class="text-end pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="gs : ${gasStations}">
+                                    <td class="ps-3 fw-semibold text-dark" th:text="${gs.name}">Shell</td>
+                                    <td>
+                                        <span class="badge bg-light text-secondary border" th:text="${gs.brand != null ? gs.brand : '—'}">Shell</span>
+                                    </td>
+                                    <td>
+                                        <span th:text="${gs.street != null ? gs.street + ' ' + (gs.houseNumber != null ? gs.houseNumber : '') + ', ' : ''}"></span>
+                                        <span class="text-muted" th:text="${gs.postalCode != null ? gs.postalCode + ' ' : ''}"></span>
+                                        <strong th:text="${gs.city != null ? gs.city : '—'}">City</strong>
+                                    </td>
+                                    <td>
+                                        <span th:if="${gs.country != null}" class="badge bg-secondary-subtle text-secondary border font-monospace" th:text="${gs.country}">DE</span>
+                                        <span th:unless="${gs.country != null}" class="text-muted small">—</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${gs.tankentankenId != null}" class="badge bg-info-subtle text-info-emphasis font-monospace small" th:text="${gs.tankentankenId}">UUID</span>
+                                        <span th:unless="${gs.tankentankenId != null}" class="text-muted small">—</span>
+                                    </td>
+                                    <td class="text-muted small" th:text="${gs.note != null ? gs.note : '—'}">Note</td>
+                                    <td class="text-end pe-3">
+                                        <form th:action="@{/stations/{id}/delete(id=${gs.id})}" method="post" class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to delete this gas station?');">
+                                            <input type="hidden" name="tab" value="gas" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm border-0" title="Delete Station">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(gasStations)}">
+                                    <td colspan="7" class="text-center py-5 text-muted">
+                                        <i class="bi bi-fuel-pump display-6 d-block mb-2 text-secondary"></i>
+                                        No gas stations registered yet. They will be auto-created during Spritmonitor CSV import or you can add them manually.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charging Stations Tab Pane -->
+            <div class="tab-pane fade" id="charging" role="tabpanel" aria-labelledby="charging-tab"
+                 th:classappend="${activeTab == 'charging'} ? 'show active' : ''">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-lightning-charge me-2 text-primary"></i>EV Charging Stations</h5>
+                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(chargingStations)} + ' stations'">0 stations</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table slm-table table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="ps-3">Name</th>
+                                    <th>Operator</th>
+                                    <th>City & Address</th>
+                                    <th>Country</th>
+                                    <th>Charging Points / Plugs</th>
+                                    <th>Max Power</th>
+                                    <th>Note</th>
+                                    <th class="text-end pe-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="cs : ${chargingStations}">
+                                    <td class="ps-3 fw-semibold text-dark" th:text="${cs.name}">Ionity</td>
+                                    <td>
+                                        <span class="badge bg-light text-secondary border" th:text="${cs.operator != null ? cs.operator : (cs.brand != null ? cs.brand : '—')}">Ionity</span>
+                                    </td>
+                                    <td>
+                                        <span th:text="${cs.street != null ? cs.street + ' ' + (cs.houseNumber != null ? cs.houseNumber : '') + ', ' : ''}"></span>
+                                        <span class="text-muted" th:text="${cs.postalCode != null ? cs.postalCode + ' ' : ''}"></span>
+                                        <strong th:text="${cs.city != null ? cs.city : '—'}">City</strong>
+                                    </td>
+                                    <td>
+                                        <span th:if="${cs.country != null}" class="badge bg-secondary-subtle text-secondary border font-monospace" th:text="${cs.country}">DE</span>
+                                        <span th:unless="${cs.country != null}" class="text-muted small">—</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex flex-wrap gap-1" th:if="${!#lists.isEmpty(cs.chargingPoints)}">
+                                            <span th:each="cp : ${cs.chargingPoints}" class="badge bg-primary-subtle text-primary font-monospace small">
+                                                <i class="bi bi-plug-fill me-1"></i><span th:text="${cp.plugType}">CCS_TYPE2</span>
+                                                <span th:if="${cp.maxPowerKw != null}" th:text="' (' + ${cp.maxPowerKw} + ' kW)'"></span>
+                                            </span>
+                                        </div>
+                                        <span th:if="${#lists.isEmpty(cs.chargingPoints)}" class="text-muted small">—</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success-subtle text-success font-monospace" th:text="${cs.maxPowerKw} + ' kW'">0 kW</span>
+                                    </td>
+                                    <td class="text-muted small" th:text="${cs.note != null ? cs.note : '—'}">Note</td>
+                                    <td class="text-end pe-3">
+                                        <form th:action="@{/stations/{id}/delete(id=${cs.id})}" method="post" class="d-inline"
+                                              onsubmit="return confirm('Are you sure you want to delete this charging station?');">
+                                            <input type="hidden" name="tab" value="charging" />
+                                            <button type="submit" class="btn btn-outline-danger btn-sm border-0" title="Delete Station">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <tr th:if="${#lists.isEmpty(chargingStations)}">
+                                    <td colspan="8" class="text-center py-5 text-muted">
+                                        <i class="bi bi-lightning-charge display-6 d-block mb-2 text-secondary"></i>
+                                        No EV charging stations registered yet. Click <strong>Add Charging Station</strong> to provision one.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal: Add Gas Station -->
+    <div class="modal fade" id="addGasStationModal" tabindex="-1" aria-labelledby="addGasStationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form th:action="@{/stations/gas}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="addGasStationModalLabel"><i class="bi bi-fuel-pump me-2 text-primary"></i>Add Gas Station</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label">Station Name <span class="text-danger">*</span></label>
+                                <input type="text" id="name" name="name" class="form-control" required placeholder="e.g. Shell Tankstelle" />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="brand" class="form-label">Brand</label>
+                                <input type="text" id="brand" name="brand" class="form-control" placeholder="e.g. Shell, Aral, Total" />
+                            </div>
+                            <div class="col-md-8">
+                                <label for="street" class="form-label">Street</label>
+                                <input type="text" id="street" name="street" class="form-control" placeholder="e.g. Hauptstraße" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="houseNumber" class="form-label">House No.</label>
+                                <input type="text" id="houseNumber" name="houseNumber" class="form-control" placeholder="e.g. 42" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="postalCode" class="form-label">Postal Code</label>
+                                <input type="text" id="postalCode" name="postalCode" class="form-control" placeholder="e.g. 80331" />
+                            </div>
+                            <div class="col-md-5">
+                                <label for="city" class="form-label">City</label>
+                                <input type="text" id="city" name="city" class="form-control" placeholder="e.g. München" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="country" class="form-label">Country (ISO 3166-1)</label>
+                                <input type="text" id="country" name="country" class="form-control text-uppercase" maxlength="2" placeholder="DE" value="DE" />
+                            </div>
+                            <div class="col-md-12">
+                                <label for="tankentankenId" class="form-label">TankenTanken UUID</label>
+                                <input type="text" id="tankentankenId" name="tankentankenId" class="form-control font-monospace" placeholder="e.g. 9123b96c-a68e-485e-b5e6-3095d42d55bc" />
+                                <div class="form-text">Optional TankenTanken / TankerKönig UUID identifier for price telemetry.</div>
+                            </div>
+                            <div class="col-md-12">
+                                <label for="note" class="form-label">Note</label>
+                                <input type="text" id="note" name="note" class="form-control" placeholder="e.g. Open 24/7, car wash available" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Gas Station</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add EV Charging Station -->
+    <div class="modal fade" id="addChargingStationModal" tabindex="-1" aria-labelledby="addChargingStationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <form th:action="@{/stations/charging}" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="addChargingStationModalLabel"><i class="bi bi-lightning-charge me-2 text-primary"></i>Add EV Charging Station</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="csName" class="form-label">Station Name <span class="text-danger">*</span></label>
+                                <input type="text" id="csName" name="name" class="form-control" required placeholder="e.g. Ionity Holzkirchen Süd" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="csBrand" class="form-label">Brand</label>
+                                <input type="text" id="csBrand" name="brand" class="form-control" placeholder="e.g. Ionity" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="operator" class="form-label">Operator</label>
+                                <input type="text" id="operator" name="operator" class="form-control" placeholder="e.g. EnBW, Ionity, Tesla" />
+                            </div>
+                            <div class="col-md-8">
+                                <label for="csStreet" class="form-label">Street</label>
+                                <input type="text" id="csStreet" name="street" class="form-control" placeholder="e.g. Gewerbering" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="csHouseNumber" class="form-label">House No.</label>
+                                <input type="text" id="csHouseNumber" name="houseNumber" class="form-control" placeholder="e.g. 5" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="csPostalCode" class="form-label">Postal Code</label>
+                                <input type="text" id="csPostalCode" name="postalCode" class="form-control" placeholder="e.g. 83607" />
+                            </div>
+                            <div class="col-md-5">
+                                <label for="csCity" class="form-label">City</label>
+                                <input type="text" id="csCity" name="city" class="form-control" placeholder="e.g. Holzkirchen" />
+                            </div>
+                            <div class="col-md-3">
+                                <label for="csCountry" class="form-label">Country (ISO 3166-1)</label>
+                                <input type="text" id="csCountry" name="country" class="form-control text-uppercase" maxlength="2" placeholder="DE" value="DE" />
+                            </div>
+
+                            <!-- Charging Points Configuration -->
+                            <div class="col-12 mt-4">
+                                <h6 class="fw-bold border-bottom pb-2 text-dark"><i class="bi bi-plug me-2 text-primary"></i>Charging Points / Plugs</h6>
+                                <div id="chargingPointsContainer">
+                                    <div class="row g-2 align-items-end mb-2 charging-point-row">
+                                        <div class="col-md-5">
+                                            <label class="form-label small">Plug Type</label>
+                                            <select name="plugType" class="form-select">
+                                                <optgroup label="European Standard / Common">
+                                                    <option value="CCS_TYPE2" selected>CCS Combo 2 (Combined Charging System)</option>
+                                                    <option value="TYPE_2">Type 2 (Mennekes, AC)</option>
+                                                    <option value="CHADEMO">CHAdeMO (DC Fast)</option>
+                                                    <option value="TESLA">Tesla Supercharger</option>
+                                                </optgroup>
+                                                <optgroup label="Rare / Regional / Legacy">
+                                                    <option value="TYPE_1">Type 1 (J1772)</option>
+                                                    <option value="GBT">GB/T (Chinese Standard)</option>
+                                                    <option value="OTHER">Other</option>
+                                                    <option value="UNKNOWN">Unknown</option>
+                                                </optgroup>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="form-label small">Max Power (kW)</label>
+                                            <input type="number" step="0.1" name="maxPowerKw" class="form-control" value="350.0" placeholder="350.0" />
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label class="form-label small">Stalls Count</label>
+                                            <input type="number" name="pointCount" class="form-control" value="4" min="1" />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <label for="csNote" class="form-label">Note</label>
+                                <input type="text" id="csNote" name="note" class="form-control" placeholder="e.g. 24/7 access, canopy, lounge" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i> Save Charging Station</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+</html>

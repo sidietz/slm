@@ -74,7 +74,7 @@ public class SecurityConfig {
 						.requestMatchers("/learning-session", "/learning-session.html", "/learningitem",
 								"/learningitem.html", "/add-learning-session", "/add-learningitem")
 						.permitAll()
-						.requestMatchers("/api/sleeptimes", "/api/moods").permitAll()
+						.requestMatchers("/api/sleeptimes", "/api/moods", "/api/refuelings").permitAll()
 						.requestMatchers("/doctor", "/doctor.html", "/add-doctor", "/appointment", "/add-appointment",
 								"/speciality", "/speciality.html", "/add-speciality")
 						.permitAll()
@@ -98,7 +98,7 @@ public class SecurityConfig {
 						.requestMatchers("/academics", "/academics/**", "/academic", "/academic/**").permitAll()
 						.requestMatchers("/favicon.ico", "/favicon/**").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()
-						.requestMatchers("/points", "/routes", "/car-trips", "/cars").permitAll()
+						.requestMatchers("/points", "/routes", "/car-trips", "/cars", "/refuelings", "/refuelings/**", "/stations", "/stations/**").permitAll()
 						.requestMatchers("/mcp/**", "/sse").permitAll()
 						.requestMatchers("/api/**")
 						.authenticated().anyRequest().denyAll())

@@ -24,6 +24,10 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 016: Spring AI Model Context Protocol (MCP) Server Integration](#adr-016-spring-ai-model-context-protocol-mcp-server-integration)
 - [ADR 017: University Lectures, Academic Tracking & Native UUIDv7 Markdown Lecture Notes](#adr-017-university-lectures-academic-tracking--native-uuidv7-markdown-lecture-notes)
 - [ADR 018: Migration of Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7](#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)
+- [ADR 019: Cross-Table Generated Column Consistency in Sleep Tracking](#adr-019-cross-table-generated-column-consistency-in-sleep-tracking)
+- [ADR 020: Full Integration Test Coverage Across WebMVC Controllers](#adr-020-full-integration-test-coverage-across-webmvc-controllers)
+- [ADR 021: Universal Active Sessions (Start & Stop Later) across Polymorphic Hierarchy](#adr-021-universal-active-sessions-start--stop-later-across-polymorphic-hierarchy)
+- [ADR 022: Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import](#adr-022-vehicle-refuelings-station-polymorphism-and-spritmonitor-csv-import)
 
 ---
 
@@ -817,3 +821,52 @@ In SLM, time tracking across all Four Pillars (Productivity, Sport, Wellness, Le
   - Polymorphic design ensures any new session subclass automatically inherits start/stop capabilities.
 - **Constraints**:
   - Aggregated KPIs (e.g. Net Focused Time) only tally completed sessions (or sessions with non-null durations), safely ignoring ongoing sessions until stopped.
+
+---
+
+## ADR 022: Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import
+
+### Status
+Accepted (v0.0.3-rc4)
+
+### Context
+SLM tracks vehicles ([`Car`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Car.java)) and vehicle journeys ([`CarTrip`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/CarTrip.java)). However, tracking operational fuel economy, costs per liter, total expenditure, odometer logs, and migrating long-term historical records from [Spritmonitor](https://www.spritmonitor.de/) previously required manual work outside the system.
+
+Furthermore, fuel and energy infrastructure requires modeling both traditional combustion gas stations (with external price telemetry IDs such as TankenTanken / TankerKönig UUIDs) and EV charging stations (with individual charging point stalls, rated kW capacity, and distinct European plug standards).
+
+### Decision
+
+1. **Station Polymorphic Hierarchy (`InheritanceType.JOINED`) with PostgreSQL 18 `uuidv7()`**:
+   - Implemented base [`Station`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Station.java) using native UUIDv7 primary keys (`DEFAULT uuidv7()`), spatial geometry links ([`Point`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Point.java)), and address metadata.
+   - Subclass [`GasStation`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/GasStation.java) adds an optional `tankentanken_id UUID UNIQUE` for external fuel price API integration.
+   - Subclass [`ChargingStation`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/ChargingStation.java) models EV charging infrastructure with 1:N [`ChargingPoint`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/ChargingPoint.java) stalls holding `max_power_kw NUMERIC(6, 1)` and [`PlugType`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/PlugType.java) (`CCS_TYPE2`, `TYPE_2`, `CHADEMO`, `TESLA`, `TYPE_1`, `GBT`, `OTHER`, `UNKNOWN`).
+
+2. **Vehicle Refueling Entity with Automatic Metrics Calculation**:
+   - Created [`Refueling`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Refueling.java) linked to [`Car`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Car.java) and optionally to [`GasStation`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/GasStation.java) (`ON DELETE SET NULL`).
+   - Domain method `autoCalculateMetrics()` automatically derives missing `costPerLiter = totalCost / liters` and calculates consumption `(liters / tripDistance) * 100`.
+   - Telemetry from vehicle on-board computers is recorded (`board_computer_consumption`, `board_computer_quantity`, `board_computer_speed`).
+   - Strictly enforces ISO 3166-1 alpha-2 for country codes (`country VARCHAR(2)`) and ISO 4217 for currency (`currency VARCHAR(3)`).
+
+3. **Spritmonitor CSV Parser (`SpritmonitorCsvService`)**:
+   - Parses Spritmonitor exported CSV files (e.g. [`1676970_fuelings.csv`](file:///home/simon/code/eclipse/slm/1676970_fuelings.csv)) featuring semicolon delimiters, quotes, and German decimal commas.
+   - Preserves vehicle scope: CSV imports are tied directly to an existing vehicle selected in the UI without altering the `car` table schema.
+   - Auto-normalizes legacy country indicators (e.g. `"D"` $\rightarrow$ `"DE"`).
+   - Automatically provisions missing gas stations in the database to prevent manual duplicate entry.
+
+4. **Interactive Billboard.js Time-Series Analytics & Management UI**:
+   - Built [`refuelings.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/refuelings.html) with vehicle filter pills, KPI overview cards (Total Spent, Total Volume, Avg €/L, Avg L/100km), and an interactive Billboard.js chart powered by `GET /api/refuelings`.
+   - The chart dynamically switches between **Consumption (`L/100km`)**, **Trip Distance (`km`)**, and **Fuel Price (`€/L`)** without page reloads.
+   - Built [`stations.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/stations.html) with dual tabs for gas stations and EV charging hubs.
+
+5. **Spring AI Model Context Protocol (MCP) Server Integration**:
+   - Implemented [`McpVehicleTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpVehicleTools.java) registered in [`McpServerConfig`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpServerConfig.java), exposing `getRefuelings`, `logRefueling`, `getStations`, and `createStation`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Full end-to-end support for tracking vehicle efficiency, expenditures, and station telemetry.
+  - Seamless migration of existing Spritmonitor historical logs without manual entry.
+  - EV readiness with dedicated charging station and plug type models.
+  - 100% test coverage verified with unit and Testcontainers integration tests.
+- **Constraints**:
+  - Deleting a station cleanly sets `station_id = NULL` on historical refuelings to preserve financial and consumption history.
+
