@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc3] - 2026-10-19
+
+### Added
+- Added [`SemesterComparator`](src/main/java/de/oberamsystems/slm/util/SemesterComparator.java) parsing European and German academic semester formats (`WiSe`, `WS`, `SoSe`, `SS`, `Wintersemester`, `Sommersemester`, `Summer`) and sorting them chronologically descending (most recent first).
+- Added [`CourseComparator`](src/main/java/de/oberamsystems/slm/util/CourseComparator.java) enforcing deterministic course ordering: primarily by semester descending, secondarily by course title alphabetically ascending (case-insensitive), and tertiarily by course ID.
+- Added comprehensive unit tests in [`SemesterComparatorTest.java`](src/test/java/de/oberamsystems/slm/util/SemesterComparatorTest.java) and [`CourseComparatorTest.java`](src/test/java/de/oberamsystems/slm/util/CourseComparatorTest.java).
+- Added integration test `testCourseSortingConsistencyBetweenAllAndSemesterFilter()` in [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java) verifying exact course order preservation between "All Semesters" and single-semester views.
+- Exposed Spring AI MCP server tool `getSemesters` in [`McpAcademicTools.java`](src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java) returning all distinct academic semesters sorted chronologically descending.
+- Documented **Deterministic Domain-Specific Sorting & Ordering** rules in Section 8 of [`AGENTS.md`](AGENTS.md).
+
+### Fixed
+- Fixed course sorting inconsistency in [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java) where switching from "All Semesters" (`createdAt DESC`) to a specific semester tab (`title ASC`) flipped the relative ordering of courses within the same semester.
+- Fixed semester tab ordering in [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java) so semester tabs always present the most recent semester first.
+- Aligned MCP tool `getCourses` in [`McpAcademicTools.java`](src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java) with `CourseComparator`.
+
 ## [0.0.3-rc2] - 2026-10-19
 
 ### Added
@@ -310,7 +325,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc2...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc3...HEAD
+[0.0.3-rc3]: https://github.com/sidietz/slm/compare/v0.0.3-rc2...v0.0.3-rc3
 [0.0.3-rc2]: https://github.com/sidietz/slm/compare/v0.0.3-rc1...v0.0.3-rc2
 [0.0.3-rc1]: https://github.com/sidietz/slm/compare/v0.0.2i...v0.0.3-rc1
 [0.0.2i]: https://github.com/sidietz/slm/compare/v0.0.2h...v0.0.2i

@@ -151,7 +151,23 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 
 ---
 
-## 8. Docker & Container Orchestration (ADR 014)
+## 8. Deterministic Domain-Specific Sorting & Ordering
+
+To ensure consistent and predictable UI views across filters, hub tabs, and API endpoints, entities and lists must always be ordered according to domain-specific criteria:
+
+1. **Academic Courses & Semesters**:
+   - Courses must be sorted by **semester descending** (most recent semester first via [`SemesterComparator.DESCENDING`](src/main/java/de/oberamsystems/slm/util/SemesterComparator.java)), then **alphabetically ascending by course title** (`title ASC` case-insensitive via [`CourseComparator`](src/main/java/de/oberamsystems/slm/util/CourseComparator.java)).
+   - Distinct semester tabs and filters must display semesters in chronological descending order (most recent first).
+2. **Train Lines**:
+   - Train lines must be sorted using [`TrainLineComparator`](src/main/java/de/oberamsystems/slm/util/TrainLineComparator.java): alphabetically by line prefix category (e.g. `ICE`, `RE`, `S`, `U`), then numerically ascending by line number (e.g. `S1`, `S2`, `S8`, `U2`, `U3`).
+3. **Temporal Logs & Activities (Appointments, Sessions, Trips, Journal Entries)**:
+   - When domain-specific grouping is not applicable, temporal events and activity logs must always be sorted by **DateTime descending** (most recent first, e.g. `start DESC`).
+4. **Catalog & Reference Data (Habits, Doctors, Employers, Contractors, Games, Books, Sport Types)**:
+   - Static or reference catalog entities must be sorted **alphabetically ascending** by primary name or title (e.g. habit name, doctor last name, book title).
+
+---
+
+## 9. Docker & Container Orchestration (ADR 014)
 
 - **Database Image**: `db` in `docker-compose.yml` must use `postgis/postgis:18-3.6`.
 - **Healthcheck**: `db` must declare a healthcheck (`test: ["CMD-SHELL", "pg_isready -U simon -d slm"]`).
@@ -160,7 +176,7 @@ Whenever database schemas, tables, triggers, or functions are modified, agents m
 
 ---
 
-## 9. Communication & Response Style
+## 10. Communication & Response Style
 
 - Keep responses concise and focused on high-level decisions, open questions, and results.
 - Create clickable GitHub-style markdown links using the `file://` scheme for all mentioned files and classes (e.g. [`SessionController.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/SessionController.java)).
