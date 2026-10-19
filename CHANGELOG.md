@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.2j] - 2026-10-19
+## [0.0.3-rc1] - 2026-10-19
 
 ### Added
 - Implemented **Sleep Architecture Tracking, Light Sleep & Cross-Table Duration Invariant Enforcement** (ADR 019):
@@ -25,18 +25,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Verified input validation rejection of mismatched stage sums and ambiguous inputs.
   - Verified PostgreSQL database trigger rejection of raw SQL invariant violations.
   - Verified Power Nap submission, UI deletion, and CSRF protection.
-- Added comprehensive end-to-end Course Details integration tests in [`CourseDetailIT.java`](src/test/java/de/oberamsystems/slm/CourseDetailIT.java):
+- Added comprehensive end-to-end Course Details & Academic integration tests in [`CourseDetailIT.java`](src/test/java/de/oberamsystems/slm/CourseDetailIT.java) and [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java):
   - Verified Course Details rendering with rich metadata, lecturer, attached lecture sessions timeline, and lecture notes list.
   - Verified empty state rendering for courses without attached sessions or notes.
   - Verified modal course editing (`POST /courses/{id}/edit`) with CSRF protection and subsequent HTML rendering.
   - Verified clearing/disassociating lecturer on course update.
-  - Verified course deletion (`POST /courses/{id}/delete`) with CSRF protection, ensuring notes are cascaded and lecture sessions are detached (`SET NULL`).
+  - Verified course deletion workflow (`POST /courses/{id}/delete`) with CSRF protection in both [`CourseDetailIT.java`](src/test/java/de/oberamsystems/slm/CourseDetailIT.java) and [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java), verifying database cascade deletion of attached notes, detached persistence of lecture sessions (`SET NULL`), and preservation of the lecturer.
+  - Verified lecture note deletion workflow (`POST /notes/{id}/delete`) with CSRF protection in both [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java) and [`CourseDetailIT.java`](src/test/java/de/oberamsystems/slm/CourseDetailIT.java), verifying note entity removal, enclosing course preservation, and empty-state re-rendering on the course details view.
   - Verified note creation workflow from course detail (`GET /courses/{courseId}/notes/new` with `sessionId`) and view rendering (`GET /notes/{id}`).
   - Verified university courses hub (`GET /courses`) with KPI metrics, semester filtering, and modal enrollment form.
 - Fixed and hardened Thymeleaf template rendering across academic views:
   - Corrected double-brace duration formatting expression in [`course-detail.html`](src/main/resources/templates/course-detail.html) to invoke Spring ConversionService.
   - Safeguarded `examRelevanceRating` and `focusRating` star sequence generation in [`course-detail.html`](src/main/resources/templates/course-detail.html) and [`lecture-note-view.html`](src/main/resources/templates/lecture-note-view.html) against null/non-positive values.
   - Safeguarded course status badge null checks in [`courses.html`](src/main/resources/templates/courses.html).
+
+- Added **Comprehensive Controller Integration Test Architecture** (ADR 020):
+  - Created end-to-end integration tests covering all 33 Spring MVC and REST controllers using Testcontainers PostgreSQL 18 with PostGIS (`postgis/postgis:18-3.6`) and Spring Security MockMvc:
+    - [`DashboardAndManagementIT.java`](src/test/java/de/oberamsystems/slm/DashboardAndManagementIT.java): verifies [`IndexController`](src/main/java/de/oberamsystems/slm/controller/IndexController.java), [`ImprintController`](src/main/java/de/oberamsystems/slm/controller/ImprintController.java), and the 6 domain management hubs (`CodingManagementController`, `JobManagementController`, `LifeManagementController`, `MiscManagementController`, `SchoolManagementController`, `SportManagementController`).
+    - [`SessionHubIT.java`](src/test/java/de/oberamsystems/slm/SessionHubIT.java): verifies polymorphic [`SessionController`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) endpoints (`/sessions`, `/coding-sessions`, `/working-sessions`), Four Pillars KPIs aggregation, session creation, and UUIDv7 deletion.
+    - [`ActivitiesAndMediaIT.java`](src/test/java/de/oberamsystems/slm/ActivitiesAndMediaIT.java): verifies [`ActivityController`](src/main/java/de/oberamsystems/slm/controller/ActivityController.java), [`SportController`](src/main/java/de/oberamsystems/slm/controller/SportController.java), [`LearningController`](src/main/java/de/oberamsystems/slm/controller/LearningController.java), [`MeditationController`](src/main/java/de/oberamsystems/slm/controller/MeditationController.java), [`GameController`](src/main/java/de/oberamsystems/slm/controller/GameController.java), and [`BookController`](src/main/java/de/oberamsystems/slm/controller/BookController.java).
+    - [`DoctorControllerIT.java`](src/test/java/de/oberamsystems/slm/DoctorControllerIT.java): verifies [`DoctorController`](src/main/java/de/oberamsystems/slm/controller/DoctorController.java) (doctors, specialities, appointments, date range filtering, PostGIS geodesic air distance).
+    - [`WellnessAndHabitsIT.java`](src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java): verifies [`HabitController`](src/main/java/de/oberamsystems/slm/controller/HabitController.java), [`MoodController`](src/main/java/de/oberamsystems/slm/controller/MoodController.java), [`MoodRestController`](src/main/java/de/oberamsystems/slm/controller/MoodRestController.java), [`SleepTimeController`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), and [`SleepTimeRestController`](src/main/java/de/oberamsystems/slm/controller/SleepTimeRestController.java).
+    - [`SocialAndPeopleIT.java`](src/test/java/de/oberamsystems/slm/SocialAndPeopleIT.java): verifies [`HumanController`](src/main/java/de/oberamsystems/slm/controller/HumanController.java), [`HumanEventController`](src/main/java/de/oberamsystems/slm/controller/HumanEventController.java), and [`CalendarEventController`](src/main/java/de/oberamsystems/slm/controller/CalendarEventController.java).
+    - [`PersonalJournalIT.java`](src/test/java/de/oberamsystems/slm/PersonalJournalIT.java): verifies [`DiaryEntryController`](src/main/java/de/oberamsystems/slm/controller/DiaryEntryController.java) and [`GratitudeController`](src/main/java/de/oberamsystems/slm/controller/GratitudeController.java).
+    - [`FinanceManagementIT.java`](src/test/java/de/oberamsystems/slm/FinanceManagementIT.java): verifies [`EmployerController`](src/main/java/de/oberamsystems/slm/controller/EmployerController.java), [`ContractController`](src/main/java/de/oberamsystems/slm/controller/ContractController.java), and [`PurchaseController`](src/main/java/de/oberamsystems/slm/controller/PurchaseController.java).
+    - [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java): verifies [`RouteController`](src/main/java/de/oberamsystems/slm/controller/RouteController.java) (Points, Routes, Cars, CarTrips, PostGIS geodesic air distance) and [`TrainTripController2`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java) (TrainLines, TrainStation2, TrainTrips).
 
 ### Changed
 - Migrated **Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7** (ADR 018):
@@ -52,6 +65,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Synchronized authoritative baseline schemas [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
 
 ### Fixed
+- Resolved entity association discrepancy in [`TrainTrip2`](src/main/java/de/oberamsystems/slm/model/TrainTrip2.java):
+  - Corrected `origin` and `destination` fields and accessors from legacy `TrainStation` to `TrainStation2`, aligning JPA entity mappings with database foreign key constraints referencing `trainstation2(id)`.
+- Hardened Spring Security public access in [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java):
+  - Added missing `/doctor.html` and `/speciality.html` matchers to permit unauthenticated access across doctor directory pages.
+- Added `@Transactional` to [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) test class level to ensure automated rollback and prevent test data pollution across shared container test suites.
 - Resolved Thymeleaf premature HTTP response commitment during deferred CSRF token evaluation:
   - Configured `spring.thymeleaf.servlet.produce-partial-output-while-processing=false` in [`application.properties`](src/main/resources/application.properties), ensuring the entire template document is rendered in memory before flushing to the servlet response stream.
   - Removed temporary `OncePerRequestFilter` from [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java), preserving the clean Spring Security filter chain and eliminating `IllegalStateException: Cannot create a session after the response has been committed` across all large table views.
@@ -276,7 +294,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.2i...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc1...HEAD
+[0.0.3-rc1]: https://github.com/sidietz/slm/compare/v0.0.2i...v0.0.3-rc1
 [0.0.2i]: https://github.com/sidietz/slm/compare/v0.0.2h...v0.0.2i
 [0.0.2h]: https://github.com/sidietz/slm/compare/v0.0.2g...v0.0.2h
 [0.0.2g]: https://github.com/sidietz/slm/compare/v0.0.2f...v0.0.2g
