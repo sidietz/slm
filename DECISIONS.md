@@ -776,3 +776,44 @@ While isolated unit tests with Mockito verified individual controller methods in
 - **Constraints**:
   - Tests must include `.with(csrf())` on state-mutating requests (`POST`, `PUT`, `DELETE`).
   - Class-level `@Transactional` must be maintained on all integration tests modifying database state.
+
+---
+
+## ADR 021: Universal Active Sessions (Start & Stop Later) across Polymorphic Hierarchy
+
+### Status
+Accepted (v0.0.3-rc2)
+
+### Context
+In SLM, time tracking across all Four Pillars (Productivity, Sport, Wellness, Leisure) previously required both a start datetime and an end datetime upon creation. In practice, users begin activities (e.g. client work, coding sessions, reading, gym workouts, meditation, sleep) without knowing in advance when they will finish. This created artificial friction and prevented real-time session tracking.
+
+### Decision
+
+1. **Nullable End Time & Generated Columns Compatibility**:
+   - In PostgreSQL 18, `session.endtime` is nullable, and the stored generated columns (`duration`, `net_duration`) evaluate to `NULL` when `endtime IS NULL` without raising database constraint violations.
+   - Initialized session records created without an end datetime with `status = 'IN_PROGRESS'`.
+   - Added domain methods `isInProgress()` and `stop(LocalDateTime, Duration, Integer, String, String)` directly on root [`Session`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Session.java).
+
+2. **Polymorphic Stop Endpoint**:
+   - Implemented a unified `POST /sessions/{id}/stop` endpoint in [`SessionController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/SessionController.java) accepting optional `end` datetime (defaulting to current time), `breakMinutes`, `focusRating` (1-5), `outcomeSummary`, and reflection `comment`.
+   - When stopping a `SleepSession`, automatically calculates missing sleep stages (`lightSleepDuration = netDuration - deep - rem`) to strictly preserve the cross-table database triggers established in ADR 019.
+
+3. **Active Session Banner & Real-Time Client Ticker**:
+   - Added an **Active Session Hero Banner** in [`sessions.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/sessions.html) that appears dynamically whenever active ongoing sessions exist.
+   - Displayed elapsed time using client-side JavaScript ticking every second (`00:00:00`), along with 1-click **Quick Stop** and modal **Finish with Review** actions.
+   - Enhanced the sessions table with `IN_PROGRESS` badges, live timers, and inline stop action buttons.
+
+4. **Relaxation of Input Validation**:
+   - Removed `required` attributes from the `end` datetime inputs across [`sessions.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/sessions.html), [`working-sessions.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/working-sessions.html), and [`coding-sessions.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/coding-sessions.html).
+   - Safeguarded [`IndexController`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/controller/IndexController.java) against null end datetimes when displaying recent activities.
+
+5. **Spring AI MCP Server Tools**:
+   - Added `getActiveSessions`, `startSession`, and `stopSession` to [`McpSessionTools`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java).
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Completely frictionless session tracking: users can start an activity with one click and finish whenever done.
+  - Zero schema migration required: existing `tables.sql`, `init.sql`, and `schema-init.sql` already support nullable `endtime` and `status = 'IN_PROGRESS'`.
+  - Polymorphic design ensures any new session subclass automatically inherits start/stop capabilities.
+- **Constraints**:
+  - Aggregated KPIs (e.g. Net Focused Time) only tally completed sessions (or sessions with non-null durations), safely ignoring ongoing sessions until stopped.

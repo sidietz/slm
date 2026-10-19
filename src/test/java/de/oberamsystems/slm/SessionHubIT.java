@@ -416,4 +416,152 @@ public class SessionHubIT extends AbstractIntegrationTest {
 
         assertFalse(sessionRepository.existsById(sessionId));
     }
+
+    @Test
+    void testStartActiveWorkingSessionWithoutEndTime() throws Exception {
+        Employer employer = new Employer();
+        employer.setName("Acme Corp");
+        employer = employerRepository.saveAndFlush(employer);
+
+        mockMvc.perform(post("/sessions/working")
+                        .with(csrf())
+                        .param("project", "Cloud Architecture Migration")
+                        .param("start", "2026-10-19T14:00")
+                        .param("end", "")
+                        .param("employer", String.valueOf(employer.getId()))
+                        .param("breakMinutes", "0")
+                        .param("billable", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=WORKING"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        WorkingSession saved = workingSessionRepository.findAll().stream()
+                .filter(w -> "Cloud Architecture Migration".equals(w.getProject()))
+                .findFirst().orElseThrow();
+
+        assertNotNull(saved.getId());
+        assertEquals("IN_PROGRESS", saved.getStatus());
+        assertTrue(saved.isInProgress());
+        assertNull(saved.getEnd());
+        assertNull(saved.getDuration());
+        assertNull(saved.getNetDuration());
+    }
+
+    @Test
+    void testStopActiveWorkingSession() throws Exception {
+        WorkingSession active = new WorkingSession();
+        active.setProject("Autonomous Agent Testing");
+        active.setStart(LocalDateTime.now().minusHours(2));
+        active.setEnd(null);
+        active.setStatus("IN_PROGRESS");
+        active.setBreakDuration(Duration.ZERO);
+        active = workingSessionRepository.saveAndFlush(active);
+        UUID activeId = active.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/sessions/" + activeId + "/stop")
+                        .with(csrf())
+                        .param("end", LocalDateTime.now().toString())
+                        .param("breakMinutes", "15")
+                        .param("focusRating", "5")
+                        .param("outcomeSummary", "Completed test coverage for active sessions")
+                        .param("comment", "Great deep flow state")
+                        .param("returnType", "WORKING"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=WORKING"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        Session stopped = sessionRepository.findById(activeId).orElseThrow();
+        assertEquals("COMPLETED", stopped.getStatus());
+        assertFalse(stopped.isInProgress());
+        assertNotNull(stopped.getEnd());
+        assertEquals(Duration.ofMinutes(15), stopped.getBreakDuration());
+        assertEquals(5, stopped.getFocusRating());
+        assertEquals("Completed test coverage for active sessions", stopped.getOutcomeSummary());
+        assertEquals("Great deep flow state", stopped.getComment());
+        assertNotNull(stopped.getDuration());
+        assertNotNull(stopped.getNetDuration());
+    }
+
+    @Test
+    void testActiveSessionHeroBannerAndRendering() throws Exception {
+        CodingSession coding = new CodingSession();
+        coding.setProject("SLM v0.0.3-rc2 Feature");
+        coding.setStart(LocalDateTime.now().minusMinutes(45));
+        coding.setEnd(null);
+        coding.setStatus("IN_PROGRESS");
+        codingSessionRepository.saveAndFlush(coding);
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(get("/sessions"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("hasActiveSession", true))
+                .andExpect(model().attribute("activeSessions", hasSize(greaterThanOrEqualTo(1))))
+                .andExpect(content().string(containsString("Active Session")))
+                .andExpect(content().string(containsString("Quick Stop")))
+                .andExpect(content().string(containsString("Finish with Review")))
+                .andExpect(content().string(containsString("stopSessionModal")));
+    }
+
+    @Test
+    void testPolymorphicActiveSessionsAcrossSubclasses() throws Exception {
+        // 1. Ongoing Meditation
+        mockMvc.perform(post("/sessions/meditation")
+                        .with(csrf())
+                        .param("start", "2026-10-19T06:30")
+                        .param("end", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=MEDITATION"));
+
+        MeditationSession med = meditationSessionRepository.findAll().stream()
+                .filter(m -> m.getEnd() == null)
+                .findFirst().orElseThrow();
+        assertEquals("IN_PROGRESS", med.getStatus());
+
+        // Stop meditation
+        mockMvc.perform(post("/sessions/" + med.getId() + "/stop")
+                        .with(csrf())
+                        .param("end", "2026-10-19T07:00")
+                        .param("focusRating", "4")
+                        .param("outcomeSummary", "Mindfulness achieved"))
+                .andExpect(status().is3xxRedirection());
+
+        Session stoppedMed = sessionRepository.findById(med.getId()).orElseThrow();
+        assertEquals("COMPLETED", stoppedMed.getStatus());
+        assertNotNull(stoppedMed.getEnd());
+
+        // 2. Ongoing Sleep Session (going to sleep, wake up unknown)
+        mockMvc.perform(post("/sessions/sleep")
+                        .with(csrf())
+                        .param("start", "2026-10-19T23:00")
+                        .param("end", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=SLEEP"));
+
+        SleepSession sleep = sleepSessionRepository.findAll().stream()
+                .filter(s -> s.getEnd() == null)
+                .findFirst().orElseThrow();
+        assertEquals("IN_PROGRESS", sleep.getStatus());
+
+        // Wake up & stop sleep session
+        mockMvc.perform(post("/sessions/" + sleep.getId() + "/stop")
+                        .with(csrf())
+                        .param("end", "2026-10-20T07:00")
+                        .param("breakMinutes", "10")
+                        .param("focusRating", "5"))
+                .andExpect(status().is3xxRedirection());
+
+        SleepSession stoppedSleep = sleepSessionRepository.findById(sleep.getId()).orElseThrow();
+        assertEquals("COMPLETED", stoppedSleep.getStatus());
+        assertNotNull(stoppedSleep.getEnd());
+        assertEquals(Duration.ofMinutes(470), stoppedSleep.getLightSleepDuration()); // 480 gross - 10 awake = 470
+    }
 }

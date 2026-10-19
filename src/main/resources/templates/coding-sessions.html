@@ -39,8 +39,8 @@
                         <input type="datetime-local" th:field="*{start}" class="form-control" required />
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-semibold">End Time <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{end}" class="form-control" required />
+                        <label class="form-label fw-semibold">End Time <small class="text-muted fw-normal">(Optional)</small></label>
+                        <input type="datetime-local" th:field="*{end}" class="form-control" />
                     </div>
                     <div class="col-md-3">
                         <label class="form-label fw-semibold">Break (minutes)</label>

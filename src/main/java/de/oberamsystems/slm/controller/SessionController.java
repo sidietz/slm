@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -207,6 +208,10 @@ public class SessionController {
 		model.addAttribute("wellnessDuration", DurationFormatter.format(wellnessDuration));
 		model.addAttribute("leisureDuration", DurationFormatter.format(leisureDuration));
 
+		List<Session> activeSessions = sessionRepo.findByEndIsNullOrderByStartDesc();
+		model.addAttribute("activeSessions", activeSessions);
+		model.addAttribute("hasActiveSession", !activeSessions.isEmpty());
+
 		// Reference items for the modal forms
 		populateReferenceData(model);
 
@@ -236,10 +241,22 @@ public class SessionController {
 		return "coding-sessions";
 	}
 
+	private void initializeSessionStatus(Session session, Long breakMinutes) {
+		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		if (session.getStart() == null) {
+			session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		}
+		if (session.getEnd() == null) {
+			session.setStatus("IN_PROGRESS");
+		} else {
+			session.setStatus("COMPLETED");
+		}
+	}
+
 	@PostMapping("/coding-sessions")
 	public String submitCodingSessionDirect(@ModelAttribute CodingSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		codingSessionRepo.save(session);
 		return "redirect:/coding-sessions";
 	}
@@ -261,7 +278,7 @@ public class SessionController {
 	@PostMapping("/working-sessions")
 	public String submitWorkingSessionDirect(@ModelAttribute WorkingSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		workingSessionRepo.save(session);
 		return "redirect:/working-sessions";
 	}
@@ -269,7 +286,7 @@ public class SessionController {
 	@PostMapping("/sessions/coding")
 	public String submitCodingSession(@ModelAttribute CodingSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		codingSessionRepo.save(session);
 		return "redirect:/sessions?type=CODING";
 	}
@@ -277,7 +294,7 @@ public class SessionController {
 	@PostMapping("/sessions/working")
 	public String submitWorkingSession(@ModelAttribute WorkingSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		workingSessionRepo.save(session);
 		return "redirect:/sessions?type=WORKING";
 	}
@@ -285,7 +302,7 @@ public class SessionController {
 	@PostMapping("/sessions/learning")
 	public String submitLearningSession(@ModelAttribute LearningSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		if (session.getLearningItem() != null && session.getLearningItem().getId() != null) {
 			learningItemRepo.findById(session.getLearningItem().getId()).ifPresent(item -> {
 				item.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
@@ -299,7 +316,7 @@ public class SessionController {
 	@PostMapping("/sessions/gaming")
 	public String submitGamingSession(@ModelAttribute GamingSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		gamingSessionRepo.save(session);
 		return "redirect:/sessions?type=GAMING";
 	}
@@ -307,7 +324,7 @@ public class SessionController {
 	@PostMapping("/sessions/reading")
 	public String submitReadingSession(@ModelAttribute ReadingSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		if (session.getStart() != null && session.getEnd() != null) {
 			long minutes = Math.max(1, Duration.between(session.getStart(), session.getEnd()).toMinutes() - breakMinutes);
 			long pages = session.getEndPageCount() - session.getStartPageCount();
@@ -322,7 +339,7 @@ public class SessionController {
 	@PostMapping("/sessions/meditation")
 	public String submitMeditationSession(@ModelAttribute MeditationSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		meditationSessionRepo.save(session);
 		return "redirect:/sessions?type=MEDITATION";
 	}
@@ -330,7 +347,7 @@ public class SessionController {
 	@PostMapping("/sessions/sport")
 	public String submitSportSession(@ModelAttribute SportSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		sportSessionRepo.save(session);
 		return "redirect:/sessions?type=SPORT";
 	}
@@ -343,8 +360,17 @@ public class SessionController {
 			@RequestParam(required = false) Long lightSleepMinutes,
 			org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
-		if (session.getStart() == null || session.getEnd() == null) {
-			redirectAttributes.addFlashAttribute("errorMessage", "Bedtime and wake-up time are required.");
+		if (session.getStart() == null) {
+			session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		}
+
+		if (session.getEnd() == null) {
+			session.setStatus("IN_PROGRESS");
+			session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+			session.setDeepSleepDuration(Duration.ZERO);
+			session.setRemSleepDuration(Duration.ZERO);
+			session.setLightSleepDuration(Duration.ZERO);
+			sleepSessionRepo.save(session);
 			return "redirect:/sessions?type=SLEEP";
 		}
 
@@ -426,6 +452,7 @@ public class SessionController {
 			return "redirect:/sessions?type=SLEEP";
 		}
 
+		session.setStatus("COMPLETED");
 		session.setBreakDuration(Duration.ofMinutes(awakeMinutes));
 		session.setDeepSleepDuration(Duration.ofMinutes(deep));
 		session.setRemSleepDuration(Duration.ofMinutes(rem));
@@ -439,13 +466,49 @@ public class SessionController {
 	public String submitLectureSession(@ModelAttribute LectureSession session,
 			@RequestParam(required = false) Long courseId,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		initializeSessionStatus(session, breakMinutes);
 		Long cid = courseId != null ? courseId : (session.getCourse() != null ? session.getCourse().getId() : null);
 		if (cid != null) {
 			courseRepo.findById(cid).ifPresent(session::setCourse);
 		}
 		lectureSessionRepo.save(session);
 		return "redirect:/sessions?type=LECTURE";
+	}
+
+	@PostMapping("/sessions/{id}/stop")
+	public String stopSession(
+			@PathVariable UUID id,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			@RequestParam(required = false) Integer focusRating,
+			@RequestParam(required = false) String outcomeSummary,
+			@RequestParam(required = false) String comment,
+			@RequestParam(required = false, defaultValue = "ALL") String returnType) {
+
+		Session session = sessionRepo.findById(id)
+				.orElseThrow(() -> new IllegalArgumentException("Session not found: " + id));
+
+		LocalDateTime stopTime = (end != null) ? end : LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+		Duration brk = DurationFormatter.fromMinutes(breakMinutes);
+		session.stop(stopTime, brk, focusRating, outcomeSummary, comment);
+
+		if (session instanceof SleepSession ss) {
+			Duration net = Duration.between(session.getStart(), stopTime).minus(brk);
+			Duration deep = ss.getDeepSleepDuration() != null ? ss.getDeepSleepDuration() : Duration.ZERO;
+			Duration rem = ss.getRemSleepDuration() != null ? ss.getRemSleepDuration() : Duration.ZERO;
+			Duration light = ss.getLightSleepDuration() != null ? ss.getLightSleepDuration() : Duration.ZERO;
+			if (deep.isZero() && rem.isZero() && light.isZero()) {
+				ss.setLightSleepDuration(net.isNegative() ? Duration.ZERO : net);
+			} else if (light.isZero() && !deep.plus(rem).equals(net)) {
+				Duration remaining = net.minus(deep).minus(rem);
+				if (!remaining.isNegative()) {
+					ss.setLightSleepDuration(remaining);
+				}
+			}
+		}
+
+		sessionRepo.save(session);
+		return "redirect:/sessions?type=" + returnType;
 	}
 
 	@PostMapping("/sessions/delete/{id}")

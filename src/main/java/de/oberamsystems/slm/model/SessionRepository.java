@@ -2,6 +2,7 @@ package de.oberamsystems.slm.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Sort;
@@ -12,6 +13,12 @@ import org.springframework.data.repository.query.Param;
 public interface SessionRepository extends JpaRepository<Session, UUID> {
 
 	List<Session> findByStatus(String status);
+
+	List<Session> findByStatusOrderByStartDesc(String status);
+
+	List<Session> findByEndIsNullOrderByStartDesc();
+
+	Optional<Session> findFirstByEndIsNullOrderByStartDesc();
 
 	List<Session> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate);
 

@@ -2,6 +2,7 @@ package de.oberamsystems.slm.model;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
 import org.hibernate.annotations.UuidGenerator;
@@ -159,6 +160,27 @@ public abstract class Session {
 
 	public void setOutcomeSummary(String outcomeSummary) {
 		this.outcomeSummary = outcomeSummary;
+	}
+
+	public boolean isInProgress() {
+		return "IN_PROGRESS".equalsIgnoreCase(this.status) || this.end == null;
+	}
+
+	public void stop(LocalDateTime stopTime, Duration breakDuration, Integer focusRating, String outcomeSummary, String comment) {
+		this.end = stopTime != null ? stopTime : LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+		this.status = "COMPLETED";
+		if (breakDuration != null) {
+			this.breakDuration = breakDuration;
+		}
+		if (focusRating != null && focusRating > 0) {
+			this.focusRating = focusRating;
+		}
+		if (outcomeSummary != null && !outcomeSummary.isBlank()) {
+			this.outcomeSummary = outcomeSummary;
+		}
+		if (comment != null && !comment.isBlank()) {
+			this.comment = comment;
+		}
 	}
 
 	@Override
