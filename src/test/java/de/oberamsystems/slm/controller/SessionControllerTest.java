@@ -239,11 +239,15 @@ public class SessionControllerTest {
 
         // Sleep
         SleepSession sleep = new SleepSession();
-        String redirectSleep = controller.submitSleepSession(sleep, 15L, 90L, 80L);
+        sleep.setStart(LocalDateTime.of(2026, 10, 18, 22, 0));
+        sleep.setEnd(LocalDateTime.of(2026, 10, 19, 6, 0));
+        org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap redirectAttributes = new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap();
+        String redirectSleep = controller.submitSleepSession(sleep, 15L, 90L, 80L, 295L, redirectAttributes);
         assertEquals("redirect:/sessions?type=SLEEP", redirectSleep);
         assertEquals(Duration.ofMinutes(15), sleep.getBreakDuration());
         assertEquals(Duration.ofMinutes(90), sleep.getDeepSleepDuration());
         assertEquals(Duration.ofMinutes(80), sleep.getRemSleepDuration());
+        assertEquals(Duration.ofMinutes(295), sleep.getLightSleepDuration());
         verify(sleepSessionRepo).save(sleep);
     }
 

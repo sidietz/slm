@@ -8,12 +8,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.2j] - 2026-10-19
 
 ### Added
+- Implemented **Sleep Architecture Tracking, Light Sleep & Cross-Table Duration Invariant Enforcement** (ADR 019):
+  - Added `light_sleep_duration INTERVAL` to [`SleepSession`](src/main/java/de/oberamsystems/slm/model/SleepSession.java) and PostgreSQL `sleep_session` table.
+  - Implemented automatic stage defaulting in [`SessionController`](src/main/java/de/oberamsystems/slm/controller/SessionController.java): when Deep, REM, and Light sleep inputs are left empty, the entire net sleep duration defaults to Light Sleep.
+  - Implemented single-missing-stage auto-calculation: when exactly one stage is omitted while the other two are entered, the missing duration is solved dynamically as `(endtime - starttime - break_duration) - sum(other stages)`.
+  - Added input validation in controller and UI: rejects mismatched stage sums with informative flash error banners (`errorMessage`).
+  - Implemented PostgreSQL 18 cross-table triggers `trg_check_sleep_session_duration` (`BEFORE INSERT OR UPDATE ON sleep_session`) and `trg_check_session_sleep_duration` (`AFTER UPDATE ON session`) guaranteeing that `deep + rem + light + break == endtime - starttime`.
+  - Added real-time client-side calculation badges and live auto-calculation hints in [`sessions.html`](src/main/resources/templates/sessions.html).
+  - Authored non-destructive atomic migration script [`src/main/resources/migration_2026-10-19_2.sql`](src/main/resources/migration_2026-10-19_2.sql) (`BEGIN;` ... `COMMIT;`) backfilling legacy records and installing triggers.
+  - Synchronized authoritative baseline schemas [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
 - Added comprehensive end-to-end UI integration tests in [`SleepSessionUIIT.java`](src/test/java/de/oberamsystems/slm/SleepSessionUIIT.java):
   - Verified modal form rendering with CSRF token on `GET /sessions?type=SLEEP`.
-  - Verified submitting Night Sleep sessions via UI `POST /sessions/sleep` with CSRF protection, native UUIDv7 persistence, PostgreSQL generated columns (`duration`, `net_duration`), and UI table rendering.
-  - Verified submitting Power Nap sessions (`isNap = true`) via UI with duration computation and UI rendering.
-  - Verified deleting sleep sessions via UI `POST /sessions/delete/{id}` and cascade deletion from joined polymorphic tables.
-  - Verified rejection of submissions without valid CSRF tokens (`HTTP 403 Forbidden`).
+  - Verified empty stages auto-defaulting to 100% light sleep.
+  - Verified single missing stage auto-calculation across REM, Deep, and Light sleep.
+  - Verified balanced full-stage submission and persistence.
+  - Verified input validation rejection of mismatched stage sums and ambiguous inputs.
+  - Verified PostgreSQL database trigger rejection of raw SQL invariant violations.
+  - Verified Power Nap submission, UI deletion, and CSRF protection.
 
 ### Changed
 - Migrated **Polymorphic Session Hierarchy to Native PostgreSQL 18 UUIDv7** (ADR 018):

@@ -180,7 +180,7 @@ CREATE TABLE coding_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE
 
 CREATE TABLE employer(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE working_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
-CREATE TABLE sleep_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
+CREATE TABLE sleep_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, light_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
 CREATE TABLE course (id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, code TEXT, semester TEXT, ects_credits NUMERIC(3, 1), lecturer_id BIGINT REFERENCES human(id) ON DELETE SET NULL, default_room TEXT, meeting_link TEXT, syllabus TEXT, exam_date TIMESTAMP, exam_location TEXT, grade NUMERIC(3, 2), exam_passed BOOLEAN, status status_type DEFAULT 'IN_PROGRESS', created_at TIMESTAMP, last_updated TIMESTAMP);
 CREATE TABLE lecture_session (id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, course_id BIGINT REFERENCES course(id) ON DELETE SET NULL, lecture_number INTEGER, topic TEXT, room TEXT, recording_url TEXT, slides_url TEXT);
 CREATE TABLE lecture_note (id UUID PRIMARY KEY DEFAULT uuidv7(), course_id BIGINT REFERENCES course(id) ON DELETE CASCADE, lecture_session_id UUID REFERENCES lecture_session(id) ON DELETE SET NULL, title TEXT NOT NULL, lecture_number INTEGER, lecture_date DATE, content_markdown TEXT, key_concepts TEXT, summary TEXT, has_homework BOOLEAN DEFAULT FALSE, homework_todo TEXT, exam_relevance_rating INTEGER, created_at TIMESTAMP, last_updated TIMESTAMP);
@@ -290,3 +290,79 @@ CREATE TRIGGER trg_point_update_doctor_air_distance
 AFTER UPDATE OF latitude, longitude ON point
 FOR EACH ROW
 EXECUTE FUNCTION update_doctor_air_distances_on_point_change();
+
+CREATE OR REPLACE FUNCTION check_sleep_session_duration()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_starttime TIMESTAMP;
+    v_endtime TIMESTAMP;
+    v_break INTERVAL;
+    v_total INTERVAL;
+    v_sum INTERVAL;
+BEGIN
+    SELECT starttime, endtime, break_duration
+      INTO v_starttime, v_endtime, v_break
+      FROM session
+     WHERE id = NEW.id;
+
+    IF v_starttime IS NOT NULL AND v_endtime IS NOT NULL THEN
+        v_total := v_endtime - v_starttime;
+        v_sum := COALESCE(NEW.deep_sleep_duration, '0 seconds'::interval)
+               + COALESCE(NEW.rem_sleep_duration, '0 seconds'::interval)
+               + COALESCE(NEW.light_sleep_duration, '0 seconds'::interval)
+               + COALESCE(v_break, '0 seconds'::interval);
+
+        IF v_sum <> v_total THEN
+            RAISE EXCEPTION 'Sleep stages sum (%) does not equal total session duration (%) for sleep_session id %',
+                v_sum, v_total, NEW.id;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_sleep_session_duration ON sleep_session;
+CREATE TRIGGER trg_check_sleep_session_duration
+BEFORE INSERT OR UPDATE ON sleep_session
+FOR EACH ROW
+EXECUTE FUNCTION check_sleep_session_duration();
+
+CREATE OR REPLACE FUNCTION check_session_sleep_duration()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_deep INTERVAL;
+    v_rem INTERVAL;
+    v_light INTERVAL;
+    v_total INTERVAL;
+    v_sum INTERVAL;
+BEGIN
+    IF NEW.session_type = 'SLEEP' AND NEW.starttime IS NOT NULL AND NEW.endtime IS NOT NULL THEN
+        SELECT deep_sleep_duration, rem_sleep_duration, light_sleep_duration
+          INTO v_deep, v_rem, v_light
+          FROM sleep_session
+         WHERE id = NEW.id;
+
+        IF FOUND THEN
+            v_total := NEW.endtime - NEW.starttime;
+            v_sum := COALESCE(v_deep, '0 seconds'::interval)
+                   + COALESCE(v_rem, '0 seconds'::interval)
+                   + COALESCE(v_light, '0 seconds'::interval)
+                   + COALESCE(NEW.break_duration, '0 seconds'::interval);
+
+            IF v_sum <> v_total THEN
+                RAISE EXCEPTION 'Sleep stages sum (%) does not equal total session duration (%) for session id %',
+                    v_sum, v_total, NEW.id;
+            END IF;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_check_session_sleep_duration ON session;
+CREATE TRIGGER trg_check_session_sleep_duration
+AFTER UPDATE OF starttime, endtime, break_duration ON session
+FOR EACH ROW
+EXECUTE FUNCTION check_session_sleep_duration();

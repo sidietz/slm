@@ -698,5 +698,37 @@ Following the implementation of `LectureNote` with native `java.util.UUID` and P
 - **Constraints**:
   - Legacy databases require execution of `migration_2026-10-19_1.sql`. Any custom mock IDs in test databases must conform to standard RFC 9562 UUID format.
 
+---
 
+## ADR 019: Sleep Architecture Tracking, Light Sleep & Cross-Table Duration Invariant Enforcement
 
+### Status
+Accepted (v0.0.2j)
+
+### Context
+In SLM, restorative wellness practices are tracked under the Wellness pillar (ADR 011). Previously, `SleepSession` only tracked `deep_sleep_duration`, `rem_sleep_duration`, and `awake_count` (with interruptions stored in `session.break_duration`). This left three gaps:
+1. **Missing Light Sleep**: Standard sleep cycles consist of Awake, Deep, REM, and Light sleep. Without `light_sleep_duration`, complete sleep architecture could not be represented.
+2. **Missing Duration Auto-Calculation**: Users with untracked sleep or wearables reporting only 2 stages had no way to automatically deduce the missing duration without manual arithmetic.
+3. **Lack of Sum Consistency & Validation**: No constraint existed to ensure `deep + rem + light + awake` equaled `endtime - starttime`. Users could enter contradictory durations, and the database did not enforce cross-table consistency.
+
+### Decision
+1. **Model & Schema Addition**:
+   - Added `light_sleep_duration INTERVAL` to `sleep_session` table and `SleepSession.java` entity (mapped with `@Type(PostgreSQLIntervalType.class)`).
+2. **Auto-Calculation & Input Validation Rules**:
+   - **All 3 stages empty**: Defaults the entire net sleep duration (`endtime - starttime - break_duration`) to Light Sleep (`deep = 0`, `rem = 0`).
+   - **Exactly 1 stage missing**: Automatically solves for the missing stage: $\text{missing} = \text{net\_duration} - \sum(\text{entered stages})$.
+   - **All 3 stages provided**: Validates that $\text{deep} + \text{rem} + \text{light} + \text{break} = \text{endtime} - \text{starttime}$.
+   - **Invalid inputs**: Rejects mismatched or ambiguous combinations with user-facing validation error flash messages (`errorMessage`).
+3. **Cross-Table PostgreSQL Database Triggers**:
+   - Implemented `trg_check_sleep_session_duration` (`BEFORE INSERT OR UPDATE ON sleep_session`) and `trg_check_session_sleep_duration` (`AFTER UPDATE ON session`) raising a PostgreSQL exception if sleep stages plus awake disruptions do not equal total gross session duration.
+4. **Migration & Baselines**:
+   - Authored atomic transactional migration `migration_2026-10-19_2.sql` (`BEGIN;` ... `COMMIT;`) backfilling legacy records (`light = duration - break - deep - rem`) and establishing triggers.
+   - Synchronized `tables.sql`, `init.sql`, and `schema-init.sql`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Full polysomnographic sleep architecture representation.
+  - Frictionless UI experience: users can log simple sleep with 0 stage inputs (auto-defaults to Light Sleep) or enter 2 stages (third auto-calculates).
+  - Absolute data integrity guaranteed at the PostgreSQL database level across all entry channels.
+- **Constraints**:
+  - Direct SQL scripts and external integrations must satisfy `deep + rem + light + break = end - start`.

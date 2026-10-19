@@ -179,10 +179,16 @@ public class McpSessionTools {
 		LocalDateTime end = LocalDateTime.parse(wakeStr);
 		int bMinutes = (breakMinutes != null && breakMinutes >= 0) ? breakMinutes : 0;
 
+		long totalMinutes = Duration.between(start, end).toMinutes();
+		long sleepMinutes = Math.max(0, totalMinutes - bMinutes);
+
 		SleepSession ss = new SleepSession();
 		ss.setStart(start);
 		ss.setEnd(end);
 		ss.setBreakDuration(Duration.ofMinutes(bMinutes));
+		ss.setLightSleepDuration(Duration.ofMinutes(sleepMinutes));
+		ss.setDeepSleepDuration(Duration.ZERO);
+		ss.setRemSleepDuration(Duration.ZERO);
 		ss.setAwakeCount(awakeCount != null ? awakeCount : 0);
 		ss.setFocusRating(qualityRating);
 		ss.setComment(comment);

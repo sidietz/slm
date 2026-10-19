@@ -338,15 +338,99 @@ public class SessionController {
 	@PostMapping("/sessions/sleep")
 	public String submitSleepSession(@ModelAttribute SleepSession session,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
-			@RequestParam(required = false, defaultValue = "0") Long deepSleepMinutes,
-			@RequestParam(required = false, defaultValue = "0") Long remSleepMinutes) {
-		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
-		if (deepSleepMinutes != null && deepSleepMinutes > 0) {
-			session.setDeepSleepDuration(DurationFormatter.fromMinutes(deepSleepMinutes));
+			@RequestParam(required = false) Long deepSleepMinutes,
+			@RequestParam(required = false) Long remSleepMinutes,
+			@RequestParam(required = false) Long lightSleepMinutes,
+			org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+
+		if (session.getStart() == null || session.getEnd() == null) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Bedtime and wake-up time are required.");
+			return "redirect:/sessions?type=SLEEP";
 		}
-		if (remSleepMinutes != null && remSleepMinutes > 0) {
-			session.setRemSleepDuration(DurationFormatter.fromMinutes(remSleepMinutes));
+
+		long totalMinutes = Duration.between(session.getStart(), session.getEnd()).toMinutes();
+		if (totalMinutes <= 0) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Wake-up time must be after bedtime.");
+			return "redirect:/sessions?type=SLEEP";
 		}
+
+		long awakeMinutes = (breakMinutes != null && breakMinutes > 0) ? breakMinutes : 0;
+		if (awakeMinutes >= totalMinutes) {
+			redirectAttributes.addFlashAttribute("errorMessage",
+					"Awake disruptions (" + awakeMinutes + "m) cannot equal or exceed total bedtime duration (" + totalMinutes + "m).");
+			return "redirect:/sessions?type=SLEEP";
+		}
+
+		long sleepMinutes = totalMinutes - awakeMinutes;
+
+		int providedCount = 0;
+		if (deepSleepMinutes != null) providedCount++;
+		if (remSleepMinutes != null) providedCount++;
+		if (lightSleepMinutes != null) providedCount++;
+
+		long deep = 0;
+		long rem = 0;
+		long light = 0;
+
+		if (providedCount == 0) {
+			// All 3 stages empty -> whole sleep duration in minutes set to light sleep
+			light = sleepMinutes;
+			deep = 0;
+			rem = 0;
+		} else if (providedCount == 2) {
+			// Exactly one sleep duration is missing -> calculate from wake up - bedtime and other sleep times
+			if (deepSleepMinutes == null) {
+				rem = Math.max(0, remSleepMinutes);
+				light = Math.max(0, lightSleepMinutes);
+				deep = sleepMinutes - rem - light;
+				if (deep < 0) {
+					redirectAttributes.addFlashAttribute("errorMessage",
+							"Specified sleep stages (" + (rem + light) + "m) exceed net sleep duration (" + sleepMinutes + "m).");
+					return "redirect:/sessions?type=SLEEP";
+				}
+			} else if (remSleepMinutes == null) {
+				deep = Math.max(0, deepSleepMinutes);
+				light = Math.max(0, lightSleepMinutes);
+				rem = sleepMinutes - deep - light;
+				if (rem < 0) {
+					redirectAttributes.addFlashAttribute("errorMessage",
+							"Specified sleep stages (" + (deep + light) + "m) exceed net sleep duration (" + sleepMinutes + "m).");
+					return "redirect:/sessions?type=SLEEP";
+				}
+			} else { // lightSleepMinutes == null
+				deep = Math.max(0, deepSleepMinutes);
+				rem = Math.max(0, remSleepMinutes);
+				light = sleepMinutes - deep - rem;
+				if (light < 0) {
+					redirectAttributes.addFlashAttribute("errorMessage",
+							"Specified sleep stages (" + (deep + rem) + "m) exceed net sleep duration (" + sleepMinutes + "m).");
+					return "redirect:/sessions?type=SLEEP";
+				}
+			}
+		} else if (providedCount == 3) {
+			// All 3 stages provided -> validate that deep + rem + light + awake == total bedtime
+			deep = Math.max(0, deepSleepMinutes);
+			rem = Math.max(0, remSleepMinutes);
+			light = Math.max(0, lightSleepMinutes);
+
+			long stageSum = deep + rem + light + awakeMinutes;
+			if (stageSum != totalMinutes) {
+				redirectAttributes.addFlashAttribute("errorMessage",
+						"Sleep stage durations (Deep: " + deep + "m, REM: " + rem + "m, Light: " + light + "m, Awake: " + awakeMinutes
+								+ "m = " + stageSum + "m) do not add up to total bedtime duration (" + totalMinutes + "m).");
+				return "redirect:/sessions?type=SLEEP";
+			}
+		} else { // providedCount == 1
+			redirectAttributes.addFlashAttribute("errorMessage",
+					"Please either leave all sleep stages empty (to default to light sleep) or specify at least two sleep stages so the missing duration can be calculated.");
+			return "redirect:/sessions?type=SLEEP";
+		}
+
+		session.setBreakDuration(Duration.ofMinutes(awakeMinutes));
+		session.setDeepSleepDuration(Duration.ofMinutes(deep));
+		session.setRemSleepDuration(Duration.ofMinutes(rem));
+		session.setLightSleepDuration(Duration.ofMinutes(light));
+
 		sleepSessionRepo.save(session);
 		return "redirect:/sessions?type=SLEEP";
 	}

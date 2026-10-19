@@ -22,6 +22,10 @@ public class SleepSession extends Session {
 	@Column(name = "rem_sleep_duration", columnDefinition = "interval")
 	private Duration remSleepDuration;
 
+	@Type(PostgreSQLIntervalType.class)
+	@Column(name = "light_sleep_duration", columnDefinition = "interval")
+	private Duration lightSleepDuration;
+
 	@Column(name = "awake_count")
 	private Integer awakeCount = 0;
 
@@ -51,6 +55,14 @@ public class SleepSession extends Session {
 
 	public void setRemSleepDuration(Duration remSleepDuration) {
 		this.remSleepDuration = remSleepDuration;
+	}
+
+	public Duration getLightSleepDuration() {
+		return lightSleepDuration;
+	}
+
+	public void setLightSleepDuration(Duration lightSleepDuration) {
+		this.lightSleepDuration = lightSleepDuration;
 	}
 
 	public Integer getAwakeCount() {
