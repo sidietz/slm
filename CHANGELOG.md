@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc5] - 2026-10-20
+
+### Added
+- Implemented **Contract Lifecycle Semantics, Auto-Extension Modeling, and Non-Negative Days Remaining** (ADR 023):
+  - Rephrased `end_date` to `initial_end_date` across database schemas ([`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), [`schema-init.sql`](src/test/resources/schema-init.sql)) and entity model [`Contract.java`](src/main/java/de/oberamsystems/slm/model/Contract.java) to clearly represent the initial minimum commitment period (*Mindestvertragslaufzeit*).
+  - Added backward-compatible `getEndDate()` and `setEndDate()` getter and setter aliases in [`Contract.java`](src/main/java/de/oberamsystems/slm/model/Contract.java).
+  - Added first-class domain fields for auto-extension (`auto_extension`, `auto_extension_months`) and cancellation tracking (`is_canceled`, `cancellation_date`, `termination_date`).
+  - Added [`ContractStatus`](src/main/java/de/oberamsystems/slm/model/Contract.java) enum (`ACTIVE_INITIAL_TERM`, `ACTIVE_AUTO_EXTENDED`, `CANCELED_PENDING`, `TERMINATED`) and helper `getCalculatedStatus()`.
+  - Replaced naive date subtraction in Hibernate `@Formula` with a CASE-based calculation guaranteeing that active, auto-extended contracts never display negative days remaining, returning `NULL` for indefinite rolling contracts and positive countdowns for pending cancellations.
+  - Upgraded [`contracts.html`](src/main/resources/templates/contracts.html) to display "Initial End Date", semantic status badges (`Auto-Extended`, `Active`, `Canceled`, `Ended`), active monthly fee summaries, and form switches for auto-extension and cancellation details.
+  - Added atomic transactional migration script [`migration_2026-10-20.sql`](src/main/resources/migration_2026-10-20.sql) (`BEGIN;` ... `COMMIT;`).
+  - Added comprehensive lifecycle and non-negative formula test cases in [`ContractIT.java`](src/test/java/de/oberamsystems/slm/ContractIT.java).
+
+### Changed
+- Decoupled composite integration test [`EmployerContractIT.java`](src/test/java/de/oberamsystems/slm/EmployerContractIT.java) into dedicated single-domain test classes [`EmployerIT.java`](src/test/java/de/oberamsystems/slm/EmployerIT.java) and [`ContractIT.java`](src/test/java/de/oberamsystems/slm/ContractIT.java) (ADR 004 & ADR 023).
+
 ## [0.0.3-rc4] - 2026-10-19
 
 ### Added
