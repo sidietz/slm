@@ -34,14 +34,20 @@ public class ContractController {
 		float totalPrice = 0;
 		
 		for (Contract p : contracts) {
-			totalPrice = totalPrice + p.getFee();
+			if (p.isActive()) {
+				totalPrice = totalPrice + p.getFee();
+			}
 		}
 
 		model.addAttribute("contracts", contracts);
 		model.addAttribute("totalFee", totalPrice);
 		Contract p = new Contract();
 		p.setStartDate(LocalDate.now());
+		p.setInitialEndDate(LocalDate.now().plusYears(1));
+		p.setAutoExtension(true);
+		p.setAutoExtensionMonths(1);
 		p.setActive(true);
+		p.setCanceled(false);
 		model.addAttribute("contract", p);
 		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "contracts";
@@ -49,18 +55,10 @@ public class ContractController {
 	
 	@PostMapping("/contracts")
 	public String submitContracts(@ModelAttribute Contract tt, Model model) {
-		List<Contract> contracts = repo.findAll(Sort.by(Sort.Direction.DESC, "startDate"));
-		float totalPrice = 0;
-		
-		for (Contract p : contracts) {
-			totalPrice = totalPrice + p.getFee();
+		if (tt.isCanceled() && tt.getTerminationDate() == null) {
+			tt.setTerminationDate(tt.getInitialEndDate() != null ? tt.getInitialEndDate() : LocalDate.now());
 		}
-
-		model.addAttribute("contracts", contracts);
-		model.addAttribute("totalFee", totalPrice);
-		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		repo.save(tt);
-		model.addAttribute("contract", tt);
 		return "redirect:/contracts";
 	}
 	

@@ -241,7 +241,7 @@ CREATE INDEX IF NOT EXISTS idx_lecture_note_course ON lecture_note(course_id);
 CREATE INDEX IF NOT EXISTS idx_lecture_note_session ON lecture_note(lecture_session_id);
 
 CREATE TABLE contractor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
-CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, end_date DATE, active BOOL);
+CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT REFERENCES contractor(id), fee REAL, start_date DATE, initial_end_date DATE, auto_extension BOOL NOT NULL DEFAULT TRUE, auto_extension_months INT NOT NULL DEFAULT 1, is_canceled BOOL NOT NULL DEFAULT FALSE, cancellation_date DATE, termination_date DATE, active BOOL);
 
 CREATE TABLE speciality(id BIGSERIAL PRIMARY KEY, title TEXT UNIQUE);
 CREATE TABLE doctor(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, speciality BIGINT NOT NULL REFERENCES speciality(id), place TEXT, city TEXT, plz TEXT, point_id BIGINT REFERENCES point(id), base_point_id BIGINT REFERENCES point(id), air_distance DOUBLE PRECISION);

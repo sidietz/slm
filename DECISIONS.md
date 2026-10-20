@@ -28,6 +28,7 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 020: Full Integration Test Coverage Across WebMVC Controllers](#adr-020-full-integration-test-coverage-across-webmvc-controllers)
 - [ADR 021: Universal Active Sessions (Start & Stop Later) across Polymorphic Hierarchy](#adr-021-universal-active-sessions-start--stop-later-across-polymorphic-hierarchy)
 - [ADR 022: Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import](#adr-022-vehicle-refuelings-station-polymorphism-and-spritmonitor-csv-import)
+- [ADR 023: Contract Lifecycle Semantics, Auto-Extension Modeling, and Non-Negative Days Remaining](#adr-023-contract-lifecycle-semantics-auto-extension-modeling-and-non-negative-days-remaining)
 
 ---
 
@@ -869,4 +870,54 @@ Furthermore, fuel and energy infrastructure requires modeling both traditional c
   - 100% test coverage verified with unit and Testcontainers integration tests.
 - **Constraints**:
   - Deleting a station cleanly sets `station_id = NULL` on historical refuelings to preserve financial and consumption history.
+
+---
+
+## ADR 023: Contract Lifecycle Semantics, Auto-Extension Modeling, and Non-Negative Days Remaining
+
+### Status
+Accepted
+
+### Context
+In [`Contract.java`](src/main/java/de/oberamsystems/slm/model/Contract.java), `daysRemaining` was previously calculated via `@Formula(value = "extract(day FROM end_date - now())")`. When a contract's initial minimum commitment period (`end_date`) passed without cancellation, `daysRemaining` turned negative (e.g. `-240 d`), rendering as an alarming red danger badge in [`contracts.html`](src/main/resources/templates/contracts.html).
+
+In modern consumer and commercial law (notably German BGB § 309 Nr. 9 b), contracts with a minimum commitment period (*Mindestvertragslaufzeit*) that are not explicitly cancelled automatically extend (indefinitely with a 1-month rolling notice period, or periodic renewal). Displaying negative days for active, auto-extended subscriptions was semantically incorrect and visually misleading. Furthermore, the label "End Date" conflated the initial commitment period with actual contract termination.
+
+### Decision
+1. **Rephrasing "End Date" to "Initial End Date" (`initial_end_date`)**:
+   - Renamed column `end_date` to `initial_end_date` across baseline schemas ([`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), [`schema-init.sql`](src/test/resources/schema-init.sql)) and in the entity model.
+   - Provided backward-compatible `getEndDate()` and `setEndDate()` getter/setter aliases in [`Contract.java`](src/main/java/de/oberamsystems/slm/model/Contract.java).
+
+2. **Explicit Auto-Extension & Cancellation Domain Model**:
+   - Added `auto_extension BOOL NOT NULL DEFAULT TRUE` and `auto_extension_months INT NOT NULL DEFAULT 1`.
+   - Added cancellation tracking fields `is_canceled BOOL NOT NULL DEFAULT FALSE`, `cancellation_date DATE`, and `termination_date DATE`.
+
+3. **Guaranteed Non-Negative Days Remaining & Status Classification**:
+   - Replaced naive date subtraction with a CASE-based `@Formula`:
+     - If contract is inactive: returns `0`.
+     - If canceled and `termination_date` exists: returns positive countdown `GREATEST(0, termination_date - CURRENT_DATE)`.
+     - If active within initial term: returns positive countdown `initial_end_date - CURRENT_DATE`.
+     - If active past initial term with auto-extension: returns `NULL` (signaling indefinite/rolling continuation; never negative).
+   - Added `ContractStatus` enum (`ACTIVE_INITIAL_TERM`, `ACTIVE_AUTO_EXTENDED`, `CANCELED_PENDING`, `TERMINATED`) and domain helper `getCalculatedStatus()`.
+
+4. **UI Modernization ([`contracts.html`](src/main/resources/templates/contracts.html))**:
+   - Table displays "Initial End Date".
+   - Remaining column renders distinct status badges:
+     - `Auto-Extended` badge for rolling contracts (no negative days).
+     - Countdown badge (`X d`) for initial term contracts.
+     - Canceled warning badge (`X d left`) for contracts pending termination.
+     - `—` for terminated contracts.
+   - Form controls include auto-extension toggle, extension period, and cancellation fields.
+
+5. **Schema Synchronization & Transactional Migration**:
+   - Authored transactional incremental migration [`src/main/resources/migration_2026-10-20.sql`](src/main/resources/migration_2026-10-20.sql) enclosed in `BEGIN; ... COMMIT;`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Eliminates misleading negative day counts and false-positive danger badges.
+  - Correctly represents German consumer contract law (BGB § 309 Nr. 9 b) and standard rolling subscriptions.
+  - Maintains complete backwards compatibility for existing queries, controllers, and tests.
+- **Constraints**:
+  - Hibernate `@Formula` fields are evaluated on database fetch/refresh, requiring `entityManager.refresh(...)` when asserting formula results in JPA test transactions.
+
 

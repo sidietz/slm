@@ -12,7 +12,10 @@
             <div class="col-lg-8">
                 <div class="card slm-table-card shadow-sm h-100">
                     <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-file-earmark-ruled me-2 text-primary"></i>Active & Past Contracts</h5>
+                        <div>
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-file-earmark-ruled me-2 text-primary"></i>Active & Past Contracts</h5>
+                            <span class="text-muted small" th:if="${totalFee != null}" th:text="'Total active monthly commitments: €' + ${#numbers.formatDecimal(totalFee, 1, 2)}"></span>
+                        </div>
                         <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(contracts)} + ' contracts'">0 contracts</span>
                     </div>
                     <div class="table-responsive">
@@ -24,7 +27,7 @@
                                     <th>Contractor</th>
                                     <th>Fee</th>
                                     <th>Start Date</th>
-                                    <th>End Date</th>
+                                    <th>Initial End Date</th>
                                     <th>Remaining</th>
                                     <th class="pe-3">Status</th>
                                 </tr>
@@ -36,20 +39,47 @@
                                     <td>
                                         <span class="badge bg-light text-dark border px-2 py-1" th:text="${e.contractor != null ? e.contractor.name : '—'}"></span>
                                     </td>
-                                    <td class="fw-semibold text-success" th:text="${e.fee}"></td>
+                                    <td class="fw-semibold text-success" th:text="${#numbers.formatDecimal(e.fee, 1, 2)} + ' €'"></td>
                                     <td class="text-muted small" th:text="${#temporals.format(e.startDate, 'dd.MM.yyyy')}"></td>
-                                    <td class="text-muted small" th:text="${#temporals.format(e.endDate, 'dd.MM.yyyy')}"></td>
+                                    <td class="text-muted small" th:text="${e.initialEndDate != null ? #temporals.format(e.initialEndDate, 'dd.MM.yyyy') : '—'}"></td>
                                     <td>
-                                        <span class="badge rounded-pill" 
-                                              th:classappend="${e.daysRemaining != null and e.daysRemaining < 30 ? 'bg-danger-subtle text-danger' : 'bg-secondary-subtle text-secondary'}"
-                                              th:text="${e.daysRemaining != null ? e.daysRemaining + ' d' : '—'}"></span>
+                                        <!-- Auto-extended active contracts: no negative days! -->
+                                        <span th:if="${e.calculatedStatus.name() == 'ACTIVE_AUTO_EXTENDED'}"
+                                              class="badge bg-primary-subtle text-primary rounded-pill px-2 py-1">
+                                            <i class="bi bi-arrow-repeat me-1"></i>Auto-Extended
+                                        </span>
+                                        <!-- Active in initial term -->
+                                        <span th:if="${e.calculatedStatus.name() == 'ACTIVE_INITIAL_TERM'}"
+                                              class="badge rounded-pill px-2 py-1"
+                                              th:classappend="${e.daysRemaining != null and e.daysRemaining <= 30 ? 'bg-warning-subtle text-warning' : 'bg-secondary-subtle text-secondary'}"
+                                              th:text="${e.daysRemaining != null ? e.daysRemaining + ' d' : '—'}">
+                                        </span>
+                                        <!-- Canceled, pending termination -->
+                                        <span th:if="${e.calculatedStatus.name() == 'CANCELED_PENDING'}"
+                                              class="badge bg-danger-subtle text-danger rounded-pill px-2 py-1"
+                                              th:text="${e.daysRemaining != null ? e.daysRemaining + ' d left' : '—'}">
+                                        </span>
+                                        <!-- Terminated / Inactive -->
+                                        <span th:if="${e.calculatedStatus.name() == 'TERMINATED'}"
+                                              class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">—</span>
                                     </td>
                                     <td class="pe-3">
-                                        <span th:if="${e.active}" class="badge bg-success-subtle text-success rounded-pill px-2 py-1">
+                                        <span th:if="${e.calculatedStatus.name() == 'ACTIVE_INITIAL_TERM'}"
+                                              class="badge bg-success-subtle text-success rounded-pill px-2 py-1">
                                             <i class="bi bi-check-circle me-1"></i> Active
                                         </span>
-                                        <span th:unless="${e.active}" class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">
-                                            <i class="bi bi-dash-circle me-1"></i> Inactive
+                                        <span th:if="${e.calculatedStatus.name() == 'ACTIVE_AUTO_EXTENDED'}"
+                                              class="badge bg-info-subtle text-info rounded-pill px-2 py-1">
+                                            <i class="bi bi-arrow-repeat me-1"></i> Rolling
+                                        </span>
+                                        <span th:if="${e.calculatedStatus.name() == 'CANCELED_PENDING'}"
+                                              class="badge bg-warning-subtle text-warning rounded-pill px-2 py-1"
+                                              th:title="${e.terminationDate != null ? 'Terminates: ' + #temporals.format(e.terminationDate, 'dd.MM.yyyy') : 'Cancellation pending'}">
+                                            <i class="bi bi-exclamation-triangle me-1"></i> Canceled
+                                        </span>
+                                        <span th:if="${e.calculatedStatus.name() == 'TERMINATED'}"
+                                              class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">
+                                            <i class="bi bi-dash-circle me-1"></i> Ended
                                         </span>
                                     </td>
                                 </tr>
@@ -88,14 +118,33 @@
                                 <input type="date" id="startDate" th:field="*{startDate}" class="form-control" required>
                             </div>
                             <div class="mb-3">
-                                <label for="endDate" class="form-label">End Date <span class="text-danger">*</span></label>
-                                <input type="date" id="endDate" th:field="*{endDate}" class="form-control" required>
+                                <label for="initialEndDate" class="form-label">Initial End Date (Mindestlaufzeit) <span class="text-danger">*</span></label>
+                                <input type="date" id="initialEndDate" th:field="*{initialEndDate}" class="form-control" required>
+                                <div class="form-text">End of the minimum commitment term. Auto-extends if not canceled.</div>
                             </div>
-                            <div class="mb-4 form-check form-switch">
+                            <div class="mb-3 form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="autoExtension" th:field="*{autoExtension}">
+                                <label class="form-check-label" for="autoExtension">Auto-Extends after Initial End Date</label>
+                            </div>
+                            <div class="mb-3">
+                                <label for="autoExtensionMonths" class="form-label">Extension Period (Months)</label>
+                                <input type="number" id="autoExtensionMonths" th:field="*{autoExtensionMonths}" class="form-control" min="1" value="1">
+                            </div>
+                            <div class="mb-3 form-check form-switch">
                                 <input class="form-check-input" type="checkbox" id="isActive" th:field="*{isActive}">
                                 <label class="form-check-label" for="isActive">Currently Active</label>
                             </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
+                            <div class="border-top pt-3 mt-3">
+                                <div class="mb-3 form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="isCanceled" th:field="*{isCanceled}">
+                                    <label class="form-check-label text-warning-emphasis fw-semibold" for="isCanceled">Mark as Canceled</label>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="terminationDate" class="form-label">Effective Termination Date</label>
+                                    <input type="date" id="terminationDate" th:field="*{terminationDate}" class="form-control">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2 mt-2">
                                 <i class="bi bi-plus-circle me-1"></i> Add Contract
                             </button>
                         </form>

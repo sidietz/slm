@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'de.oberamsystems'
-version = '0.0.3-rc3'
+version = '0.0.3-rc5'
 description = "simon's life manager"
 
 springBoot {
