@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc4] - 2026-10-19
+
+### Added
+- Implemented **Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import** (ADR 022):
+  - Created base entity [`Station`](src/main/java/de/oberamsystems/slm/model/Station.java) using native PostgreSQL 18 UUIDv7 primary keys and `InheritanceType.JOINED`.
+  - Created [`GasStation`](src/main/java/de/oberamsystems/slm/model/GasStation.java) subclass with optional `tankentanken_id UUID UNIQUE` for external fuel price telemetry.
+  - Created [`ChargingStation`](src/main/java/de/oberamsystems/slm/model/ChargingStation.java) subclass and 1:N [`ChargingPoint`](src/main/java/de/oberamsystems/slm/model/ChargingPoint.java) stalls supporting power in kW and [`PlugType`](src/main/java/de/oberamsystems/slm/model/PlugType.java) enum (`CCS_TYPE2`, `TYPE_2`, `CHADEMO`, `TESLA`, `TYPE_1`, `GBT`, `OTHER`, `UNKNOWN`).
+  - Created [`Refueling`](src/main/java/de/oberamsystems/slm/model/Refueling.java) entity with automatic metrics calculation (`costPerLiter`, `calculatedConsumption`), board computer telemetry (`board_computer_consumption`, `board_computer_quantity`, `board_computer_speed`), ISO 3166-1 alpha-2 country codes, and ISO 4217 currencies.
+  - Implemented [`SpritmonitorCsvService`](src/main/java/de/oberamsystems/slm/service/SpritmonitorCsvService.java) parsing semicolon-delimited CSV exports with German decimal commas, normalizing country codes, and auto-provisioning missing gas stations.
+  - Implemented [`RefuelingController`](src/main/java/de/oberamsystems/slm/controller/RefuelingController.java) managing `/refuelings`, `/refuelings/import`, and timeseries API endpoint `GET /api/refuelings`.
+  - Implemented [`StationController`](src/main/java/de/oberamsystems/slm/controller/StationController.java) managing `/stations`, `/stations/gas`, and `/stations/charging`.
+  - Created modern UI [`refuelings.html`](src/main/resources/templates/refuelings.html) with vehicle filter pills, KPI overview cards, and an interactive Billboard.js analytics chart switchable between Consumption (`L/100km`), Trip Distance (`km`), and Fuel Price (`€/L`).
+  - Created UI [`stations.html`](src/main/resources/templates/stations.html) featuring dual tabs for Gas Stations and EV Charging Stations.
+  - Added Spring AI Model Context Protocol (MCP) server tools `getRefuelings`, `logRefueling`, `getStations`, and `createStation` in [`McpVehicleTools.java`](src/main/java/de/oberamsystems/slm/mcp/McpVehicleTools.java).
+  - Added non-destructive atomic migration script [`migration_2026-10-19_3.sql`](src/main/resources/migration_2026-10-19_3.sql) (`BEGIN;` ... `COMMIT;`) and synchronized baseline schemas [`tables.sql`](src/main/resources/tables.sql), [`enums.sql`](src/main/resources/enums.sql), [`init.sql`](init.sql), and [`schema-init.sql`](src/test/resources/schema-init.sql).
+  - Added unit test [`SpritmonitorCsvServiceTest.java`](src/test/java/de/oberamsystems/slm/service/SpritmonitorCsvServiceTest.java) and Testcontainers integration test [`RefuelingIT.java`](src/test/java/de/oberamsystems/slm/RefuelingIT.java).
+
 ## [0.0.3-rc3] - 2026-10-19
 
 ### Added

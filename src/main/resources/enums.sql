@@ -19,3 +19,53 @@ CREATE TYPE status_type AS ENUM('PLANNED', 'IN_PROGRESS', 'COMPLETED');
 
 CREATE TYPE human_category AS ENUM ('FAMILY', 'CLASSMATE', 'FRIEND', 'FRIEND_OF_FRIEND', 'TEACHER', 'LECTURER', 'CELEBRITY', 'POLITICIAN', 'SPD', 'OTHER');
 CREATE TYPE event_type AS ENUM ('BIRTHDAY', 'MEMORIAL', 'WEDDING_ANNIVERSARY', 'RELATIONSHIP_ANNIVERSARY', 'WORK_ANNIVERSARY', 'CUSTOM');
+
+CREATE TYPE fuel_type AS ENUM (
+    'DIESEL',
+    'SUPER_E10',
+    'SUPER_E5',
+    'SUPER_PLUS',
+    'PREMIUM_DIESEL',
+    'LPG',
+    'CNG',
+    'ELECTRIC',
+    'HYDROGEN',
+    'OTHER'
+);
+
+CREATE TYPE fueling_type AS ENUM (
+    'FULL',
+    'PARTIAL',
+    'INITIAL'
+);
+
+CREATE TYPE driving_style AS ENUM (
+    'ECONOMICAL',
+    'NORMAL',
+    'FAST'
+);
+
+CREATE TYPE tire_type AS ENUM (
+    'SUMMER',
+    'WINTER',
+    'ALL_SEASON'
+);
+
+CREATE TYPE station_type AS ENUM (
+    'GAS_STATION',
+    'CHARGING_STATION',
+    'H2_STATION',
+    'OTHER'
+);
+
+CREATE TYPE plug_type AS ENUM (
+    'CCS_TYPE2',
+    'CHADEMO',
+    'GBT',
+    'OTHER',
+    'TESLA',
+    'TYPE_1',
+    'TYPE_2',
+    'UNKNOWN'
+);
+

@@ -20,6 +20,8 @@
   - [4. Professional & Financial Management](#4-professional--financial-management)
   - [5. Logistics, Spatial GIS & Travel](#5-logistics-spatial-gis--travel)
   - [6. Library & Media Catalog](#6-library--media-catalog)
+  - [7. Academic Management & Studies](#7-academic-management--studies)
+  - [8. Model Context Protocol (MCP) Server](#8-model-context-protocol-mcp-server)
 - [Architecture & Tech Stack](#architecture--tech-stack)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
@@ -37,7 +39,7 @@
 
 ### 1. Sessions Hub & Time Tracking (`/sessions`)
 A polymorphic time-tracking system built around a four pillars life balance model:
-- **Productivity**: Coding, Working, Learning, and Reading sessions.
+- **Productivity**: Coding, Working, Learning, Reading, and Lecture sessions.
 - **Sport**: Dedicated physical training, running, and workouts.
 - **Wellness**: Biological restoration, meditation, and sleep sessions.
 - **Leisure**: Recreational gaming sessions.
@@ -65,7 +67,11 @@ A polymorphic time-tracking system built around a four pillars life balance mode
 - **Contracts & Employers (`/contracts`, `/employers`)**: Manage client relationships, employment contracts, and terms.
 - **Spend Management (`/purchases`)**: Log expenses, purchase categories, and vendor relationships.
 
-### 5. Logistics, Spatial GIS & Travel
+### 5. Logistics, Spatial GIS, Vehicles & Fuel Economy
+- **Vehicles & Refuelings (`/cars`, `/refuelings`)**: Fleet management, odometer readings, and refueling records with automated consumption (`L/100km`) and price per liter calculation.
+- **Fuel & EV Charging Stations (`/stations`)**: Polymorphic station directory supporting Gas Stations (with TankenTanken UUID) and EV Charging Stations (with 1:N Charging Point stalls, power in kW, and European plug standards like CCS2 and Type 2).
+- **Spritmonitor CSV Import**: One-click import for Spritmonitor CSV exports (`1676970_fuelings.csv`) with German decimal parsing, ISO country normalization, and station auto-provisioning.
+- **Interactive Refueling Analytics**: Billboard.js time-series trend chart switchable dynamically between Consumption (`L/100km`), Trip Distance (`km`), and Fuel Price (`€/L`).
 - **Train Trips (`/train-trips`)**: Detailed rail journey logs with lines, train stations, and connection tracking.
 - **Spatial Routes & Points (`/routes`, `/points`)**: PostGIS-powered geospatial coordinate tracking and distance calculations.
 - **Human Management (`/humans`)**: Personal CRM for organizing contacts, friends, and relationships.
@@ -73,6 +79,60 @@ A polymorphic time-tracking system built around a four pillars life balance mode
 ### 6. Library & Media Catalog
 - **Book Management (`/books`, `/authors`, `/readingsessions`)**: Personal library, reading speeds, pages read, and publisher details.
 - **Gaming Hub (`/games`, `/gaming-sessions`)**: Video game catalog tracking platforms, hardware devices, game modes, and playtime.
+
+### 7. Academic Management & Studies (`/courses`)
+Comprehensive tracking for university coursework, lecture notes, syllabus management, and exam preparation:
+- **University Courses (`/courses`)**: Manage course catalogs with ECTS credits tracking, semester alignment, lecturer assignments, default lecture halls, and virtual meeting links.
+- **Deterministic Semester Ordering**: Automated chronological sorting of academic terms (`WiSe 2026/27` > `SoSe 2026` > `WS 2025/26`) and consistent intra-semester alphabetical course listings across both "All Semesters" and single-semester views.
+- **Course Detail Dashboard (`/courses/{id}`)**: Dedicated course cockpit featuring lecturer contact cards, syllabus markdown, lecture sessions timeline, and linked lecture notes.
+- **Lecture Notes (`/notes/{id}`)**: Rich markdown note-taking attached to courses and lecture sessions, with key concepts tags, homework reminders and todo tracking, and 1-5 star exam relevance ratings.
+- **Lecture Sessions**: Polymorphic `LectureSession` entities extending the root `Session` hierarchy to track lecture attendance, live focus, and classroom locations.
+- **Exams & Grading**: Track exam schedules within the next 90 days, exam locations, passing status, and final grade recordings.
+- **Spring AI MCP Server Tools**: AI-callable tools for retrieving courses, listing chronologically sorted semesters, inspecting syllabus and course details, full-text searching lecture notes, and logging new notes.
+
+### 8. Model Context Protocol (MCP) Server
+SLM embeds a [Spring AI](https://spring.io/projects/spring-ai) Model Context Protocol (MCP) server providing external AI assistants (e.g. Claude Desktop, Antigravity IDE, custom autonomous agents) with direct, structured, read-write access to life tracking data via Server-Sent Events (SSE) at `/sse` and message handling at `/mcp/message`, secured with API Key authentication (`X-API-KEY` or `?apiKey=...`).
+
+The server exposes 27 domain tools organized across 6 specialized controllers:
+
+#### 1. Academic & University Management (`McpAcademicTools`)
+- **`getSemesters()`**: Retrieve all distinct academic semesters, sorted chronologically descending (most recent semester first via `SemesterComparator.DESCENDING`).
+- **`getCourses(semester)`**: Retrieve university courses, optionally filtered by semester, sorted deterministically by `CourseComparator`.
+- **`getCourseDetails(courseId)`**: Get in-depth course information including syllabus markdown, lecturer details, lecture notes, and attended lectures.
+- **`logLectureSession(...)`**: Log attendance at a university lecture session with start/end time, room/URL, focus rating, and topics.
+- **`createLectureNote(...)`**: Save or update lecture notes in rich Markdown format with key concepts summary, homework assignments, and 1-5 star exam relevance rating.
+- **`searchLectureNotes(query)`**: Search across all lecture notes by keyword in title, markdown content, or key concepts tags.
+
+#### 2. Sessions & Life Balance (`McpSessionTools`)
+- **`getFourPillarsDailyBreakdown(dateStr)`**: Calculate daily Four Pillars life balance breakdown (Productivity focus, Sport training, Wellness sleep/meditation, and Leisure gaming).
+- **`getRecentSessions(category, limit)`**: Retrieve recent time tracking sessions filtered by pillar category (`PRODUCTIVITY`, `SPORT`, `WELLNESS`, `LEISURE`, or `ALL`).
+- **`getActiveSessions()`**: Retrieve all currently active ongoing sessions (without end time set, status `IN_PROGRESS`).
+- **`startSession(sessionType, titleOrProject, comment)`**: Start a new ongoing session without an end time across all polymorphic session types.
+- **`stopSession(sessionId, breakMinutes, focusRating, outcomeSummary, comment)`**: Stop an ongoing active session, compute net duration, and record ratings.
+- **`logCodingSession(...)`**: Log a completed coding session linked to project name, git branch, and language.
+- **`logSleepSession(...)`**: Log a sleep session with bedtime, wake time, quality rating, and night disruptions.
+
+#### 3. Wellness & Habit Tracking (`McpWellnessTools`)
+- **`getHabits()`**: Retrieve all tracked habits and their last-done completion timestamp.
+- **`completeHabit(habitIdentifier, timestampStr)`**: Record a habit as completed (by name or ID).
+- **`logMood(happiness, impetus, stress, dateStr)`**: Log a daily mood rating with happiness, drive/energy, and stress levels (scores 1-5).
+- **`logGratitude(description, dateStr)`**: Log a daily gratitude reflection note.
+
+#### 4. Medical & Healthcare (`McpMedicalTools`)
+- **`getUpcomingAppointments()`**: Retrieve upcoming medical and doctor appointments with doctor details, speciality, and geodesic air distance.
+- **`searchDoctors(query)`**: Search doctors by speciality keyword or doctor name, with practice location and distance from home.
+- **`createAppointment(doctorId, startStr, endStr, comment)`**: Schedule a new medical or doctor appointment.
+
+#### 5. Contacts & Life Milestones (`McpLifeEventTools`)
+- **`getUpcomingLifeEvents(daysAhead)`**: Retrieve upcoming life events, anniversaries, birthdays, memorials, and milestones sorted by days until occurrence.
+- **`getContactLifeEvents(contactId)`**: Retrieve all life events and anniversaries recorded for a specific contact.
+- **`createLifeEvent(contactId, type, dateStr, title, notes, secondaryContactId)`**: Create a new milestone or anniversary for a contact.
+
+#### 6. Vehicles, Refuelings & Stations (`McpVehicleTools`)
+- **`getRefuelings(carId, limit)`**: Query refueling history with volume in liters, fuel price per liter, total costs, odometer, and consumption.
+- **`logRefueling(...)`**: Record a new refueling entry linked to a vehicle and gas station.
+- **`getStations(stationType, country)`**: List gas stations (with TankenTanken UUID) and EV charging stations (with power in kW and plug types).
+- **`createStation(...)`**: Provision a new gas or EV charging station.
 
 ---
 
@@ -87,6 +147,7 @@ A polymorphic time-tracking system built around a four pillars life balance mode
 | **Polymorphic Hierarchy** | `InheritanceType.JOINED` (`Session` base entity with concrete sub-tables) |
 | **Frontend UI** | Thymeleaf 3, Bootstrap 5.3.8, Bootstrap Icons, Billboard.js / D3 |
 | **Testing** | JUnit 6 (`6.1.3`), Spring Boot Test, Testcontainers (`postgis/postgis:18-3.6`) |
+| **AI & Agent Integration** | Spring AI 2.0.1 (Model Context Protocol / MCP Server) |
 
 ---
 
@@ -169,9 +230,11 @@ To execute the test suite:
 ```
 slm/
 ├── src/main/java/de/oberamsystems/slm/
-│   ├── controller/          # Spring MVC controllers (SessionController, DoctorController, etc.)
+│   ├── controller/          # Spring MVC controllers (SessionController, AcademicController, etc.)
 │   ├── model/               # JPA entities, polymorphic Session hierarchy, and repositories
+│   ├── mcp/                 # Spring AI Model Context Protocol (MCP) tool endpoints
 │   ├── service/             # Domain services (SelfieStorageService, etc.)
+│   ├── util/                # Domain comparators (SemesterComparator, CourseComparator, TrainLineComparator)
 │   ├── SecurityConfig.java  # Spring Security filter chain and endpoint policies
 │   └── SlmApplication.java  # Main application entry point
 ├── src/main/resources/
