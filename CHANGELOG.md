@@ -16,7 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Replaced naive date subtraction in Hibernate `@Formula` with a CASE-based calculation guaranteeing that active, auto-extended contracts never display negative days remaining, returning `NULL` for indefinite rolling contracts and positive countdowns for pending cancellations.
   - Upgraded [`contracts.html`](src/main/resources/templates/contracts.html) to display "Initial End Date", semantic status badges (`Auto-Extended`, `Active`, `Canceled`, `Ended`), active monthly fee summaries, and form switches for auto-extension and cancellation details.
   - Added atomic transactional migration script [`migration_2026-10-20.sql`](src/main/resources/migration_2026-10-20.sql) (`BEGIN;` ... `COMMIT;`).
-  - Added comprehensive lifecycle and non-negative formula test cases in [`EmployerContractIT.java`](src/test/java/de/oberamsystems/slm/EmployerContractIT.java).
+  - Added comprehensive lifecycle and non-negative formula test cases in [`ContractIT.java`](src/test/java/de/oberamsystems/slm/ContractIT.java).
+
+### Changed
+- Decoupled composite integration test [`EmployerContractIT.java`](src/test/java/de/oberamsystems/slm/EmployerContractIT.java) into dedicated single-domain test classes [`EmployerIT.java`](src/test/java/de/oberamsystems/slm/EmployerIT.java) and [`ContractIT.java`](src/test/java/de/oberamsystems/slm/ContractIT.java) (ADR 004 & ADR 023).
 
 ## [0.0.3-rc4] - 2026-10-19
 
