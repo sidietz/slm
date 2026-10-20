@@ -8,64 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Devices & Hardware', 'Manage computers, consoles, mobile devices, serial numbers, and equipment', 'bi bi-laptop', 'theme-activity', '/activity-management', 'Activity Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Device Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-danger"><i class="bi bi-plus-circle me-2"></i>Add Hardware Device</h2>
-            <form th:action="@{/devices}" th:object="${device}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Device Name <span class="text-danger">*</span></label>
-                        <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="e.g. Work MacBook Pro, Gaming Rig, PS5" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Device Type <span class="text-danger">*</span></label>
-                        <select class="form-select" th:field="*{deviceType}">
-                            <option value="">-- Select Type --</option>
-                            <option th:each="e : ${deviceTypes}" th:value="${e.id}" th:text="${e.name}"></option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Vendor</label>
-                        <select class="form-select" th:field="*{vendor}">
-                            <option value="">-- Select Vendor --</option>
-                            <option th:each="e : ${vendors}" th:value="${e.id}" th:text="${e.name}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Manufacturer</label>
-                        <select class="form-select" th:field="*{manufacturer}">
-                            <option value="">-- Select Manufacturer --</option>
-                            <option th:each="e : ${manufacturers}" th:value="${e.id}" th:text="${e.name}"></option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-3">
-                        <label class="form-label">Model Name</label>
-                        <input type="text" th:field="*{modelName}" class="form-control" placeholder="M3 Max 16-inch" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Serial Number</label>
-                        <input type="text" th:field="*{serialNumber}" class="form-control" placeholder="SN-..." />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Price (&euro;)</label>
-                        <input type="number" step="0.01" min="0" th:field="*{price}" class="form-control" placeholder="0.00" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Purchase Date</label>
-                        <input type="date" th:field="*{purchaseDate}" class="form-control" />
-                    </div>
-
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-danger px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Device
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Devices Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -74,6 +16,9 @@
                     <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${devices != null ? devices.size() : 0}">0</span>
                 </h2>
                 <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#deviceModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Device
+                    </button>
                     <a th:href="@{/vendors}" class="btn btn-outline-secondary btn-sm">
                         <i class="bi bi-shop me-1"></i> Vendors
                     </a>
@@ -93,11 +38,12 @@
                             <th>Serial Number</th>
                             <th>Price</th>
                             <th>Purchase Date</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${devices == null or devices.empty}">
-                            <td colspan="6" class="text-center py-4 text-muted">
+                            <td colspan="7" class="text-center py-4 text-muted">
                                 No devices registered yet. Add your hardware above!
                             </td>
                         </tr>
@@ -119,12 +65,136 @@
                             </td>
                             <td class="fw-semibold" th:text="${device.price != null ? ('&euro;' + #numbers.formatDecimal(device.price, 1, 2)) : '-'}">&euro;0.00</td>
                             <td class="small text-muted" th:text="${device.purchaseDate != null ? device.purchaseDate : '-'}">2026-01-01</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#deviceModal"
+                                        th:data-id="${device.id}"
+                                        th:data-name="${device.name}"
+                                        th:data-device-type="${device.deviceType != null ? device.deviceType.id : ''}"
+                                        th:data-vendor="${device.vendor != null ? device.vendor.id : ''}"
+                                        th:data-manufacturer="${device.manufacturer != null ? device.manufacturer.id : ''}"
+                                        th:data-model-name="${device.modelName}"
+                                        th:data-serial-number="${device.serialNumber}"
+                                        th:data-price="${device.price}"
+                                        th:data-purchase-date="${device.purchaseDate}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Device Modal (Add / Edit) -->
+        <div class="modal fade" id="deviceModal" tabindex="-1" aria-labelledby="deviceModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/devices}" th:object="${device}" method="post" id="deviceForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="deviceModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-danger"></i>Add Hardware Device
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="deviceId" />
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Device Name <span class="text-danger">*</span></label>
+                                    <input type="text" th:field="*{name}" id="deviceName" class="form-control" placeholder="e.g. Work MacBook Pro, Gaming Rig, PS5" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Device Type <span class="text-danger">*</span></label>
+                                    <select class="form-select" th:field="*{deviceType}" id="deviceTypeSelect">
+                                        <option value="">-- Select Type --</option>
+                                        <option th:each="e : ${deviceTypes}" th:value="${e.id}" th:text="${e.name}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Vendor</label>
+                                    <select class="form-select" th:field="*{vendor}" id="deviceVendor">
+                                        <option value="">-- Select Vendor --</option>
+                                        <option th:each="e : ${vendors}" th:value="${e.id}" th:text="${e.name}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Manufacturer</label>
+                                    <select class="form-select" th:field="*{manufacturer}" id="deviceManufacturer">
+                                        <option value="">-- Select Manufacturer --</option>
+                                        <option th:each="e : ${manufacturers}" th:value="${e.id}" th:text="${e.name}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-3">
+                                    <label class="form-label">Model Name</label>
+                                    <input type="text" th:field="*{modelName}" id="deviceModelName" class="form-control" placeholder="M3 Max 16-inch" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Serial Number</label>
+                                    <input type="text" th:field="*{serialNumber}" id="deviceSerialNumber" class="form-control" placeholder="SN-..." />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Price (&euro;)</label>
+                                    <input type="number" step="0.01" min="0" th:field="*{price}" id="devicePrice" class="form-control" placeholder="0.00" />
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Purchase Date</label>
+                                    <input type="date" th:field="*{purchaseDate}" id="devicePurchaseDate" class="form-control" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold" id="deviceSubmitBtn">
+                                <i class="bi bi-save me-1"></i> Save Device
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const deviceModal = document.getElementById('deviceModal');
+            if (deviceModal) {
+                deviceModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('deviceModalTitle');
+                    const submitBtn = document.getElementById('deviceSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Edit Hardware Device';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Device';
+                        document.getElementById('deviceId').value = id;
+                        document.getElementById('deviceName').value = button.getAttribute('data-name') || '';
+                        document.getElementById('deviceTypeSelect').value = button.getAttribute('data-device-type') || '';
+                        document.getElementById('deviceVendor').value = button.getAttribute('data-vendor') || '';
+                        document.getElementById('deviceManufacturer').value = button.getAttribute('data-manufacturer') || '';
+                        document.getElementById('deviceModelName').value = button.getAttribute('data-model-name') || '';
+                        document.getElementById('deviceSerialNumber').value = button.getAttribute('data-serial-number') || '';
+                        document.getElementById('devicePrice').value = button.getAttribute('data-price') || '';
+                        document.getElementById('devicePurchaseDate').value = button.getAttribute('data-purchase-date') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-danger"></i>Add Hardware Device';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Device';
+                        document.getElementById('deviceForm').reset();
+                        document.getElementById('deviceId').value = '';
+                    }
+                });
+
+                deviceModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('deviceForm').reset();
+                    document.getElementById('deviceId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

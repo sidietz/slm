@@ -78,6 +78,21 @@ public class BookController {
 		model.addAttribute("author", a);
 		return "redirect:/authors";
 	}
+
+	@GetMapping("/press")
+	public String addPresses(@RequestParam(required = false) Long id, Model model) {
+		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		model.addAttribute("press", new Press());
+		return "press";
+	}
+
+	@PostMapping("/press")
+	public String submitPresses(@ModelAttribute Press p, Model model) {
+		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		pressRepo.save(p);
+		model.addAttribute("press", p);
+		return "redirect:/press";
+	}
 	
 	@GetMapping("/reading-sessions")
 	public String addReadingSessions(@RequestParam(required = false) Long id, Model model) {

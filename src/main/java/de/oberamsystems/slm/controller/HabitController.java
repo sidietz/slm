@@ -84,6 +84,7 @@ public class HabitController {
 		model.addAttribute("habitId", id);
 		Habit selected = repo.getById(id);
 		entry.setHabit(selected);
+		entry.setId(null);
 		model.addAttribute("habit", selected);
 		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));

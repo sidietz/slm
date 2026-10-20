@@ -30,6 +30,10 @@ public class HabitEntry {
 		return id;
 	}
 
+	public void setId(Long id) {
+		this.id = id;
+	}
+
 	public Habit getHabit() {
 		return habit;
 	}

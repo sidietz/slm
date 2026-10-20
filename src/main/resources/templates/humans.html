@@ -9,17 +9,21 @@
 
     <main class="container my-5">
         <div class="row g-4 mb-5">
-            <div class="col-lg-8">
-                <div class="card slm-table-card shadow-sm h-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <div>
+            <!-- Full-Width Humans Table Card -->
+            <div class="col-12">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
                             <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contact Directory</h5>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(humans)} + ' contacts'">0 contacts</span>
                         </div>
                         <div class="d-flex gap-2">
-                            <a th:href="@{/human-events}" class="btn btn-sm btn-outline-primary rounded-pill">
+                            <a th:href="@{/human-events}" class="btn btn-outline-primary rounded-pill fw-semibold">
                                 <i class="bi bi-calendar2-heart me-1"></i> Life Events &amp; Anniversaries
                             </a>
-                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2" th:text="${#lists.size(humans)} + ' contacts'">0 contacts</span>
+                            <button type="button" class="btn btn-primary fw-semibold" onclick="openCreateHumanModal()">
+                                <i class="bi bi-plus-circle me-1"></i> Add Contact
+                            </button>
                         </div>
                     </div>
                     <div class="table-responsive">
@@ -31,7 +35,8 @@
                                     <th>Birthday</th>
                                     <th>Status / Death Date</th>
                                     <th>Category</th>
-                                    <th class="pe-3 text-end">Events</th>
+                                    <th>Events</th>
+                                    <th class="text-end pe-3" style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -53,60 +58,116 @@
                                     <td>
                                         <span class="badge bg-light text-dark border px-2 py-1" th:text="${human.category}"></span>
                                     </td>
-                                    <td class="pe-3 text-end">
+                                    <td>
                                         <a th:href="@{/human-events(humanId=${human.id})}" class="btn btn-sm btn-outline-secondary rounded-pill" title="View Events">
                                             <i class="bi bi-calendar-event me-1"></i>Events
                                         </a>
                                     </td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Edit Contact"
+                                                th:data-id="${human.id}"
+                                                th:data-firstname="${human.firstname}"
+                                                th:data-lastname="${human.lastname}"
+                                                th:data-birthday="${human.birthday != null ? #dates.format(human.birthday, 'yyyy-MM-dd') : ''}"
+                                                th:data-death-date="${human.deathDate != null ? #dates.format(human.deathDate, 'yyyy-MM-dd') : ''}"
+                                                th:data-category="${human.category}"
+                                                onclick="populateEditHumanModal(this)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(humans)}">
-                                    <td colspan="6" class="text-center py-4 text-muted">No contacts registered yet.</td>
+                                    <td colspan="7" class="text-center py-4 text-muted">No contacts registered yet. Click "Add Contact" above to add your first contact.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-4">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-person-plus me-2 text-primary"></i>Add Contact</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/humans}" th:object="${human}" method="post">
-                            <div class="mb-3">
-                                <label for="categorySelect" class="form-label">Category</label>
-                                <select id="categorySelect" class="form-select" th:field="*{category}">
-                                    <option th:each="p : ${categories}" th:value="${p}" th:text="${p}"></option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="firstName" class="form-label">First Name <span class="text-danger">*</span></label>
-                                <input type="text" id="firstName" th:field="*{firstname}" class="form-control" placeholder="e.g. John" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="lastName" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                <input type="text" id="lastName" th:field="*{lastname}" class="form-control" placeholder="e.g. Doe" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="birthday" class="form-label">Birthday <span class="text-danger">*</span></label>
-                                <input type="date" id="birthday" th:field="*{birthday}" class="form-control" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="deathDate" class="form-label">Death Date <span class="text-muted small">(Optional, for memorials)</span></label>
-                                <input type="date" id="deathDate" th:field="*{deathDate}" class="form-control">
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="bi bi-person-plus me-1"></i> Add Contact
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
+    <!-- Dual-Purpose Modal for Adding and Editing Humans -->
+    <div class="modal fade" id="humanModal" tabindex="-1" aria-labelledby="humanModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="humanModalLabel">
+                        <i class="bi bi-person-plus me-2 text-primary"></i>Add Contact
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="humanForm" th:action="@{/humans}" method="post">
+                    <input type="hidden" id="modalHumanId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="modalCategorySelect" class="form-label fw-semibold">Category</label>
+                                <select id="modalCategorySelect" name="category" class="form-select">
+                                    <option th:each="p : ${categories}" th:value="${p}" th:text="${p}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalFirstName" class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                                <input type="text" id="modalFirstName" name="firstname" class="form-control" placeholder="e.g. John" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalLastName" class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" id="modalLastName" name="lastname" class="form-control" placeholder="e.g. Doe" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalBirthday" class="form-label fw-semibold">Birthday <span class="text-danger">*</span></label>
+                                <input type="date" id="modalBirthday" name="birthday" class="form-control" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalDeathDate" class="form-label fw-semibold">Death Date <span class="text-muted small">(Optional)</span></label>
+                                <input type="date" id="modalDeathDate" name="deathDate" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalHumanSubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Contact
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateHumanModal() {
+            document.getElementById('humanForm').reset();
+            document.getElementById('modalHumanId').value = '';
+            document.getElementById('humanModalLabel').innerHTML = '<i class="bi bi-person-plus me-2 text-primary"></i>Add Contact';
+            document.getElementById('modalHumanSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Contact';
+            document.getElementById('modalHumanSubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('humanModal'));
+            modal.show();
+        }
+
+        function populateEditHumanModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalHumanId').value = ds.id || '';
+            document.getElementById('modalFirstName').value = ds.firstname || '';
+            document.getElementById('modalLastName').value = ds.lastname || '';
+            document.getElementById('modalCategorySelect').value = ds.category || '';
+            document.getElementById('modalBirthday').value = ds.birthday || '';
+            document.getElementById('modalDeathDate').value = ds.deathDate || '';
+
+            document.getElementById('humanModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Contact #${ds.id}`;
+            document.getElementById('modalHumanSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Contact';
+            document.getElementById('modalHumanSubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('humanModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

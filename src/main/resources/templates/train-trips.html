@@ -16,11 +16,17 @@
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-lg-8">
-                <div class="card slm-table-card shadow-sm h-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Logged Train Journeys</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(traintrips2)} + ' trips'">0 trips</span>
+            <!-- Full-Width Train Trips Table Card -->
+            <div class="col-12">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-clock-history me-2 text-primary"></i>Logged Train Journeys</h5>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(traintrips2)} + ' trips'">0 trips</span>
+                        </div>
+                        <button type="button" class="btn btn-primary fw-semibold" onclick="openCreateTrainTripModal()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Train Trip
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0">
@@ -32,7 +38,8 @@
                                     <th>Destination</th>
                                     <th>Departure</th>
                                     <th>Arrival</th>
-                                    <th class="pe-3">Duration</th>
+                                    <th>Duration</th>
+                                    <th class="text-end pe-3" style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -45,68 +52,91 @@
                                     <td class="fw-semibold text-dark" th:text="${e.destination != null ? e.destination.name : '—'}"></td>
                                     <td class="text-muted small" th:text="${#temporals.format(e.start, 'dd.MM.yyyy HH:mm')}"></td>
                                     <td class="text-muted small" th:text="${#temporals.format(e.end, 'dd.MM.yyyy HH:mm')}"></td>
-                                    <td class="pe-3">
+                                    <td>
                                         <span class="code-pill" th:text="${{e.duration}}"></span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Edit Train Trip"
+                                                th:data-id="${e.id}"
+                                                th:data-line-id="${e.line != null ? e.line.id : ''}"
+                                                th:data-origin-id="${e.origin != null ? e.origin.id : ''}"
+                                                th:data-destination-id="${e.destination != null ? e.destination.id : ''}"
+                                                th:data-start="${e.start}"
+                                                th:data-end="${e.end}"
+                                                onclick="populateEditTrainTripModal(this)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
                                     </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(traintrips2)}">
-                                    <td colspan="7" class="text-center py-4 text-muted">No train trips recorded yet.</td>
+                                    <td colspan="8" class="text-center py-4 text-muted">No train trips recorded yet. Click "Add Train Trip" above to log a rail journey.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
+        </div>
+    </main>
 
-            <div class="col-lg-4">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Train Trip</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/train-trips}" th:object="${traintrip}" method="post">
-                            <div class="mb-3">
-                                <label for="selectLine" class="form-label">Train Line</label>
-                                <select id="selectLine" class="form-select" name="selectLine" onchange="updateLine(event)">
+    <!-- Dual-Purpose Modal for Adding and Editing Train Trips -->
+    <div class="modal fade" id="trainTripModal" tabindex="-1" aria-labelledby="trainTripModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="trainTripModalLabel">
+                        <i class="bi bi-train-front me-2 text-primary"></i>Add Train Trip
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="trainTripForm" th:action="@{/train-trips}" method="post">
+                    <input type="hidden" id="modalTrainTripId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="modalSelectLine" class="form-label fw-semibold">Train Line <span class="text-danger">*</span></label>
+                                <select id="modalSelectLine" class="form-select" name="lineId" onchange="updateLine(event)">
                                     <option th:each="l : ${lines}" th:value="${l.id}"
                                             th:text="${l.name + ' - ' + l.description}" 
                                             th:selected="(${lineId} == ${l.id})"></option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="selectOrigin" class="form-label">Origin Station</label>
-                                <select id="selectOrigin" class="form-select" th:field="*{origin}">
+                            <div class="col-12">
+                                <label for="modalSelectOrigin" class="form-label fw-semibold">Origin Station</label>
+                                <select id="modalSelectOrigin" class="form-select" name="origin">
                                     <option th:each="s : ${traintrips}" th:value="${s.id}"
                                             th:text="${s.ds100 + ' - ' + s.name}"></option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="selectDestination" class="form-label">Destination Station</label>
-                                <select id="selectDestination" class="form-select" th:field="*{destination}">
+                            <div class="col-12">
+                                <label for="modalSelectDestination" class="form-label fw-semibold">Destination Station</label>
+                                <select id="modalSelectDestination" class="form-select" name="destination">
                                     <option th:each="s : ${traintrips}" th:value="${s.id}"
                                             th:text="${s.ds100 + ' - ' + s.name}"></option>
                                 </select>
                             </div>
-                            <div class="mb-3">
-                                <label for="start" class="form-label">Departure <span class="text-danger">*</span></label>
-                                <input type="datetime-local" id="start" th:field="*{start}" class="form-control" required>
+                            <div class="col-md-6">
+                                <label for="modalTrainTripStart" class="form-label fw-semibold">Departure <span class="text-danger">*</span></label>
+                                <input type="datetime-local" id="modalTrainTripStart" name="start" class="form-control" required>
                             </div>
-                            <div class="mb-4">
-                                <label for="end" class="form-label">Arrival <span class="text-danger">*</span></label>
-                                <input type="datetime-local" id="end" th:field="*{end}" class="form-control" required>
+                            <div class="col-md-6">
+                                <label for="modalTrainTripEnd" class="form-label fw-semibold">Arrival <span class="text-danger">*</span></label>
+                                <input type="datetime-local" id="modalTrainTripEnd" name="end" class="form-control" required>
                             </div>
-                            <div class="d-flex gap-2">
-                                <button type="submit" class="btn btn-primary flex-grow-1 py-2">
-                                    <i class="bi bi-plus-circle me-1"></i> Log Trip
-                                </button>
-                                <button type="reset" class="btn btn-outline-secondary py-2">Reset</button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
-                </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalTrainTripSubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Train Trip
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-    </main>
+    </div>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 
@@ -115,6 +145,40 @@
         var searchParams = new URLSearchParams(window.location.search);
         searchParams.set("id", event.target.value);
         window.location.search = searchParams.toString();
+    }
+
+    function openCreateTrainTripModal() {
+        document.getElementById('trainTripForm').reset();
+        document.getElementById('modalTrainTripId').value = '';
+        document.getElementById('trainTripModalLabel').innerHTML = '<i class="bi bi-train-front me-2 text-primary"></i>Add Train Trip';
+        document.getElementById('modalTrainTripSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Train Trip';
+        document.getElementById('modalTrainTripSubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+
+        const now = new Date();
+        const pad = (n) => String(n).padStart(2, '0');
+        const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        document.getElementById('modalTrainTripStart').value = nowStr;
+        document.getElementById('modalTrainTripEnd').value = nowStr;
+
+        const modal = new bootstrap.Modal(document.getElementById('trainTripModal'));
+        modal.show();
+    }
+
+    function populateEditTrainTripModal(btn) {
+        const ds = btn.dataset;
+        document.getElementById('modalTrainTripId').value = ds.id || '';
+        if (ds.lineId) document.getElementById('modalSelectLine').value = ds.lineId;
+        if (ds.originId) document.getElementById('modalSelectOrigin').value = ds.originId;
+        if (ds.destinationId) document.getElementById('modalSelectDestination').value = ds.destinationId;
+        document.getElementById('modalTrainTripStart').value = ds.start || '';
+        document.getElementById('modalTrainTripEnd').value = ds.end || '';
+
+        document.getElementById('trainTripModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Train Trip #${ds.id}`;
+        document.getElementById('modalTrainTripSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Train Trip';
+        document.getElementById('modalTrainTripSubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+        const modal = new bootstrap.Modal(document.getElementById('trainTripModal'));
+        modal.show();
     }
     </script>
 </body>

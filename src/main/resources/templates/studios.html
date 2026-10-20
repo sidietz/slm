@@ -8,62 +8,134 @@
     <header th:replace="~{fragments/layout :: header('Game Development Studios', 'Manage game developer studios and creators', 'bi bi-joystick', 'theme-gaming', '/games', 'Games Library')}"></header>
 
     <main class="container mb-5">
-        <div class="row g-4">
-            <!-- Add Studio Card -->
-            <div class="col-md-5">
-                <section class="card slm-form-card">
-                    <h2 class="text-warning"><i class="bi bi-plus-circle me-2"></i>Add Studio</h2>
-                    <form th:action="@{/studios}" th:object="${studio}" method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Studio Name <span class="text-danger">*</span></label>
-                            <input type="text" th:field="*{name}" class="form-control" placeholder="e.g. FromSoftware, Valve, CD Projekt Red" required />
+        <!-- Existing Studios Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-joystick me-2 text-warning"></i>Configured Studios
+                    <span class="badge bg-warning-subtle text-warning ms-2 fs-6" th:text="${studios != null ? studios.size() : 0}">0</span>
+                </h2>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-warning text-white btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#studioModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Studio
+                    </button>
+                    <a th:href="@{/games}" class="btn btn-outline-warning btn-sm">
+                        <i class="bi bi-controller me-1"></i> Games Library
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 80px;">ID</th>
+                            <th>Studio Name</th>
+                            <th>Headquarters</th>
+                            <th>Founding Date</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${studios == null or studios.empty}">
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                No studios defined yet.
+                            </td>
+                        </tr>
+                        <tr th:each="e : ${studios}">
+                            <td class="text-muted small" th:text="${e.id}">1</td>
+                            <td>
+                                <strong th:text="${e.name}">Studio</strong>
+                            </td>
+                            <td th:text="${e.hq != null and !e.hq.empty ? e.hq : '-'}">Headquarters</td>
+                            <td class="small text-muted" th:text="${e.foundingDate != null ? #temporals.format(e.foundingDate, 'dd.MM.yyyy') : '-'}">01.01.1990</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-warning"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#studioModal"
+                                        th:data-id="${e.id}"
+                                        th:data-name="${e.name}"
+                                        th:data-hq="${e.hq}"
+                                        th:data-founding-date="${e.foundingDate}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Studio Modal (Add / Edit) -->
+        <div class="modal fade" id="studioModal" tabindex="-1" aria-labelledby="studioModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/studios}" th:object="${studio}" method="post" id="studioForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="studioModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-warning"></i>Add Studio
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-warning text-white px-4 fw-semibold">
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="studioId" />
+                            <div class="mb-3">
+                                <label class="form-label">Studio Name <span class="text-danger">*</span></label>
+                                <input type="text" th:field="*{name}" id="studioName" class="form-control" placeholder="e.g. FromSoftware, Valve, CD Projekt Red" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Headquarters</label>
+                                <input type="text" th:field="*{hq}" id="studioHq" class="form-control" placeholder="e.g. Tokyo, Japan" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Founding Date</label>
+                                <input type="date" th:field="*{foundingDate}" id="studioFoundingDate" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning text-white fw-semibold" id="studioSubmitBtn">
                                 <i class="bi bi-save me-1"></i> Add Studio
                             </button>
                         </div>
                     </form>
-                </section>
-            </div>
-
-            <!-- Existing Studios Table Card -->
-            <div class="col-md-7">
-                <section class="card slm-table-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h2 class="h4 fw-bold mb-0 text-dark">
-                            <i class="bi bi-joystick me-2 text-warning"></i>Configured Studios
-                            <span class="badge bg-warning-subtle text-warning ms-2 fs-6" th:text="${studios != null ? studios.size() : 0}">0</span>
-                        </h2>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table slm-table align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 80px;">ID</th>
-                                    <th>Studio Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:if="${studios == null or studios.empty}">
-                                    <td colspan="2" class="text-center py-4 text-muted">
-                                        No studios defined yet.
-                                    </td>
-                                </tr>
-                                <tr th:each="e : ${studios}">
-                                    <td class="text-muted small" th:text="${e.id}">1</td>
-                                    <td>
-                                        <strong th:text="${e.name}">Studio</strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                </div>
             </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const studioModal = document.getElementById('studioModal');
+            if (studioModal) {
+                studioModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('studioModalTitle');
+                    const submitBtn = document.getElementById('studioSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-warning"></i>Edit Studio';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Studio';
+                        document.getElementById('studioId').value = id;
+                        document.getElementById('studioName').value = button.getAttribute('data-name') || '';
+                        document.getElementById('studioHq').value = button.getAttribute('data-hq') || '';
+                        document.getElementById('studioFoundingDate').value = button.getAttribute('data-founding-date') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-warning"></i>Add Studio';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Add Studio';
+                        document.getElementById('studioForm').reset();
+                        document.getElementById('studioId').value = '';
+                    }
+                });
+
+                studioModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('studioForm').reset();
+                    document.getElementById('studioId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

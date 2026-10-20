@@ -8,28 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Personal Diary', 'Record private journal entries, life reflections, and milestones', 'bi bi-journal-text', 'theme-habit', '/habit-management', 'Habit Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Diary Entry Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-primary"><i class="bi bi-pencil-square me-2"></i>New Journal Entry</h2>
-            <form th:action="@{/diary}" th:object="${diaryentry}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" th:field="*{date}" class="form-control" required />
-                    </div>
-                    <div class="col-md-8">
-                        <label class="form-label">Journal Content <span class="text-danger">*</span></label>
-                        <textarea class="form-control" rows="5" th:field="*{description}" placeholder="Write your thoughts, reflections, achievements, or challenges..." required></textarea>
-                    </div>
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Diary Entry
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Diary Entries Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -37,6 +15,9 @@
                     <i class="bi bi-journal-text me-2 text-primary"></i>Diary Entries
                     <span class="badge bg-primary-subtle text-primary ms-2 fs-6" th:text="${diaryentries != null ? diaryentries.size() : 0}">0</span>
                 </h2>
+                <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#diaryModal">
+                    <i class="bi bi-plus-circle me-1"></i> New Journal Entry
+                </button>
             </div>
 
             <div class="table-responsive">
@@ -45,23 +26,101 @@
                         <tr>
                             <th style="width: 140px;">Date</th>
                             <th>Entry</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${diaryentries == null or diaryentries.empty}">
-                            <td colspan="2" class="text-center py-4 text-muted">
+                            <td colspan="3" class="text-center py-4 text-muted">
                                 No diary entries recorded yet. Begin your private journal above!
                             </td>
                         </tr>
                         <tr th:each="e : ${diaryentries}">
                             <td class="small fw-semibold text-dark" th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}">01.01.2026</td>
                             <td style="white-space: pre-wrap;" th:text="${e.description}">Description</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#diaryModal"
+                                        th:data-id="${e.id}"
+                                        th:data-date="${e.date}"
+                                        th:data-description="${e.description}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Diary Modal (Add / Edit) -->
+        <div class="modal fade" id="diaryModal" tabindex="-1" aria-labelledby="diaryModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/diary}" th:object="${diaryentry}" method="post" id="diaryForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="diaryModalTitle">
+                                <i class="bi bi-pencil-square me-2 text-primary"></i>New Journal Entry
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="diaryId" />
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" th:field="*{date}" id="diaryDate" class="form-control" style="max-width: 250px;" required />
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">Journal Content <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" rows="6" th:field="*{description}" id="diaryDescription" placeholder="Write your thoughts, reflections, achievements, or challenges..." required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold" id="diarySubmitBtn">
+                                <i class="bi bi-save me-1"></i> Save Diary Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const diaryModal = document.getElementById('diaryModal');
+            if (diaryModal) {
+                diaryModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('diaryModalTitle');
+                    const submitBtn = document.getElementById('diarySubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-primary"></i>Edit Journal Entry';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Diary Entry';
+                        document.getElementById('diaryId').value = id;
+                        document.getElementById('diaryDate').value = button.getAttribute('data-date') || '';
+                        document.getElementById('diaryDescription').value = button.getAttribute('data-description') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil-square me-2 text-primary"></i>New Journal Entry';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Diary Entry';
+                        document.getElementById('diaryForm').reset();
+                        document.getElementById('diaryId').value = '';
+                    }
+                });
+
+                diaryModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('diaryForm').reset();
+                    document.getElementById('diaryId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

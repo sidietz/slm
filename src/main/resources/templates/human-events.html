@@ -183,12 +183,27 @@
                                 <span th:if="${e.yearsElapsed == null or e.yearsElapsed <= 0}" class="text-muted small">—</span>
                             </td>
                             <td class="pe-4 text-end">
-                                <form th:action="@{/human-events/delete}" method="post" class="d-inline" onsubmit="return confirm('Delete this event?');">
-                                    <input type="hidden" name="id" th:value="${e.id}" />
-                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Delete Event">
-                                        <i class="bi bi-trash"></i>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" 
+                                            class="btn btn-outline-primary" 
+                                            title="Edit Event"
+                                            th:data-id="${e.id}"
+                                            th:data-event-type="${e.eventType.name()}"
+                                            th:data-human-id="${e.human != null ? e.human.id : ''}"
+                                            th:data-secondary-human-id="${e.secondaryHuman != null ? e.secondaryHuman.id : ''}"
+                                            th:data-title="${e.title}"
+                                            th:data-event-date="${e.eventDate}"
+                                            th:data-notes="${e.notes}"
+                                            onclick="populateEditEventModal(this)">
+                                        <i class="bi bi-pencil"></i>
                                     </button>
-                                </form>
+                                    <form th:action="@{/human-events/delete}" method="post" class="d-inline" onsubmit="return confirm('Delete this event?');">
+                                        <input type="hidden" name="id" th:value="${e.id}" />
+                                        <button type="submit" class="btn btn-outline-danger" title="Delete Event">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                         <tr th:if="${#lists.isEmpty(events)}">
@@ -196,7 +211,7 @@
                                 <div class="fs-1 text-muted mb-2"><i class="bi bi-calendar-x"></i></div>
                                 <h5>No life events or anniversaries recorded</h5>
                                 <p class="small text-muted mb-3">Add birthdays, memorials, wedding anniversaries, or milestones for your contacts.</p>
-                                <button type="button" class="btn btn-primary rounded-pill px-4 btn-sm" data-bs-toggle="modal" data-bs-target="#addEventModal">
+                                <button type="button" class="btn btn-primary rounded-pill px-4 btn-sm" onclick="openCreateEventModal()">
                                     <i class="bi bi-plus-circle me-1"></i> Create First Event
                                 </button>
                             </td>
@@ -207,7 +222,7 @@
         </div>
     </main>
 
-    <!-- Add Event Modal -->
+    <!-- Dual-Purpose Event Modal -->
     <div class="modal fade" id="addEventModal" tabindex="-1" aria-labelledby="addEventModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -215,11 +230,12 @@
                     <h5 class="modal-title fw-bold text-dark" id="addEventModalLabel"><i class="bi bi-calendar-plus me-2 text-primary"></i>Add Life Event / Anniversary</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <form th:action="@{/human-events}" th:object="${newEvent}" method="post">
+                <form id="eventForm" th:action="@{/human-events}" method="post">
+                    <input type="hidden" id="modalEventId" name="id" value="">
                     <div class="modal-body p-4">
                         <div class="mb-3">
                             <label for="eventCategory" class="form-label fw-semibold">Event Type <span class="text-danger">*</span></label>
-                            <select id="eventCategory" class="form-select" th:field="*{eventType}" required>
+                            <select id="eventCategory" class="form-select" name="eventType" required>
                                 <option th:each="t : ${types}" th:value="${t}" th:text="${t.displayName}"></option>
                             </select>
                         </div>
@@ -239,21 +255,21 @@
                         </div>
                         <div class="mb-3">
                             <label for="eventTitle" class="form-label fw-semibold">Event Title</label>
-                            <input type="text" id="eventTitle" th:field="*{title}" class="form-control" placeholder="e.g. Silver Wedding, Grandpa Memorial, Joined Company">
+                            <input type="text" id="eventTitle" name="title" class="form-control" placeholder="e.g. Silver Wedding, Grandpa Memorial, Joined Company">
                             <div class="form-text">Leave blank to auto-generate based on type and contact name.</div>
                         </div>
                         <div class="mb-3">
                             <label for="eventDate" class="form-label fw-semibold">Original Event Date <span class="text-danger">*</span></label>
-                            <input type="date" id="eventDate" th:field="*{eventDate}" class="form-control" required>
+                            <input type="date" id="eventDate" name="eventDate" class="form-control" required>
                         </div>
                         <div class="mb-3">
                             <label for="eventNotes" class="form-label fw-semibold">Notes / Memories</label>
-                            <textarea id="eventNotes" th:field="*{notes}" class="form-control" rows="2" placeholder="e.g. Married in Munich, favorite flowers, gift ideas..."></textarea>
+                            <textarea id="eventNotes" name="notes" class="form-control" rows="2" placeholder="e.g. Married in Munich, favorite flowers, gift ideas..."></textarea>
                         </div>
                     </div>
                     <div class="modal-footer bg-light py-2">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary px-4">Save Event</button>
+                        <button type="submit" id="modalEventSubmitBtn" class="btn btn-primary px-4">Save Event</button>
                     </div>
                 </form>
             </div>
@@ -261,5 +277,36 @@
     </div>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateEventModal() {
+            document.getElementById('eventForm').reset();
+            document.getElementById('modalEventId').value = '';
+            document.getElementById('addEventModalLabel').innerHTML = '<i class="bi bi-calendar-plus me-2 text-primary"></i>Add Life Event / Anniversary';
+            document.getElementById('modalEventSubmitBtn').innerHTML = 'Save Event';
+            document.getElementById('modalEventSubmitBtn').className = 'btn btn-primary px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('addEventModal'));
+            modal.show();
+        }
+
+        function populateEditEventModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalEventId').value = ds.id || '';
+            document.getElementById('eventCategory').value = ds.eventType || '';
+            document.getElementById('primaryContact').value = ds.humanId || '';
+            document.getElementById('secondaryContact').value = ds.secondaryHumanId || '';
+            document.getElementById('eventTitle').value = ds.title || '';
+            document.getElementById('eventDate').value = ds.eventDate || '';
+            document.getElementById('eventNotes').value = ds.notes || '';
+
+            document.getElementById('addEventModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Event #${ds.id}`;
+            document.getElementById('modalEventSubmitBtn').innerHTML = 'Update Event';
+            document.getElementById('modalEventSubmitBtn').className = 'btn btn-warning px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('addEventModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

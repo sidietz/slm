@@ -8,55 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Mood Tracker', 'Log daily emotional states, energy impetus, and stress levels', 'bi bi-emoji-smile', 'theme-habit', '/habit-management', 'Habit Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Mood Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-primary"><i class="bi bi-plus-circle me-2"></i>Log Daily Mood</h2>
-            <form th:action="@{/moods}" th:object="${mood}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-12">
-                        <label class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" th:field="*{date}" class="form-control" style="max-width: 250px;" required />
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Happiness (1 - 10): <span id="happinessVal" class="fw-bold text-success fs-5">5</span></label>
-                        <input id="happiness" class="form-range" type="range" min="1" max="10" th:field="*{happiness}"
-                               oninput="document.getElementById('happinessVal').innerText = this.value" />
-                        <div class="d-flex justify-content-between text-muted small">
-                            <span>1 (Low)</span>
-                            <span>10 (Ecstatic)</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Impetus / Energy (1 - 10): <span id="impetusVal" class="fw-bold text-primary fs-5">5</span></label>
-                        <input id="impetus" class="form-range" type="range" min="1" max="10" th:field="*{impetus}"
-                               oninput="document.getElementById('impetusVal').innerText = this.value" />
-                        <div class="d-flex justify-content-between text-muted small">
-                            <span>1 (Lethargic)</span>
-                            <span>10 (Energetic)</span>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Stress Level (1 - 10): <span id="stressVal" class="fw-bold text-danger fs-5">5</span></label>
-                        <input id="stress" class="form-range" type="range" min="1" max="10" th:field="*{stress}"
-                               oninput="document.getElementById('stressVal').innerText = this.value" />
-                        <div class="d-flex justify-content-between text-muted small">
-                            <span>1 (Relaxed)</span>
-                            <span>10 (High Stress)</span>
-                        </div>
-                    </div>
-
-                    <div class="col-12 text-end mt-4">
-                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Mood Entry
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Moods Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -64,9 +15,14 @@
                     <i class="bi bi-emoji-smile me-2 text-primary"></i>Recorded Moods
                     <span class="badge bg-primary-subtle text-primary ms-2 fs-6" th:text="${moods != null ? moods.size() : 0}">0</span>
                 </h2>
-                <a th:href="@{/mood-bb}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-graph-up me-1"></i> View Mood Trends Chart
-                </a>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#moodModal">
+                        <i class="bi bi-plus-circle me-1"></i> Log Daily Mood
+                    </button>
+                    <a th:href="@{/mood-bb}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-graph-up me-1"></i> View Mood Trends Chart
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -77,11 +33,12 @@
                             <th>Happiness</th>
                             <th>Impetus (Energy)</th>
                             <th>Stress</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${moods == null or moods.empty}">
-                            <td colspan="4" class="text-center py-4 text-muted">
+                            <td colspan="5" class="text-center py-4 text-muted">
                                 No mood entries recorded yet. Record your first day above!
                             </td>
                         </tr>
@@ -98,12 +55,131 @@
                             <td>
                                 <span class="badge bg-danger-subtle text-danger fs-6" th:text="${e.stress} + ' / 10'">3 / 10</span>
                             </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#moodModal"
+                                        th:data-id="${e.id}"
+                                        th:data-date="${e.date}"
+                                        th:data-happiness="${e.happiness}"
+                                        th:data-impetus="${e.impetus}"
+                                        th:data-stress="${e.stress}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Mood Modal (Add / Edit) -->
+        <div class="modal fade" id="moodModal" tabindex="-1" aria-labelledby="moodModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/moods}" th:object="${mood}" method="post" id="moodForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="moodModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-primary"></i>Log Daily Mood
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="moodId" />
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" th:field="*{date}" id="moodDate" class="form-control" style="max-width: 250px;" required />
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Happiness (1 - 10): <span id="happinessVal" class="fw-bold text-success fs-5">5</span></label>
+                                    <input id="happiness" class="form-range" type="range" min="1" max="10" th:field="*{happiness}"
+                                           oninput="document.getElementById('happinessVal').innerText = this.value" />
+                                    <div class="d-flex justify-content-between text-muted small">
+                                        <span>1 (Low)</span>
+                                        <span>10 (Ecstatic)</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Impetus / Energy (1 - 10): <span id="impetusVal" class="fw-bold text-primary fs-5">5</span></label>
+                                    <input id="impetus" class="form-range" type="range" min="1" max="10" th:field="*{impetus}"
+                                           oninput="document.getElementById('impetusVal').innerText = this.value" />
+                                    <div class="d-flex justify-content-between text-muted small">
+                                        <span>1 (Lethargic)</span>
+                                        <span>10 (Energetic)</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Stress Level (1 - 10): <span id="stressVal" class="fw-bold text-danger fs-5">5</span></label>
+                                    <input id="stress" class="form-range" type="range" min="1" max="10" th:field="*{stress}"
+                                           oninput="document.getElementById('stressVal').innerText = this.value" />
+                                    <div class="d-flex justify-content-between text-muted small">
+                                        <span>1 (Relaxed)</span>
+                                        <span>10 (High Stress)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold" id="moodSubmitBtn">
+                                <i class="bi bi-save me-1"></i> Save Mood Entry
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const moodModal = document.getElementById('moodModal');
+            if (moodModal) {
+                moodModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('moodModalTitle');
+                    const submitBtn = document.getElementById('moodSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-primary"></i>Edit Daily Mood';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Mood Entry';
+                        document.getElementById('moodId').value = id;
+                        document.getElementById('moodDate').value = button.getAttribute('data-date') || '';
+                        
+                        const hVal = button.getAttribute('data-happiness') || 5;
+                        document.getElementById('happiness').value = hVal;
+                        document.getElementById('happinessVal').innerText = hVal;
+
+                        const iVal = button.getAttribute('data-impetus') || 5;
+                        document.getElementById('impetus').value = iVal;
+                        document.getElementById('impetusVal').innerText = iVal;
+
+                        const sVal = button.getAttribute('data-stress') || 5;
+                        document.getElementById('stress').value = sVal;
+                        document.getElementById('stressVal').innerText = sVal;
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-primary"></i>Log Daily Mood';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Mood Entry';
+                        document.getElementById('moodForm').reset();
+                        document.getElementById('moodId').value = '';
+                        document.getElementById('happinessVal').innerText = document.getElementById('happiness').value || 5;
+                        document.getElementById('impetusVal').innerText = document.getElementById('impetus').value || 5;
+                        document.getElementById('stressVal').innerText = document.getElementById('stress').value || 5;
+                    }
+                });
+
+                moodModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('moodForm').reset();
+                    document.getElementById('moodId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

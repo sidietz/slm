@@ -29,6 +29,7 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 021: Universal Active Sessions (Start & Stop Later) across Polymorphic Hierarchy](#adr-021-universal-active-sessions-start--stop-later-across-polymorphic-hierarchy)
 - [ADR 022: Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import](#adr-022-vehicle-refuelings-station-polymorphism-and-spritmonitor-csv-import)
 - [ADR 023: Contract Lifecycle Semantics, Auto-Extension Modeling, and Non-Negative Days Remaining](#adr-023-contract-lifecycle-semantics-auto-extension-modeling-and-non-negative-days-remaining)
+- [ADR 024: Universal Modal-First Input Architecture and In-Place Entity Editing](#adr-024-universal-modal-first-input-architecture-and-in-place-entity-editing)
 
 ---
 
@@ -919,5 +920,56 @@ In modern consumer and commercial law (notably German BGB § 309 Nr. 9 b), contr
   - Maintains complete backwards compatibility for existing queries, controllers, and tests.
 - **Constraints**:
   - Hibernate `@Formula` fields are evaluated on database fetch/refresh, requiring `entityManager.refresh(...)` when asserting formula results in JPA test transactions.
+
+---
+
+## ADR 024: Universal Modal-First Input Architecture and In-Place Entity Editing
+
+### Status
+Accepted
+
+### Context
+In earlier versions of Simon's Life Manager (SLM), user interface interactions for entity creation and modification were fragmented across disparate paradigms:
+1. **Asymmetric 2-Column Split Views**: Many catalog and reference views (e.g. `contractors.html`, `employers.html`, `vendors.html`, `authors.html`, `publishers.html`, `studios.html`, `manufacturers.html`, `habits.html`, `activity-types.html`, `sport-types.html`) squeezed an inline form on the left (`col-md-5`) and a table on the right (`col-md-7`), causing table horizontal overflow, text clipping, and cramped layout on non-wide viewports.
+2. **Top-Heavy Form Cards**: Views like `books.html`, `games.html`, `devices.html`, `activities.html`, `sports.html`, `learning-items.html`, `diary.html`, `gratitudes.html`, `moods.html`, `purchases.html`, `doctors.html`, `humans.html`, `cars.html`, `routes.html`, `points.html`, and `train-trips.html` rendered a large static form card above the data table, pushing the main data grid well below the fold.
+3. **Lack of In-Place Editing**: In most entity views, rows could only be deleted or inspected; updating an entry required re-creation or was unsupported in the UI.
+4. **Dedicated Termination Actions**: Certain business domain entities like contracts required distinct action flows: editing contract properties (amount, contractor, initial end date) must remain distinct from terminating the contract (setting canceled flag and calculating termination date).
+
+### Decision
+We established a project-wide **Modal-First Input Architecture** that unifies all entity listing and management views across SLM:
+
+1. **Full-Width Table Real Estate (`col-12`)**:
+   - All legacy 2-column split views and top-heavy form cards have been removed from the page flow.
+   - Every entity view now showcases a full-width (`col-12`), responsive data table maximizing readability, column alignment, and horizontal information density.
+   - Action buttons (e.g., `+ Add <Entity>`) are placed prominently in the header or table card controls.
+
+2. **Dual-Purpose Bootstrap 5 Modals (Create & Edit)**:
+   - Each view defines a single modal dialog serving both entity creation and in-place entity modification without full-page reloads.
+   - Each modal form includes a hidden identifier input (`<input type="hidden" th:field="*{id}" id="<entity>Id" />`).
+   - Tables feature a dedicated `Actions` column with an `[ Edit ]` button on every entity row.
+   - Row edit buttons carry entity attributes via HTML5 `data-*` attributes (`th:data-id`, `th:data-name`, `th:data-*`).
+
+3. **Client-Side Modal Population & Reset**:
+   - Vanilla JavaScript listens to Bootstrap's `show.bs.modal` and `hidden.bs.modal` lifecycle events.
+   - When opened via `[ Edit ]` (`event.relatedTarget` has `data-id`), the script updates the modal title (`Edit <Entity>`), updates the submit button label (`Update <Entity>`), and populates form fields instantly from `data-*` attributes without making AJAX round-trips.
+   - When opened via `[ Add <Entity> ]`, the script resets the form, clears the hidden ID, and sets the modal title to `Add <Entity>`.
+
+4. **Entity Model Mutability & Spring WebDataBinder Integration (ADR 002 Compliance)**:
+   - Added explicit `public void setId(Long id)` (or `setId(long id)` / `setId(UUID id)`) methods across all mutable JavaBean entities (`Book`, `Author`, `Press`, `Game`, `Publisher`, `Studio`, `Device`, `Manufacturer`, `Habit`, `HabitEntry`, `Activity`, `ActivityType`, `SportType`, `DiaryEntry`, `Gratitude`, `Mood`).
+   - When an edit form submits with a non-empty `id`, Spring MVC binds the ID to the `@ModelAttribute`, allowing JPA repositories to cleanly execute an SQL `UPDATE` instead of an `INSERT`.
+   - In `HabitController.submitLastDoneHabitEntries`, explicitly ensured `entry.setId(null)` to preserve distinct creation of new habit completion logs when selected by habit ID.
+
+5. **Dedicated Contract Termination Workflow**:
+   - In `contracts.html` and `ContractController.java`, provided a dedicated `[ Terminate ]` button and `POST /contracts/{id}/terminate` endpoint alongside `[ Edit ]`, ensuring contract termination logic operates safely and independently from property modifications.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Consistent, modern, and uncluttered UX across all 25+ entity domains.
+  - Zero full-page reload lag during edit dialog invocation.
+  - Vastly improved mobile and tablet responsiveness with full-width tables.
+  - Eliminates duplicate edit templates and ad-hoc controllers.
+- **Constraints**:
+  - Complex entity models with relational dropdowns require passing referenced entity IDs (e.g., `author.id`, `press.id`, `category.id`) through `data-*` attributes to ensure `<select>` elements select the correct option on modal opening.
+
 
 

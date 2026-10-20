@@ -8,36 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Sports & Fitness', 'Log athletic activities, workouts, runs, and physical training', 'bi bi-heart-pulse', 'theme-activity', '/activity-management', 'Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Sport Form Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-danger"><i class="bi bi-plus-circle me-2"></i>Log Workout / Sport</h2>
-            <form th:action="@{/sports}" th:object="${sport}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Sport / Activity Type <span class="text-danger">*</span></label>
-                        <select th:field="*{type}" class="form-select" required>
-                            <option value="">-- Select Sport --</option>
-                            <option th:each="kind : ${sportTypes}" th:value="${kind.id}" th:text="${kind.name}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Start Time <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{start}" class="form-control" required />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">End Time <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{end}" class="form-control" required />
-                    </div>
-
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-danger px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Workout
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Sports Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -45,9 +15,14 @@
                     <i class="bi bi-trophy me-2 text-danger"></i>Recorded Sports &amp; Workouts
                     <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${sports != null ? sports.size() : 0}">0</span>
                 </h2>
-                <a th:href="@{/sport-types}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-tags me-1"></i> Manage Sport Types
-                </a>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#sportModal">
+                        <i class="bi bi-plus-circle me-1"></i> Log Workout
+                    </button>
+                    <a th:href="@{/sport-types}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-tags me-1"></i> Manage Sport Types
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -57,11 +32,12 @@
                             <th>Sport Type</th>
                             <th>Start</th>
                             <th>End</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${sports == null or sports.empty}">
-                            <td colspan="3" class="text-center py-4 text-muted">
+                            <td colspan="4" class="text-center py-4 text-muted">
                                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                                 No workouts logged yet. Record your first session above!
                             </td>
@@ -72,12 +48,98 @@
                             </td>
                             <td class="small" th:text="${#temporals.format(sport.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 08:00</td>
                             <td class="small" th:text="${#temporals.format(sport.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 09:15</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#sportModal"
+                                        th:data-id="${sport.id}"
+                                        th:data-type="${sport.type != null ? sport.type.id : ''}"
+                                        th:data-start="${sport.start}"
+                                        th:data-end="${sport.end}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Sport Modal (Add / Edit) -->
+        <div class="modal fade" id="sportModal" tabindex="-1" aria-labelledby="sportModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/sports}" th:object="${sport}" method="post" id="sportForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="sportModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-danger"></i>Log Workout / Sport
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="sportId" />
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label class="form-label">Sport / Activity Type <span class="text-danger">*</span></label>
+                                    <select th:field="*{type}" class="form-select" id="sportTypeSelect" required>
+                                        <option value="">-- Select Sport --</option>
+                                        <option th:each="kind : ${sportTypes}" th:value="${kind.id}" th:text="${kind.name}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" th:field="*{start}" id="sportStart" class="form-control" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">End Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" th:field="*{end}" id="sportEnd" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold" id="sportSubmitBtn">
+                                <i class="bi bi-save me-1"></i> Save Workout
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sportModal = document.getElementById('sportModal');
+            if (sportModal) {
+                sportModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('sportModalTitle');
+                    const submitBtn = document.getElementById('sportSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Edit Workout / Sport';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Workout';
+                        document.getElementById('sportId').value = id;
+                        document.getElementById('sportTypeSelect').value = button.getAttribute('data-type') || '';
+                        document.getElementById('sportStart').value = button.getAttribute('data-start') || '';
+                        document.getElementById('sportEnd').value = button.getAttribute('data-end') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-danger"></i>Log Workout / Sport';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Workout';
+                        document.getElementById('sportForm').reset();
+                        document.getElementById('sportId').value = '';
+                    }
+                });
+
+                sportModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('sportForm').reset();
+                    document.getElementById('sportId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
