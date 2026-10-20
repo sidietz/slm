@@ -48,7 +48,17 @@ public class ContractControllerTest {
         Contract c2 = new Contract();
         String view2 = controller.submitContracts(c2, model);
         assertEquals("redirect:/contracts", view2);
-        
+
+        // contract termination
+        Contract cToTerminate = new Contract();
+        cToTerminate.setActive(true);
+        when(repo.findById(99L)).thenReturn(java.util.Optional.of(cToTerminate));
+        String viewTerm = controller.terminateContract(99L);
+        assertEquals("redirect:/contracts", viewTerm);
+        org.junit.jupiter.api.Assertions.assertFalse(cToTerminate.isActive());
+        org.junit.jupiter.api.Assertions.assertTrue(cToTerminate.isCanceled());
+        org.junit.jupiter.api.Assertions.assertNotNull(cToTerminate.getTerminationDate());
+
         // contractors
         String view3 = controller.addContractors(1L, model);
         assertEquals("contractors", view3);

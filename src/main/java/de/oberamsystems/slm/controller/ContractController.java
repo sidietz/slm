@@ -58,7 +58,23 @@ public class ContractController {
 		if (tt.isCanceled() && tt.getTerminationDate() == null) {
 			tt.setTerminationDate(tt.getInitialEndDate() != null ? tt.getInitialEndDate() : LocalDate.now());
 		}
+		if (tt.isCanceled() && tt.getTerminationDate() != null && !tt.getTerminationDate().isAfter(LocalDate.now())) {
+			tt.setActive(false);
+		}
 		repo.save(tt);
+		return "redirect:/contracts";
+	}
+	
+	@PostMapping("/contracts/{id}/terminate")
+	public String terminateContract(@PathVariable Long id) {
+		repo.findById(id).ifPresent(c -> {
+			c.setActive(false);
+			c.setCanceled(true);
+			if (c.getTerminationDate() == null) {
+				c.setTerminationDate(LocalDate.now());
+			}
+			repo.save(c);
+		});
 		return "redirect:/contracts";
 	}
 	
