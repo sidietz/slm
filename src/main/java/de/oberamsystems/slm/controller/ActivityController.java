@@ -43,6 +43,15 @@ public class ActivityController {
 	public String submitActivity(@ModelAttribute Activity activity, Model model) {
 		model.addAttribute("activities", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (activity.getType() == null || activity.getType().getId() == null) {
+			java.util.List<ActivityType> types = typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+			if (!types.isEmpty()) {
+				activity.setType(types.getFirst());
+			}
+		}
+		if (activity.getId() != null && (activity.getId() <= 0 || !repo.existsById(activity.getId()))) {
+			activity.setId(null);
+		}
 		repo.save(activity);
 		model.addAttribute("activity", activity);
 		return "redirect:/activities";
@@ -59,6 +68,9 @@ public class ActivityController {
 	@PostMapping("/activity-types")
 	public String submitActivityType(@ModelAttribute ActivityType type, Model model) {
 		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (type.getId() != null && (type.getId() <= 0 || !typeRepo.existsById(type.getId()))) {
+			type.setId(null);
+		}
 		typeRepo.save(type);
 		model.addAttribute("type", type);
 		return "redirect:/activity-types";

@@ -263,4 +263,72 @@ public class FinanceManagementIT extends AbstractIntegrationTest {
         assertEquals(89.95f, updated.getPrice(), 0.001);
         assertEquals(LocalDate.of(2026, 10, 12), updated.getPurchaseDate());
     }
+
+    @Test
+    void testModalCreateFlowWithEmptyIdParam() throws Exception {
+        // 1. Employer via modal with empty id
+        mockMvc.perform(post("/employers")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Modal Tech Ltd"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employers"));
+        assertEquals(1, employerRepository.count());
+
+        // 2. Contractor via modal with empty id
+        mockMvc.perform(post("/contractors")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Modal Cloud Services"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/contractors"));
+        assertEquals(1, contractorRepository.count());
+        Contractor c = contractorRepository.findAll().getFirst();
+
+        // 3. Contract via modal with empty id
+        mockMvc.perform(post("/contracts")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Cloud Hosting Enterprise")
+                        .param("contractor", c.getId().toString())
+                        .param("fee", "120.00")
+                        .param("startDate", "2026-10-01")
+                        .param("active", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/contracts"));
+        assertEquals(1, contractRepository.count());
+
+        // 4. Vendor via modal with empty id
+        mockMvc.perform(post("/vendors")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Modal Hardware Shop"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/vendors"));
+        assertEquals(1, vendorRepository.count());
+        Vendor v = vendorRepository.findAll().getFirst();
+
+        // 5. Purchase via modal with empty id and explicit vendor
+        mockMvc.perform(post("/purchases")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "4K Monitor")
+                        .param("vendor", v.getId().toString())
+                        .param("price", "399.00")
+                        .param("purchaseDate", "2026-10-21"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/purchases"));
+        assertEquals(1, purchaseRepository.count());
+
+        // 6. Purchase via modal with empty id and omitted vendor (tests fallback)
+        mockMvc.perform(post("/purchases")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "HDMI 2.1 Cable")
+                        .param("price", "19.99")
+                        .param("purchaseDate", "2026-10-21"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/purchases"));
+        assertEquals(2, purchaseRepository.count());
+    }
 }

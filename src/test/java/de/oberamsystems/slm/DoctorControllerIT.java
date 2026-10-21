@@ -272,4 +272,64 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
         assertEquals("Comprehensive knee MRI follow-up", updated.getComment());
         assertEquals(LocalDateTime.of(2026, 11, 5, 10, 45), updated.getEnd());
     }
+
+    @Test
+    void testModalCreateDoctorAndAppointmentWithEmptyIdParam() throws Exception {
+        // 1. Speciality via modal with empty id
+        mockMvc.perform(post("/specialities")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Neurology"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/specialities"));
+        assertEquals(1, specialityRepository.count());
+        Speciality spec = specialityRepository.findAll().getFirst();
+
+        // 2. Doctor via modal with empty id and explicit speciality
+        mockMvc.perform(post("/doctors")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("firstname", "Sigmund")
+                        .param("lastname", "Freud")
+                        .param("speciality", spec.getId().toString())
+                        .param("city", "Vienna"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/doctors"));
+        assertEquals(1, doctorRepository.count());
+
+        // 3. Doctor via modal with empty id and omitted speciality (tests fallback)
+        mockMvc.perform(post("/doctors")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("firstname", "Carl")
+                        .param("lastname", "Jung")
+                        .param("city", "Zurich"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/doctors"));
+        assertEquals(2, doctorRepository.count());
+        Doctor doc = doctorRepository.findAll().getFirst();
+
+        // 4. Appointment via modal with empty id and explicit doctor
+        mockMvc.perform(post("/appointments")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("doctor", doc.getId().toString())
+                        .param("start", "2026-11-10T14:00")
+                        .param("end", "2026-11-10T15:00")
+                        .param("comment", "Checkup"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/appointments"));
+        assertEquals(1, appointmentRepository.count());
+
+        // 5. Appointment via modal with empty id and omitted doctor (tests fallback)
+        mockMvc.perform(post("/appointments")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("start", "2026-11-12T09:00")
+                        .param("end", "2026-11-12T09:30")
+                        .param("comment", "Routine"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/appointments"));
+        assertEquals(2, appointmentRepository.count());
+    }
 }

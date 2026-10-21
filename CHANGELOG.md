@@ -18,6 +18,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added origin and destination station fallbacks in [`TrainTripController2.java`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java) defaulting to the first available station if null or omitted.
   - Updated [`train-trips.html`](src/main/resources/templates/train-trips.html) to remove legacy `onchange="updateLine(event)"` on `#modalSelectLine` which caused an unwanted page reload inside the modal dialog, populated origin and destination selects with all stations (`${stations != null && !#lists.isEmpty(stations) ? stations : traintrips}`), and ensured default selection in `openCreateTrainTripModal()`.
   - Added integration test `testAddTrainTripViaModalForm` in [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) verifying train trip creation with empty string `id`, `lineId`, and omitted line parameter fallback.
+- System-wide audit and hardening of all modal-first entity creation endpoints against primary key type conversion issues (`id=""`, `id <= 0`) and `NOT NULL` foreign key / column constraint violations:
+  - Universal defensive non-positive ID reset (`id <= 0` -> `null`) across all controller handlers: [`PurchaseController.java`](src/main/java/de/oberamsystems/slm/controller/PurchaseController.java), [`ActivityController.java`](src/main/java/de/oberamsystems/slm/controller/ActivityController.java), [`BookController.java`](src/main/java/de/oberamsystems/slm/controller/BookController.java), [`GameController.java`](src/main/java/de/oberamsystems/slm/controller/GameController.java), [`DoctorController.java`](src/main/java/de/oberamsystems/slm/controller/DoctorController.java), [`RouteController.java`](src/main/java/de/oberamsystems/slm/controller/RouteController.java), [`HabitController.java`](src/main/java/de/oberamsystems/slm/controller/HabitController.java), [`SportController.java`](src/main/java/de/oberamsystems/slm/controller/SportController.java), [`LearningController.java`](src/main/java/de/oberamsystems/slm/controller/LearningController.java), [`ContractController.java`](src/main/java/de/oberamsystems/slm/controller/ContractController.java), [`EmployerController.java`](src/main/java/de/oberamsystems/slm/controller/EmployerController.java), [`DiaryEntryController.java`](src/main/java/de/oberamsystems/slm/controller/DiaryEntryController.java), [`GratitudeController.java`](src/main/java/de/oberamsystems/slm/controller/GratitudeController.java), [`MoodController.java`](src/main/java/de/oberamsystems/slm/controller/MoodController.java), [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), [`HumanEventController.java`](src/main/java/de/oberamsystems/slm/controller/HumanEventController.java), [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java), and [`TrainTripController2.java`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java).
+  - Implemented safe relation and mandatory property fallbacks for unselected or omitted foreign keys and attributes:
+    - Vendor in `PurchaseController` ([`purchases.html`](src/main/resources/templates/purchases.html) updated with `required` and `*`).
+    - Speciality and Doctor in `DoctorController`.
+    - ActivityType in `ActivityController`.
+    - Author, Press, and ISBN in `BookController`.
+    - Publisher, Studio, DeviceType, Vendor, and Manufacturer in `GameController`.
+    - Start point, End point, Car, Route, Manufacturer, and Vendor in `RouteController`.
+    - Habit in `HabitController`.
+    - SportType in `SportController`.
+    - Human in `HumanEventController`.
+  - Added comprehensive modal creation integration tests validating `param("id", "")` and fallback handling across all domains:
+    - [`FinanceManagementIT.java`](src/test/java/de/oberamsystems/slm/FinanceManagementIT.java) (`testModalCreateFlowWithEmptyIdParam`)
+    - [`DoctorControllerIT.java`](src/test/java/de/oberamsystems/slm/DoctorControllerIT.java) (`testModalCreateDoctorAndAppointmentWithEmptyIdParam`)
+    - [`ActivitiesAndMediaIT.java`](src/test/java/de/oberamsystems/slm/ActivitiesAndMediaIT.java) (`testModalCreateActivitiesAndMediaWithEmptyIdParam`)
+    - [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) (`testModalCreateTransitAndMobilityWithEmptyIdParam`)
+    - [`WellnessAndHabitsIT.java`](src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java) (`testModalCreateWellnessAndHabitsWithEmptyIdParam`)
+    - [`PersonalJournalIT.java`](src/test/java/de/oberamsystems/slm/PersonalJournalIT.java) (`testModalCreateDiaryAndGratitudeWithEmptyIdParam`)
+    - [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java) (`testModalCreateCourseWithEmptyIdParam`)
+    - [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) (`testModalCreateHumanEventWithEmptyIdParam`)
 
 ## [0.0.3-rc7] - 2026-10-21
 

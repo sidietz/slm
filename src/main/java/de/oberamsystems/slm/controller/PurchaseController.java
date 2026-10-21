@@ -58,6 +58,15 @@ public class PurchaseController {
 		model.addAttribute("purchases", purchases);
 		model.addAttribute("totalPrice", totalPrice);
 		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (tt.getVendor() == null || tt.getVendor().getId() == null) {
+			List<Vendor> vendors = vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+			if (!vendors.isEmpty()) {
+				tt.setVendor(vendors.getFirst());
+			}
+		}
+		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
+			tt.setId(null);
+		}
 		repo.save(tt);
 		model.addAttribute("purchase", tt);
 		return "redirect:/purchases";

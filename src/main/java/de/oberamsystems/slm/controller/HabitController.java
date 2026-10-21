@@ -38,6 +38,9 @@ public class HabitController {
 	@PostMapping("/habits")
 	public String submitHabits(@ModelAttribute Habit ts, Model model) {
 		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (ts.getId() != null && (ts.getId() <= 0 || !repo.existsById(ts.getId()))) {
+			ts.setId(null);
+		}
 		repo.save(ts);
 		model.addAttribute("habit", ts);
 		return "redirect:/habits";
@@ -57,6 +60,15 @@ public class HabitController {
 	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model) {
 		model.addAttribute("habitentries", entryRepo.findAll(Sort.by(Sort.Direction.DESC, "lastDone")));
 		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (entry.getHabit() == null || entry.getHabit().getId() == null) {
+			java.util.List<Habit> habits = repo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+			if (!habits.isEmpty()) {
+				entry.setHabit(habits.getFirst());
+			}
+		}
+		if (entry.getId() != null && (entry.getId() <= 0 || !entryRepo.existsById(entry.getId()))) {
+			entry.setId(null);
+		}
 		entryRepo.save(entry);
 		model.addAttribute("habitentry", entry);
 		return "redirect:/habit-entries";

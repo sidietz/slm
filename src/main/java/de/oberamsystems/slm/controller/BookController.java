@@ -59,6 +59,24 @@ public class BookController {
 		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("types", BookTypeEnum.values());
 		model.addAttribute("genres", BookGenreEnum.values());
+		if (tt.getAuthor() == null || tt.getAuthor().getId() == null) {
+			List<Author> authors = authorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname"));
+			if (!authors.isEmpty()) {
+				tt.setAuthor(authors.getFirst());
+			}
+		}
+		if (tt.getPress() == null || tt.getPress().getId() == null) {
+			List<Press> presses = pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+			if (!presses.isEmpty()) {
+				tt.setPress(presses.getFirst());
+			}
+		}
+		if (tt.getIsbn() == null || tt.getIsbn().isBlank()) {
+			tt.setIsbn(String.format("%013d", Math.abs(System.nanoTime() % 10000000000000L)));
+		}
+		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
+			tt.setId(null);
+		}
 		repo.save(tt);
 		model.addAttribute("book", tt);
 		return "redirect:/books";
@@ -74,6 +92,9 @@ public class BookController {
 	@PostMapping("/authors")
 	public String submitAuthors(@ModelAttribute Author a, Model model) {
 		model.addAttribute("authors", authorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		if (a.getId() != null && (a.getId() <= 0 || !authorRepo.existsById(a.getId()))) {
+			a.setId(null);
+		}
 		authorRepo.save(a);
 		model.addAttribute("author", a);
 		return "redirect:/authors";
@@ -89,6 +110,9 @@ public class BookController {
 	@PostMapping("/press")
 	public String submitPresses(@ModelAttribute Press p, Model model) {
 		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (p.getId() != null && (p.getId() <= 0 || !pressRepo.existsById(p.getId()))) {
+			p.setId(null);
+		}
 		pressRepo.save(p);
 		model.addAttribute("press", p);
 		return "redirect:/press";

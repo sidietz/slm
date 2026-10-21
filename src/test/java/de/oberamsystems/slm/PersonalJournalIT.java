@@ -134,4 +134,27 @@ public class PersonalJournalIT extends AbstractIntegrationTest {
         Gratitude updatedGratitude = gratitudeRepository.findById(gratitudeId).orElseThrow();
         assertEquals("Grateful for smooth refactorings and robust test suites.", updatedGratitude.getDescription());
     }
+
+    @Test
+    void testModalCreateDiaryAndGratitudeWithEmptyIdParam() throws Exception {
+        // 1. Diary via modal with empty id
+        mockMvc.perform(post("/diary")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("date", "2026-10-21")
+                        .param("description", "Productive day working on SLM modal architecture."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/diary"));
+        assertEquals(1, diaryEntryRepository.count());
+
+        // 2. Gratitude via modal with empty id
+        mockMvc.perform(post("/gratitudes")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("date", "2026-10-21")
+                        .param("description", "Grateful for clear user feedback."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/gratitudes"));
+        assertEquals(1, gratitudeRepository.count());
+    }
 }

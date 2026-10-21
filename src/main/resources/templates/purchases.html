@@ -103,9 +103,8 @@
                                 <input type="text" id="modalTitle" name="title" class="form-control" placeholder="e.g. Mechanical Keyboard" required>
                             </div>
                             <div class="col-12">
-                                <label for="modalVendor" class="form-label fw-semibold">Vendor</label>
-                                <select id="modalVendor" name="vendor" class="form-select">
-                                    <option value="">— Select Vendor (optional) —</option>
+                                <label for="modalVendor" class="form-label fw-semibold">Vendor <span class="text-danger">*</span></label>
+                                <select id="modalVendor" name="vendor" class="form-select" required>
                                     <option th:each="s : ${vendors}" th:value="${s.id}" th:text="${s.name}"></option>
                                 </select>
                             </div>

@@ -145,7 +145,7 @@ public class TrainTripController2 {
 		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lines", getSortedLines());
 		log.warn(String.format("lineId: %d", tsdto.getLineId()));
-		TrainStation2 ts = (tsdto.getId() != null)
+		TrainStation2 ts = (tsdto.getId() != null && tsdto.getId() > 0 && stationRepo.existsById(tsdto.getId()))
 				? stationRepo.findById(tsdto.getId()).orElseGet(() -> new TrainStation2(tsdto.getDs100(), tsdto.getName()))
 				: new TrainStation2(tsdto.getDs100(), tsdto.getName());
 		ts.setDs100(tsdto.getDs100());
@@ -168,6 +168,9 @@ public class TrainTripController2 {
 	@PostMapping("/train-lines")
 	public String submitTrainLines(@ModelAttribute TrainLine line, Model model) {
 		model.addAttribute("lines", getSortedLines());
+		if (line.getId() != null && (line.getId() <= 0 || !lineRepo.existsById(line.getId()))) {
+			line.setId(null);
+		}
 		lineRepo.save(line);
 		model.addAttribute("trainline", new TrainLine());
 		return "redirect:/train-lines";

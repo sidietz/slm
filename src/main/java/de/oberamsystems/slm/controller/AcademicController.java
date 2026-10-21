@@ -87,6 +87,9 @@ public class AcademicController {
 		} else {
 			course.setLecturer(null);
 		}
+		if (course.getId() != null && (course.getId() <= 0 || !courseRepo.existsById(course.getId()))) {
+			course.setId(null);
+		}
 		courseRepo.save(course);
 		return "redirect:/courses";
 	}

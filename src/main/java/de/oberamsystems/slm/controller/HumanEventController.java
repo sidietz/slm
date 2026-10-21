@@ -68,15 +68,21 @@ public class HumanEventController {
 	public String saveEvent(@ModelAttribute HumanEvent event,
 	                         @RequestParam(required = false) Long humanId,
 	                         @RequestParam(required = false) Long secondaryHumanId) {
-		if (humanId != null) {
+		if (humanId != null && humanId > 0) {
 			humanRepo.findById(humanId).ifPresent(event::setHuman);
 		}
-		if (secondaryHumanId != null) {
+		if (secondaryHumanId != null && secondaryHumanId > 0) {
 			humanRepo.findById(secondaryHumanId).ifPresent(event::setSecondaryHuman);
+		}
+		if (event.getHuman() == null) {
+			humanRepo.findAll().stream().findFirst().ifPresent(event::setHuman);
 		}
 		if (event.getTitle() == null || event.getTitle().trim().isEmpty()) {
 			String contactName = event.getHuman() != null ? event.getHuman().getFullName() : "Contact";
 			event.setTitle(event.getEventType().getDisplayName() + " – " + contactName);
+		}
+		if (event.getId() != null && (event.getId() <= 0 || !eventRepo.existsById(event.getId()))) {
+			event.setId(null);
 		}
 		eventRepo.save(event);
 		log.info("Saved HumanEvent id={}, type={}, date={}", event.getId(), event.getEventType(), event.getEventDate());

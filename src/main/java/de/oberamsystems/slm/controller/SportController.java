@@ -44,6 +44,15 @@ public class SportController {
 	public String submitSports(@ModelAttribute SportSession sport, Model model) {
 		model.addAttribute("sports", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		model.addAttribute("sportTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (sport.getType() == null || sport.getType().getId() == null) {
+			java.util.List<SportType> types = typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+			if (!types.isEmpty()) {
+				sport.setType(types.getFirst());
+			}
+		}
+		if (sport.getId() != null && !repo.existsById(sport.getId())) {
+			sport.setId(null);
+		}
 		repo.save(sport);
 		model.addAttribute("sport", sport);
 		return "redirect:/sports";
@@ -60,6 +69,9 @@ public class SportController {
 	@PostMapping("/sport-types")
 	public String submitSportType(@ModelAttribute SportType type, Model model) {
 		model.addAttribute("sports", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (type.getId() != null && (type.getId() <= 0 || !typeRepo.existsById(type.getId()))) {
+			type.setId(null);
+		}
 		typeRepo.save(type);
 		model.addAttribute("type", type);
 		return "redirect:/sport-types";

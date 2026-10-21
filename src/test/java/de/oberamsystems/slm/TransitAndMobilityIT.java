@@ -450,5 +450,107 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
 
         assertEquals(2, trainTrip2Repository.count());
     }
+
+    @Test
+    void testModalCreateTransitAndMobilityWithEmptyIdParam() throws Exception {
+        // 1. Point via modal with empty id
+        mockMvc.perform(post("/points")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Odeonsplatz")
+                        .param("latitude", "48.1428")
+                        .param("longitude", "11.5775")
+                        .param("isHome", "false"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/points"));
+        assertEquals(1, pointRepository.count());
+        Point p1 = pointRepository.findAll().getFirst();
+
+        Point p2 = pointRepository.saveAndFlush(new Point(null, "Marienplatz", "City Center", 48.137154, 11.576124, true));
+
+        // 2. Route via modal with empty id and explicit start/end
+        mockMvc.perform(post("/routes")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "City Center Stroll")
+                        .param("start", p1.getId().toString())
+                        .param("end", p2.getId().toString())
+                        .param("driveDistance", "1.2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/routes"));
+        assertEquals(1, routeRepository.count());
+
+        // 3. Route via modal with empty id and omitted start/end (tests fallback)
+        mockMvc.perform(post("/routes")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "City Center Loop")
+                        .param("driveDistance", "2.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/routes"));
+        assertEquals(2, routeRepository.count());
+        Route route = routeRepository.findAll().getFirst();
+
+        // 4. Car via modal with empty id
+        Manufacturer m = manufacturerRepository.saveAndFlush(new Manufacturer(null, "BMW AG", "Munich", null));
+        Vendor v = vendorRepository.saveAndFlush(new Vendor(null, "BMW Niederlassung"));
+
+        mockMvc.perform(post("/cars")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "BMW 330e")
+                        .param("modelName", "330e Touring")
+                        .param("manufacturer", m.getId().toString())
+                        .param("vendor", v.getId().toString())
+                        .param("purchasePrice", "52000.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cars"));
+        assertEquals(1, carRepository.count());
+        Car car = carRepository.findAll().getFirst();
+
+        // 5. CarTrip via modal with empty id and explicit car/route
+        mockMvc.perform(post("/car-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("car", car.getId().toString())
+                        .param("route", route.getId().toString())
+                        .param("start", "2026-10-21T08:00")
+                        .param("end", "2026-10-21T08:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/car-trips"));
+        assertEquals(1, carTripRepository.count());
+
+        // 6. CarTrip via modal with empty id and omitted car/route (tests fallback)
+        mockMvc.perform(post("/car-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("start", "2026-10-21T18:00")
+                        .param("end", "2026-10-21T18:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/car-trips"));
+        assertEquals(2, carTripRepository.count());
+
+        // 7. TrainLine via modal with empty id
+        mockMvc.perform(post("/train-lines")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "U3")
+                        .param("description", "Moosach - Fürstenried West"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train-lines"));
+        assertEquals(1, trainLineRepository.count());
+        TrainLine line = trainLineRepository.findAll().getFirst();
+
+        // 8. TrainStation2 via modal with empty id
+        mockMvc.perform(post("/train-stations")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("ds100", "MMOP")
+                        .param("name", "München Moosach")
+                        .param("lineId", line.getId().toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train-stations"));
+        assertEquals(1, trainStation2Repository.count());
+    }
 }
 

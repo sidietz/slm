@@ -645,4 +645,172 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
         assertEquals("Half-Life: Alyx (Definitive)", updatedGame.getTitle());
         assertEquals(49.99F, updatedGame.getPrice());
     }
+
+    @Test
+    void testModalCreateActivitiesAndMediaWithEmptyIdParam() throws Exception {
+        // 1. ActivityType via modal with empty id
+        mockMvc.perform(post("/activity-types")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Coding Project"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/activity-types"));
+        assertEquals(1, activityTypeRepository.count());
+        ActivityType at = activityTypeRepository.findAll().getFirst();
+
+        // 2. Activity via modal with empty id and explicit type
+        mockMvc.perform(post("/activities")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Build Feature")
+                        .param("type", at.getId().toString())
+                        .param("start", "2026-10-21T09:00")
+                        .param("end", "2026-10-21T10:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/activities"));
+        assertEquals(1, activityRepository.count());
+
+        // 3. Activity via modal with empty id and omitted type (tests fallback)
+        mockMvc.perform(post("/activities")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Review PR")
+                        .param("start", "2026-10-21T11:00")
+                        .param("end", "2026-10-21T11:45"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/activities"));
+        assertEquals(2, activityRepository.count());
+
+        // 4. Author via modal with empty id
+        mockMvc.perform(post("/authors")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("firstname", "Robert")
+                        .param("lastname", "Martin"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/authors"));
+        assertEquals(1, authorRepository.count());
+        Author author = authorRepository.findAll().getFirst();
+
+        // 5. Press via modal with empty id
+        mockMvc.perform(post("/press")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Prentice Hall"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/press"));
+        assertEquals(1, pressRepository.count());
+        Press press = pressRepository.findAll().getFirst();
+
+        // 6. Book via modal with empty id and explicit author/press
+        mockMvc.perform(post("/books")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Clean Code")
+                        .param("isbn", "9780132350884")
+                        .param("author", author.getId().toString())
+                        .param("press", press.getId().toString())
+                        .param("pageCount", "464")
+                        .param("price", "42.50"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/books"));
+        assertEquals(1, bookRepository.count());
+
+        // 7. Book via modal with empty id and omitted author/press (tests fallback)
+        mockMvc.perform(post("/books")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Clean Architecture")
+                        .param("pageCount", "430")
+                        .param("price", "39.90"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/books"));
+        assertEquals(2, bookRepository.count());
+
+        // 8. Publisher via modal with empty id
+        mockMvc.perform(post("/publishers")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Nintendo Co."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/publishers"));
+        assertEquals(1, publisherRepository.count());
+        Publisher pub = publisherRepository.findAll().getFirst();
+
+        // 9. Studio via modal with empty id
+        mockMvc.perform(post("/studios")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Nintendo EPD"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/studios"));
+        assertEquals(1, studioRepository.count());
+        Studio stu = studioRepository.findAll().getFirst();
+
+        // 10. Game via modal with empty id and explicit publisher/studio
+        mockMvc.perform(post("/games")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Zelda: Tears of the Kingdom")
+                        .param("publisher", pub.getId().toString())
+                        .param("studio", stu.getId().toString())
+                        .param("price", "69.99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/games"));
+        assertEquals(1, gameRepository.count());
+
+        // 11. Game via modal with empty id and omitted publisher/studio (tests fallback)
+        mockMvc.perform(post("/games")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("title", "Super Mario Odyssey")
+                        .param("price", "59.99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/games"));
+        assertEquals(2, gameRepository.count());
+
+        // 12. Manufacturer & Vendor via modal
+        mockMvc.perform(post("/manufacturers")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Nintendo"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/manufacturers"));
+        assertEquals(1, manufacturerRepository.count());
+        Manufacturer man = manufacturerRepository.findAll().getFirst();
+
+        mockMvc.perform(post("/vendors")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "My Nintendo Store"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/vendors"));
+        assertEquals(1, vendorRepository.count());
+        Vendor ven = vendorRepository.findAll().getFirst();
+
+        DeviceType devType = deviceTypeRepository.saveAndFlush(new DeviceType(null, "Gaming Console"));
+
+        // 13. Device via modal with empty id and explicit relations
+        mockMvc.perform(post("/devices")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Nintendo Switch OLED")
+                        .param("manufacturer", man.getId().toString())
+                        .param("vendor", ven.getId().toString())
+                        .param("deviceType", devType.getId().toString())
+                        .param("price", "349.99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/devices"));
+        assertEquals(1, deviceRepository.count());
+
+        // 14. Device via modal with empty id and omitted relations (tests fallback)
+        mockMvc.perform(post("/devices")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Pro Controller")
+                        .param("price", "69.99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/devices"));
+        assertEquals(2, deviceRepository.count());
+    }
 }

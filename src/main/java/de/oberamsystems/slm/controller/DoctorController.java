@@ -57,6 +57,15 @@ public class DoctorController {
 	public String submitAppointment(@ModelAttribute Appointment app, Model model) {
 		model.addAttribute("appointments", repo.findAll(Sort.by(Sort.Direction.DESC, "departure")));
 		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		if (app.getDoctor() == null || app.getDoctor().getId() == null) {
+			List<Doctor> doctors = doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname")));
+			if (!doctors.isEmpty()) {
+				app.setDoctor(doctors.getFirst());
+			}
+		}
+		if (app.getId() != null && (app.getId() <= 0 || !repo.existsById(app.getId()))) {
+			app.setId(null);
+		}
 		repo.save(app);
 		model.addAttribute("appointment", app);
 		return "redirect:/appointments";
@@ -78,6 +87,12 @@ public class DoctorController {
 		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
 		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
 		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
+		if (doc.getSpeciality() == null || doc.getSpeciality().getId() == null) {
+			List<Speciality> specs = specRepo.findAll(Sort.by(Sort.Direction.ASC, "title"));
+			if (!specs.isEmpty()) {
+				doc.setSpeciality(specs.getFirst());
+			}
+		}
 		if (doc.getBasePoint() == null || doc.getBasePoint().getId() == null) {
 			pointRepo.findFirstByIsHomeTrue().ifPresent(doc::setBasePoint);
 		}
@@ -90,6 +105,9 @@ public class DoctorController {
 			} catch (Exception e) {
 				log.warn("Could not calculate doctor air distance via PostGIS: {}", e.getMessage());
 			}
+		}
+		if (doc.getId() != null && (doc.getId() <= 0 || !doctorRepo.existsById(doc.getId()))) {
+			doc.setId(null);
 		}
 		doctorRepo.save(doc);
 		model.addAttribute("doctor", doc);
@@ -105,6 +123,9 @@ public class DoctorController {
 
 	@PostMapping("/specialities")
 	public String submitSpecialities(@ModelAttribute Speciality spec, Model model) {
+		if (spec.getId() != null && (spec.getId() <= 0 || !specRepo.existsById(spec.getId()))) {
+			spec.setId(null);
+		}
 		specRepo.save(spec);
 		model.addAttribute("speciality", spec);
 		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
