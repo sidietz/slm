@@ -97,7 +97,7 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="modalSelectLine" class="form-label fw-semibold">Train Line <span class="text-danger">*</span></label>
-                                <select id="modalSelectLine" class="form-select" name="lineId" onchange="updateLine(event)">
+                                <select id="modalSelectLine" class="form-select" name="lineId">
                                     <option th:each="l : ${lines}" th:value="${l.id}"
                                             th:text="${l.name + ' - ' + l.description}" 
                                             th:selected="(${lineId} == ${l.id})"></option>
@@ -106,14 +106,14 @@
                             <div class="col-12">
                                 <label for="modalSelectOrigin" class="form-label fw-semibold">Origin Station</label>
                                 <select id="modalSelectOrigin" class="form-select" name="origin">
-                                    <option th:each="s : ${traintrips}" th:value="${s.id}"
+                                    <option th:each="s : ${stations != null && !#lists.isEmpty(stations) ? stations : traintrips}" th:value="${s.id}"
                                             th:text="${s.ds100 + ' - ' + s.name}"></option>
                                 </select>
                             </div>
                             <div class="col-12">
                                 <label for="modalSelectDestination" class="form-label fw-semibold">Destination Station</label>
                                 <select id="modalSelectDestination" class="form-select" name="destination">
-                                    <option th:each="s : ${traintrips}" th:value="${s.id}"
+                                    <option th:each="s : ${stations != null && !#lists.isEmpty(stations) ? stations : traintrips}" th:value="${s.id}"
                                             th:text="${s.ds100 + ' - ' + s.name}"></option>
                                 </select>
                             </div>
@@ -150,6 +150,10 @@
     function openCreateTrainTripModal() {
         document.getElementById('trainTripForm').reset();
         document.getElementById('modalTrainTripId').value = '';
+        const lineSelect = document.getElementById('modalSelectLine');
+        if (lineSelect && lineSelect.options.length > 0 && lineSelect.selectedIndex < 0) {
+            lineSelect.selectedIndex = 0;
+        }
         document.getElementById('trainTripModalLabel').innerHTML = '<i class="bi bi-train-front me-2 text-primary"></i>Add Train Trip';
         document.getElementById('modalTrainTripSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Train Trip';
         document.getElementById('modalTrainTripSubmitBtn').className = 'btn btn-primary fw-semibold px-4';

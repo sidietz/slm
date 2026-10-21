@@ -402,4 +402,53 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         assertEquals(LocalDateTime.of(2026, 10, 21, 10, 5), updatedTrip.getStart());
         assertEquals(LocalDateTime.of(2026, 10, 21, 10, 22), updatedTrip.getEnd());
     }
+
+    @Test
+    void testAddTrainTripViaModalForm() throws Exception {
+        TrainLine line = new TrainLine();
+        line.setName("RE1");
+        line.setDescription("Nürnberg Express");
+        line = trainLineRepository.saveAndFlush(line);
+
+        TrainStation2 origin = new TrainStation2("MH", "München Hbf");
+        origin = trainStation2Repository.saveAndFlush(origin);
+
+        TrainStation2 dest = new TrainStation2("NN", "Nürnberg Hbf");
+        dest = trainStation2Repository.saveAndFlush(dest);
+
+        // 1. Create train trip via modal POST with empty id and lineId
+        mockMvc.perform(post("/train-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("lineId", line.getId().toString())
+                        .param("origin", origin.getId().toString())
+                        .param("destination", dest.getId().toString())
+                        .param("start", "2026-10-21T07:19")
+                        .param("end", "2026-10-21T07:55"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("train-trips"))
+                .andExpect(model().attributeExists("traintrips2", "lineId", "lines", "stations"));
+
+        assertEquals(1, trainTrip2Repository.count());
+        TrainTrip2 savedTrip = trainTrip2Repository.findAll().getFirst();
+        assertNotNull(savedTrip.getId());
+        assertEquals(line.getId(), savedTrip.getLine().getId());
+        assertEquals(origin.getId(), savedTrip.getOrigin().getId());
+        assertEquals(dest.getId(), savedTrip.getDestination().getId());
+        assertEquals(LocalDateTime.of(2026, 10, 21, 7, 19), savedTrip.getStart());
+        assertEquals(LocalDateTime.of(2026, 10, 21, 7, 55), savedTrip.getEnd());
+
+        // 2. Also verify submitting with omitted lineId defaults to available line gracefully
+        mockMvc.perform(post("/train-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("origin", origin.getId().toString())
+                        .param("destination", dest.getId().toString())
+                        .param("start", "2026-10-21T08:00")
+                        .param("end", "2026-10-21T08:45"))
+                .andExpect(status().isOk());
+
+        assertEquals(2, trainTrip2Repository.count());
+    }
 }
+

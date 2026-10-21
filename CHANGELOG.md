@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Implemented global `StringTrimmerEditor(true)` in [`GlobalBindingInitializer.java`](src/main/java/de/oberamsystems/slm/config/GlobalBindingInitializer.java) converting empty or whitespace strings in form submissions directly to `null`.
   - Added defensive non-positive ID check (`human.getId() <= 0`) in [`HumanController.java`](src/main/java/de/oberamsystems/slm/controller/HumanController.java) to reset incoming empty IDs to `null` and safely guarded `syncHumanEvents`.
   - Added dedicated integration tests `testAddLecturerViaModalFormWithEmptyIdParam` in [`SocialAndPeopleIT.java`](src/test/java/de/oberamsystems/slm/SocialAndPeopleIT.java) and updated `testAddLecturerInHumansSection` in [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) to submit empty string `id` parameters.
+- Fixed `DataIntegrityViolationException: null value in column "line_id" of relation "train_trip2" violates not-null constraint` when creating train trips via the UI modal form:
+  - Enhanced line resolution in [`TrainTripController2.java`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java) across `lineId`, `line`, `tt.line.id`, and `id`, with automatic fallback to the first available line in `getSortedLines()`, guaranteeing `tt.getLine()` is never null.
+  - Added origin and destination station fallbacks in [`TrainTripController2.java`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java) defaulting to the first available station if null or omitted.
+  - Updated [`train-trips.html`](src/main/resources/templates/train-trips.html) to remove legacy `onchange="updateLine(event)"` on `#modalSelectLine` which caused an unwanted page reload inside the modal dialog, populated origin and destination selects with all stations (`${stations != null && !#lists.isEmpty(stations) ? stations : traintrips}`), and ensured default selection in `openCreateTrainTripModal()`.
+  - Added integration test `testAddTrainTripViaModalForm` in [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) verifying train trip creation with empty string `id`, `lineId`, and omitted line parameter fallback.
 
 ## [0.0.3-rc7] - 2026-10-21
 
