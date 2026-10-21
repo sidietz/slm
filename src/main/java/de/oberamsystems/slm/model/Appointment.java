@@ -3,7 +3,9 @@ package de.oberamsystems.slm.model;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.Type;
+import org.hibernate.generator.EventType;
 
 import io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType;
 import jakarta.persistence.*;
@@ -22,19 +24,22 @@ public class Appointment {
 	@Column(name = "arrival", columnDefinition = "TIMESTAMP")
 	private LocalDateTime arrival;
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "travel_duration", columnDefinition = "interval", insertable=false)
+	@Column(name = "travel_duration", columnDefinition = "interval", insertable = false, updatable = false)
+	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration travelDuration;
 	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime start;
 	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "duration", columnDefinition = "interval", insertable=false)
+	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
+	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration duration;
 	@Column(name = "arrival_home", columnDefinition = "TIMESTAMP")
 	private LocalDateTime arrivalHome;
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "complete_duration", columnDefinition = "interval", insertable=false)
+	@Column(name = "complete_duration", columnDefinition = "interval", insertable = false, updatable = false)
+	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration completeDuration;
 	private String comment;
 	
@@ -140,5 +145,9 @@ public class Appointment {
 
 	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

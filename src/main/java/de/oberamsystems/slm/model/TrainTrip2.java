@@ -29,7 +29,8 @@ public class TrainTrip2 {
 	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "duration", columnDefinition = "interval", insertable=false)
+	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
+	@org.hibernate.annotations.Generated(event = { org.hibernate.generator.EventType.INSERT, org.hibernate.generator.EventType.UPDATE })
 	private Duration duration;
 	
 	public TrainTrip2() {
@@ -96,5 +97,9 @@ public class TrainTrip2 {
 
 	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

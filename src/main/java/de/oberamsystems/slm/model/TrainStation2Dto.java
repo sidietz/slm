@@ -36,6 +36,10 @@ public class TrainStation2Dto {
 		return id;
 	}
 
+	public void setId(Long id) {
+		this.id = id;
+	}
+
 	public Long getLineId() {
 		return lineId;
 	}

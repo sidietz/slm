@@ -23,7 +23,8 @@ public class SleepTime {
 	private LocalDateTime getup;
 
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "sleeptime", columnDefinition = "interval", insertable=false)
+	@Column(name = "sleeptime", columnDefinition = "interval", insertable = false, updatable = false)
+	@org.hibernate.annotations.Generated(event = { org.hibernate.generator.EventType.INSERT, org.hibernate.generator.EventType.UPDATE })
 	private Duration sleeptime;
 	
 
@@ -59,6 +60,10 @@ public class SleepTime {
 
 	public long getId() {
 		return id;
+	}
+
+	public void setId(long id) {
+		this.id = id;
 	}
 	
 	@Override

@@ -24,7 +24,8 @@ public class CalendarEvent {
 	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "duration", columnDefinition = "interval", insertable=false)
+	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
+	@org.hibernate.annotations.Generated(event = { org.hibernate.generator.EventType.INSERT, org.hibernate.generator.EventType.UPDATE })
 	private Duration duration;
 	
 	public CalendarEvent() {
@@ -77,5 +78,9 @@ public class CalendarEvent {
 	
 	public Duration getDuration() {
 		return duration;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

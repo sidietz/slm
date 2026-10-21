@@ -59,11 +59,20 @@ public class TrainTripController2 {
 	}
 	
 	@PostMapping("/train-trips")
-	public String submitTrainTrips(@RequestParam(required = false) Long id, @ModelAttribute TrainTrip2 tt, Model model) {
-		id = id == null ? 0 : id;
+	public String submitTrainTrips(@RequestParam(required = false) Long id,
+								   @RequestParam(required = false) Long lineId,
+								   @ModelAttribute TrainTrip2 tt,
+								   Model model) {
+		Long effectiveLineId = (lineId != null && lineId > 0) ? lineId : ((tt.getLine() != null && tt.getLine().getId() != null) ? tt.getLine().getId() : id);
+		effectiveLineId = (effectiveLineId == null) ? 0L : effectiveLineId;
+		if (effectiveLineId > 0) {
+			tt.setLine(lineRepo.getReferenceById(effectiveLineId));
+		}
+		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
+			tt.setId(null);
+		}
 		model.addAttribute("traintrips2", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
-		tt.setLine(lineRepo.getReferenceById(id));
-		model.addAttribute("lineId", id);
+		model.addAttribute("lineId", effectiveLineId);
 		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lines", getSortedLines());
@@ -71,6 +80,10 @@ public class TrainTripController2 {
 		repo.save(tt);
 		model.addAttribute("traintrip", tt);
 		return "train-trips";
+	}
+
+	public String submitTrainTrips(Long id, TrainTrip2 tt, Model model) {
+		return submitTrainTrips(id, null, tt, model);
 	}
 	
 	@GetMapping("/train-stations")

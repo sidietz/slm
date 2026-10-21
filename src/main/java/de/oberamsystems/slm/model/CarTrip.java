@@ -5,7 +5,9 @@ import jakarta.persistence.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.Type;
+import org.hibernate.generator.EventType;
 
 import io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType;
 
@@ -31,7 +33,8 @@ public class CarTrip {
 	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
-	@Column(name = "duration", columnDefinition = "interval", insertable=false)
+	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
+	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration duration;
 	
 	public CarTrip() {
@@ -105,5 +108,9 @@ public class CarTrip {
 
 	public Long getId() {
 		return id;
-	}	
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
 }

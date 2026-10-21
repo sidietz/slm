@@ -147,4 +147,75 @@ public class SocialAndPeopleIT extends AbstractIntegrationTest {
                 .andExpect(content().string(containsString("ACM Keynote Presentation")))
                 .andExpect(content().string(containsString("Keynote on High-Performance Concurrent Architectures")));
     }
+
+    @Test
+    void testUpdateHumanFlow() throws Exception {
+        Human human = new Human();
+        human.setFirstname("Marie");
+        human.setLastname("Curie");
+        human.setCategory(HumanCategory.FRIEND);
+        human.setBirthday(java.sql.Date.valueOf("1867-11-07"));
+        human = humanRepository.saveAndFlush(human);
+        Long humanId = human.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/humans")
+                        .with(csrf())
+                        .param("id", String.valueOf(humanId))
+                        .param("firstname", "Marie")
+                        .param("lastname", "Skłodowska-Curie")
+                        .param("category", "FAMILY")
+                        .param("birthday", "1867-11-07"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("humans"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, humanRepository.count(), "Editing human must not duplicate row");
+        Human updated = humanRepository.findById(humanId).orElseThrow();
+        assertEquals("Skłodowska-Curie", updated.getLastname());
+        assertEquals(HumanCategory.FAMILY, updated.getCategory());
+    }
+
+    @Test
+    void testUpdateHumanEventFlow() throws Exception {
+        Human human = new Human();
+        human.setFirstname("Pierre");
+        human.setLastname("Curie");
+        human.setCategory(HumanCategory.FAMILY);
+        human.setBirthday(java.sql.Date.valueOf("1859-05-15"));
+        human = humanRepository.saveAndFlush(human);
+
+        HumanEvent event = new HumanEvent();
+        event.setHuman(human);
+        event.setTitle("Nobel Prize Banquet");
+        event.setEventType(EventType.CUSTOM);
+        event.setEventDate(LocalDate.of(2026, 12, 10));
+        event = humanEventRepository.saveAndFlush(event);
+        Long eventId = event.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/human-events")
+                        .with(csrf())
+                        .param("id", eventId.toString())
+                        .param("humanId", String.valueOf(human.getId()))
+                        .param("title", "Nobel Prize Gala Ceremony")
+                        .param("eventType", "CUSTOM")
+                        .param("eventDate", "2026-12-11"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/human-events"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, humanEventRepository.count(), "Editing human event must not duplicate row");
+        HumanEvent updated = humanEventRepository.findById(eventId).orElseThrow();
+        assertEquals("Nobel Prize Gala Ceremony", updated.getTitle());
+        assertEquals(LocalDate.of(2026, 12, 11), updated.getEventDate());
+    }
 }
