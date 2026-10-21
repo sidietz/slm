@@ -229,4 +229,81 @@ public class RefuelingIT extends AbstractIntegrationTest {
 		Refueling refreshed = refuelingRepository.findById(savedRefueling.getId()).orElseThrow();
 		assertNull(refreshed.getStation(), "Station foreign key on refueling must be set to NULL upon station deletion");
 	}
+
+	@Test
+	void testUpdateGasStationFlow() throws Exception {
+		GasStation gs = new GasStation();
+		gs.setName("Shell Station Süd");
+		gs.setBrand("Shell");
+		gs.setCity("München");
+		gs.setCountry("DE");
+		gs = gasStationRepository.saveAndFlush(gs);
+		UUID stationId = gs.getId();
+
+		mockMvc.perform(post("/stations/gas")
+						.with(csrf())
+						.param("id", stationId.toString())
+						.param("name", "Shell Express Süd")
+						.param("brand", "Shell Express")
+						.param("city", "Unterhaching")
+						.param("country", "DE"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/stations?tab=gas"));
+
+		assertEquals(1, gasStationRepository.count());
+		entityManager.clear();
+		GasStation updated = gasStationRepository.findById(stationId).orElseThrow();
+		assertEquals("Shell Express Süd", updated.getName());
+		assertEquals("Shell Express", updated.getBrand());
+		assertEquals("Unterhaching", updated.getCity());
+	}
+
+	@Test
+	void testUpdateRefuelingFlow() throws Exception {
+		GasStation gs = new GasStation();
+		gs.setName("Total Energies");
+		gs.setBrand("Total");
+		gs.setCity("München");
+		gs.setCountry("DE");
+		gs = gasStationRepository.saveAndFlush(gs);
+
+		Refueling r = new Refueling();
+		r.setCar(testCar);
+		r.setStation(gs);
+		r.setFuelingDate(LocalDateTime.of(2026, 10, 20, 11, 0));
+		r.setLiters(new BigDecimal("50.00"));
+		r.setTotalCost(new BigDecimal("85.00"));
+		r.setTripDistance(new BigDecimal("800.0"));
+		r.setFuelType(FuelType.DIESEL);
+		r.setFuelingType(FuelingType.FULL);
+		r.setCountry("DE");
+		r.autoCalculateMetrics();
+		r = refuelingRepository.saveAndFlush(r);
+		UUID refuelingId = r.getId();
+
+		mockMvc.perform(post("/refuelings")
+						.with(csrf())
+						.param("id", refuelingId.toString())
+						.param("carId", testCar.getId().toString())
+						.param("stationId", gs.getId().toString())
+						.param("fuelingDate", "2026-10-20T11:30")
+						.param("liters", "52.00")
+						.param("totalCost", "88.40")
+						.param("tripDistance", "820.0")
+						.param("fuelType", "DIESEL")
+						.param("fuelingType", "FULL")
+						.param("country", "DE")
+						.param("note", "Updated note"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/refuelings?carId=" + testCar.getId()));
+
+		assertEquals(1, refuelingRepository.count());
+		entityManager.clear();
+		Refueling updated = refuelingRepository.findById(refuelingId).orElseThrow();
+		assertEquals(new BigDecimal("52.00"), updated.getLiters());
+		assertEquals(new BigDecimal("88.40"), updated.getTotalCost());
+		assertEquals(new BigDecimal("820.00"), updated.getTripDistance());
+		assertEquals("Updated note", updated.getNote());
+		assertEquals(new BigDecimal("1.700"), updated.getCostPerLiter());
+	}
 }

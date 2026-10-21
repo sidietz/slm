@@ -34,6 +34,9 @@ public class PersonalJournalIT extends AbstractIntegrationTest {
     @Autowired
     private GratitudeRepository gratitudeRepository;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -93,5 +96,42 @@ public class PersonalJournalIT extends AbstractIntegrationTest {
         mockMvc.perform(get("/gratitudes"))
                 .andExpect(status().isOk())
                 .andExpect(content().string(containsString("Grateful for crisp autumn air")));
+    }
+
+    @Test
+    void testUpdateDiaryAndGratitudeFlow() throws Exception {
+        DiaryEntry diary = new DiaryEntry(null, LocalDate.of(2026, 10, 20), "Initial reflection");
+        diary = diaryEntryRepository.saveAndFlush(diary);
+        Long diaryId = diary.getId();
+
+        mockMvc.perform(post("/diary")
+                        .with(csrf())
+                        .param("id", diaryId.toString())
+                        .param("date", "2026-10-20")
+                        .param("description", "Updated architectural retrospective and roadmap."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/diary"));
+
+        assertEquals(1, diaryEntryRepository.count());
+        entityManager.clear();
+        DiaryEntry updatedDiary = diaryEntryRepository.findById(diaryId).orElseThrow();
+        assertEquals("Updated architectural retrospective and roadmap.", updatedDiary.getDescription());
+
+        Gratitude gratitude = new Gratitude(null, LocalDate.of(2026, 10, 20), "Initial gratitude");
+        gratitude = gratitudeRepository.saveAndFlush(gratitude);
+        Long gratitudeId = gratitude.getId();
+
+        mockMvc.perform(post("/gratitudes")
+                        .with(csrf())
+                        .param("id", gratitudeId.toString())
+                        .param("date", "2026-10-20")
+                        .param("description", "Grateful for smooth refactorings and robust test suites."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/gratitudes"));
+
+        assertEquals(1, gratitudeRepository.count());
+        entityManager.clear();
+        Gratitude updatedGratitude = gratitudeRepository.findById(gratitudeId).orElseThrow();
+        assertEquals("Grateful for smooth refactorings and robust test suites.", updatedGratitude.getDescription());
     }
 }

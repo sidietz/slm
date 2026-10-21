@@ -40,6 +40,9 @@ public class FinanceManagementIT extends AbstractIntegrationTest {
     @Autowired
     private PurchaseRepository purchaseRepository;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -142,5 +145,122 @@ public class FinanceManagementIT extends AbstractIntegrationTest {
         Purchase purchase = purchaseRepository.findAll().getFirst();
         assertEquals("USB-C NVMe Enclosure", purchase.getTitle());
         assertEquals(39.99f, purchase.getPrice(), 0.001);
+    }
+
+    @Test
+    void testUpdateEmployerFlow() throws Exception {
+        Employer employer = new Employer();
+        employer.setName("Old Tech Corp");
+        employer = employerRepository.saveAndFlush(employer);
+        Long empId = employer.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/employers")
+                        .with(csrf())
+                        .param("id", empId.toString())
+                        .param("name", "New Tech Holding GmbH"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/employers"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, employerRepository.count(), "Editing employer must not create duplicate row");
+        Employer updated = employerRepository.findById(empId).orElseThrow();
+        assertEquals("New Tech Holding GmbH", updated.getName());
+    }
+
+    @Test
+    void testUpdateContractorFlow() throws Exception {
+        Contractor contractor = new Contractor();
+        contractor.setName("Telekom Deutschland GmbH");
+        contractor = contractorRepository.saveAndFlush(contractor);
+        Long contractorId = contractor.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/contractors")
+                        .with(csrf())
+                        .param("id", contractorId.toString())
+                        .param("name", "Deutsche Telekom AG"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/contractors"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, contractorRepository.count(), "Editing contractor must not create duplicate row");
+        Contractor updated = contractorRepository.findById(contractorId).orElseThrow();
+        assertEquals("Deutsche Telekom AG", updated.getName());
+    }
+
+    @Test
+    void testUpdateVendorFlow() throws Exception {
+        Vendor vendor = new Vendor();
+        vendor.setName("Amazon DE");
+        vendor = vendorRepository.saveAndFlush(vendor);
+        Long vendorId = vendor.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/vendors")
+                        .with(csrf())
+                        .param("id", vendorId.toString())
+                        .param("name", "Amazon EU S.a.r.l."))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/vendors"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, vendorRepository.count(), "Editing vendor must not create duplicate row");
+        Vendor updated = vendorRepository.findById(vendorId).orElseThrow();
+        assertEquals("Amazon EU S.a.r.l.", updated.getName());
+    }
+
+    @Test
+    void testUpdatePurchaseFlow() throws Exception {
+        Vendor v1 = new Vendor();
+        v1.setName("Saturn Electronics");
+        v1 = vendorRepository.saveAndFlush(v1);
+
+        Vendor v2 = new Vendor();
+        v2.setName("MediaMarkt");
+        v2 = vendorRepository.saveAndFlush(v2);
+
+        Purchase purchase = new Purchase();
+        purchase.setTitle("Logitech MX Master 3S");
+        purchase.setVendor(v1);
+        purchase.setPrice(99.99f);
+        purchase.setPurchaseDate(LocalDate.of(2026, 10, 10));
+        purchase = purchaseRepository.saveAndFlush(purchase);
+        Long purchaseId = purchase.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/purchases")
+                        .with(csrf())
+                        .param("id", purchaseId.toString())
+                        .param("title", "Logitech MX Master 3S - Space Grey")
+                        .param("vendor", v2.getId().toString())
+                        .param("price", "89.95")
+                        .param("purchaseDate", "2026-10-12"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/purchases"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, purchaseRepository.count(), "Editing purchase must not create duplicate row");
+        Purchase updated = purchaseRepository.findById(purchaseId).orElseThrow();
+        assertEquals("Logitech MX Master 3S - Space Grey", updated.getTitle());
+        assertEquals(v2.getId(), updated.getVendor().getId());
+        assertEquals(89.95f, updated.getPrice(), 0.001);
+        assertEquals(LocalDate.of(2026, 10, 12), updated.getPurchaseDate());
     }
 }

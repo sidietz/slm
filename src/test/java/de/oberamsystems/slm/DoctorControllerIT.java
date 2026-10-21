@@ -38,6 +38,9 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
     @Autowired
     private AppointmentRepository appointmentRepository;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -164,5 +167,109 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
                 .andExpect(model().attributeExists("appointments", "fromDate", "toDate", "minDate", "maxDate"))
                 .andExpect(content().string(containsString("House")))
                 .andExpect(content().string(containsString("Routine blood work and checkup")));
+    }
+
+    @Test
+    void testUpdateSpecialityFlow() throws Exception {
+        Speciality spec = new Speciality(null, "Pediatrics");
+        spec = specialityRepository.saveAndFlush(spec);
+        Long specId = spec.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/specialities")
+                        .with(csrf())
+                        .param("id", specId.toString())
+                        .param("title", "Pediatric Medicine"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/specialities"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, specialityRepository.count(), "Editing speciality must not duplicate row");
+        Speciality updated = specialityRepository.findById(specId).orElseThrow();
+        assertEquals("Pediatric Medicine", updated.getTitle());
+    }
+
+    @Test
+    void testUpdateDoctorFlow() throws Exception {
+        Speciality spec = new Speciality(null, "Dermatology");
+        spec = specialityRepository.saveAndFlush(spec);
+
+        Doctor doc = new Doctor();
+        doc.setFirstname("Paul");
+        doc.setLastname("Ehrlich");
+        doc.setSpeciality(spec);
+        doc.setCity("Frankfurt");
+        doc.setPlz("60323");
+        doc = doctorRepository.saveAndFlush(doc);
+        Long docId = doc.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/doctors")
+                        .with(csrf())
+                        .param("id", docId.toString())
+                        .param("firstname", "Paul")
+                        .param("lastname", "Ehrlich")
+                        .param("speciality", spec.getId().toString())
+                        .param("city", "Frankfurt am Main")
+                        .param("plz", "60596")
+                        .param("place", "Theodor-Stern-Kai 7"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/doctors"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, doctorRepository.count(), "Editing doctor must not duplicate row");
+        Doctor updated = doctorRepository.findById(docId).orElseThrow();
+        assertEquals("Frankfurt am Main", updated.getCity());
+        assertEquals("60596", updated.getPlz());
+        assertEquals("Theodor-Stern-Kai 7", updated.getPlace());
+    }
+
+    @Test
+    void testUpdateAppointmentFlow() throws Exception {
+        Speciality spec = new Speciality(null, "Orthopedics");
+        spec = specialityRepository.saveAndFlush(spec);
+
+        Doctor doc = new Doctor();
+        doc.setFirstname("Max");
+        doc.setLastname("Planck");
+        doc.setSpeciality(spec);
+        doc = doctorRepository.saveAndFlush(doc);
+
+        Appointment appt = new Appointment();
+        appt.setDoctor(doc);
+        appt.setStart(LocalDateTime.of(2026, 11, 5, 10, 0));
+        appt.setEnd(LocalDateTime.of(2026, 11, 5, 10, 30));
+        appt.setComment("Initial consultation");
+        appt = appointmentRepository.saveAndFlush(appt);
+        Long apptId = appt.getId();
+
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(post("/appointments")
+                        .with(csrf())
+                        .param("id", apptId.toString())
+                        .param("doctor", doc.getId().toString())
+                        .param("start", "2026-11-05T10:00")
+                        .param("end", "2026-11-05T10:45")
+                        .param("comment", "Comprehensive knee MRI follow-up"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/appointments"));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertEquals(1, appointmentRepository.count(), "Editing appointment must not duplicate row");
+        Appointment updated = appointmentRepository.findById(apptId).orElseThrow();
+        assertEquals("Comprehensive knee MRI follow-up", updated.getComment());
+        assertEquals(LocalDateTime.of(2026, 11, 5, 10, 45), updated.getEnd());
     }
 }

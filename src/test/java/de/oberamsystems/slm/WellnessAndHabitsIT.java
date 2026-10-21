@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -38,6 +39,9 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
 
     @Autowired
     private SleepTimeRepository sleepTimeRepository;
+
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
 
     private MockMvc mockMvc;
 
@@ -163,5 +167,102 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$", hasSize(1)));
+    }
+
+    @Test
+    void testUpdateHabitFlowAndCompletionLogSafety() throws Exception {
+        Habit habit = new Habit(null, "Drink Water");
+        habit.setDescription("Drink 2L daily");
+        habit = habitRepository.saveAndFlush(habit);
+        Long habitId = habit.getId();
+
+        mockMvc.perform(post("/habits")
+                        .with(csrf())
+                        .param("id", habitId.toString())
+                        .param("name", "Hydration Goal")
+                        .param("description", "Drink 3L of water daily"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/habits"));
+
+        assertEquals(1, habitRepository.count());
+        entityManager.clear();
+        Habit updatedHabit = habitRepository.findById(habitId).orElseThrow();
+        assertEquals("Hydration Goal", updatedHabit.getName());
+        assertEquals("Drink 3L of water daily", updatedHabit.getDescription());
+
+        HabitEntry entry = new HabitEntry(null, updatedHabit, LocalDateTime.of(2026, 10, 20, 8, 0));
+        entry = habitEntryRepository.saveAndFlush(entry);
+        Long entryId = entry.getId();
+
+        mockMvc.perform(post("/habit-entries")
+                        .with(csrf())
+                        .param("id", entryId.toString())
+                        .param("habit", updatedHabit.getId().toString())
+                        .param("lastDone", "2026-10-20T08:45"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/habit-entries"));
+
+        assertEquals(1, habitEntryRepository.count());
+        entityManager.clear();
+        HabitEntry updatedEntry = habitEntryRepository.findById(entryId).orElseThrow();
+        assertEquals(LocalDateTime.of(2026, 10, 20, 8, 45), updatedEntry.getLastDone());
+
+        // Verify completion log endpoint safety: /last-done-habit-entries must ALWAYS append a new row
+        mockMvc.perform(post("/last-done-habit-entries")
+                        .with(csrf())
+                        .param("id", updatedHabit.getId().toString())
+                        .param("lastDone", "2026-10-20T12:00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/last-done-habit-entries"));
+
+        assertEquals(2, habitEntryRepository.count(), "Quick log via last-done-habit-entries must append a new entry");
+    }
+
+    @Test
+    void testUpdateMoodFlow() throws Exception {
+        Mood mood = new Mood(null, LocalDate.of(2026, 10, 20), 6, 5, 4);
+        mood = moodRepository.saveAndFlush(mood);
+        Long moodId = mood.getId();
+
+        mockMvc.perform(post("/moods")
+                        .with(csrf())
+                        .param("id", moodId.toString())
+                        .param("date", "2026-10-20")
+                        .param("happiness", "9")
+                        .param("impetus", "8")
+                        .param("stress", "2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/moods"));
+
+        assertEquals(1, moodRepository.count());
+        entityManager.clear();
+        Mood updatedMood = moodRepository.findById(moodId).orElseThrow();
+        assertEquals(9, updatedMood.getHappiness());
+        assertEquals(8, updatedMood.getImpetus());
+        assertEquals(2, updatedMood.getStress());
+    }
+
+    @Test
+    void testUpdateSleepTimeFlow() throws Exception {
+        SleepTime st = new SleepTime();
+        st.setGotobed(LocalDateTime.of(2026, 10, 19, 22, 30));
+        st.setGetup(LocalDateTime.of(2026, 10, 20, 6, 30));
+        st = sleepTimeRepository.saveAndFlush(st);
+        long stId = st.getId();
+
+        mockMvc.perform(post("/sleep-times")
+                        .with(csrf())
+                        .param("id", String.valueOf(stId))
+                        .param("gotobed", "2026-10-19T23:00")
+                        .param("getup", "2026-10-20T07:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sleep-times"));
+
+        assertEquals(1, sleepTimeRepository.count());
+        entityManager.clear();
+        SleepTime updatedSt = sleepTimeRepository.findById(stId).orElseThrow();
+        assertEquals(LocalDateTime.of(2026, 10, 19, 23, 0), updatedSt.getGotobed());
+        assertEquals(LocalDateTime.of(2026, 10, 20, 7, 30), updatedSt.getGetup());
+        assertNotNull(updatedSt.getSleeptime(), "Generated sleeptime interval must be auto-calculated on update");
     }
 }

@@ -54,6 +54,9 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
     @Autowired
     private TrainTrip2Repository trainTrip2Repository;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -214,5 +217,189 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
                 .andExpect(view().name("train-trips"));
 
         assertEquals(1, trainTrip2Repository.count());
+    }
+
+    @Test
+    void testUpdatePointAndRouteFlow() throws Exception {
+        Point p = new Point(null, "Initial Point", "Init Desc", 48.0, 11.0, false);
+        p = pointRepository.saveAndFlush(p);
+        Long pointId = p.getId();
+
+        mockMvc.perform(post("/points")
+                        .with(csrf())
+                        .param("id", pointId.toString())
+                        .param("name", "Updated Point")
+                        .param("description", "Updated Desc")
+                        .param("latitude", "48.15")
+                        .param("longitude", "11.58")
+                        .param("isHome", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/points"));
+
+        assertEquals(1, pointRepository.count());
+        entityManager.clear();
+        Point updatedPoint = pointRepository.findById(pointId).orElseThrow();
+        assertEquals("Updated Point", updatedPoint.getName());
+        assertEquals("Updated Desc", updatedPoint.getDescription());
+        assertEquals(48.15, updatedPoint.getLatitude());
+        assertEquals(11.58, updatedPoint.getLongitude());
+        assertEquals(true, updatedPoint.getIsHome());
+
+        Point endPoint = new Point(null, "End Point", "End Desc", 48.2, 11.6, false);
+        endPoint = pointRepository.saveAndFlush(endPoint);
+
+        Route r = new Route(null, "Route A", "Desc A", updatedPoint, endPoint, 10.0, 12.0);
+        r = routeRepository.saveAndFlush(r);
+        Long routeId = r.getId();
+
+        mockMvc.perform(post("/routes")
+                        .with(csrf())
+                        .param("id", routeId.toString())
+                        .param("name", "Route A Updated")
+                        .param("description", "Desc A Updated")
+                        .param("start", updatedPoint.getId().toString())
+                        .param("end", endPoint.getId().toString())
+                        .param("driveDistance", "15.5"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/routes"));
+
+        assertEquals(1, routeRepository.count());
+        entityManager.clear();
+        Route updatedRoute = routeRepository.findById(routeId).orElseThrow();
+        assertEquals("Route A Updated", updatedRoute.getName());
+        assertEquals("Desc A Updated", updatedRoute.getDescription());
+        assertEquals(15.5, updatedRoute.getDriveDistance());
+    }
+
+    @Test
+    void testUpdateCarAndTripFlow() throws Exception {
+        Manufacturer m = manufacturerRepository.saveAndFlush(new Manufacturer(null, "Audi AG", "Ingolstadt", LocalDate.of(1909, 7, 16)));
+        Vendor v = new Vendor(null, "Audi Zentrum");
+        v = vendorRepository.saveAndFlush(v);
+
+        Car car = new Car();
+        car.setName("Audi A4");
+        car.setModelName("A4 Avant");
+        car.setManufacturer(m);
+        car.setVendor(v);
+        car.setPurchasePrice(45000.0);
+        car = carRepository.saveAndFlush(car);
+        Long carId = car.getId();
+
+        mockMvc.perform(post("/cars")
+                        .with(csrf())
+                        .param("id", carId.toString())
+                        .param("name", "Audi A4 Black Edition")
+                        .param("modelName", "A4 Avant S-Line")
+                        .param("manufacturer", m.getId().toString())
+                        .param("vendor", v.getId().toString())
+                        .param("purchasePrice", "48000.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cars"));
+
+        assertEquals(1, carRepository.count());
+        entityManager.clear();
+        Car updatedCar = carRepository.findById(carId).orElseThrow();
+        assertEquals("Audi A4 Black Edition", updatedCar.getName());
+        assertEquals("A4 Avant S-Line", updatedCar.getModelName());
+        assertEquals(48000.0, updatedCar.getPurchasePrice());
+
+        Point p1 = pointRepository.saveAndFlush(new Point(null, "P1", "P1", 48.0, 11.0, true));
+        Point p2 = pointRepository.saveAndFlush(new Point(null, "P2", "P2", 48.5, 11.5, false));
+        Route route = routeRepository.saveAndFlush(new Route(null, "Commute", "Commute route", p1, p2, 50.0, 60.0));
+
+        CarTrip trip = new CarTrip();
+        trip.setCar(updatedCar);
+        trip.setRoute(route);
+        trip.setIsWayBack(false);
+        trip.setStart(LocalDateTime.of(2026, 10, 20, 8, 0));
+        trip.setEnd(LocalDateTime.of(2026, 10, 20, 9, 0));
+        trip = carTripRepository.saveAndFlush(trip);
+        Long tripId = trip.getId();
+
+        mockMvc.perform(post("/car-trips")
+                        .with(csrf())
+                        .param("id", tripId.toString())
+                        .param("car", updatedCar.getId().toString())
+                        .param("route", route.getId().toString())
+                        .param("start", "2026-10-20T08:30")
+                        .param("end", "2026-10-20T09:45")
+                        .param("isWayBack", "true"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/car-trips"));
+
+        assertEquals(1, carTripRepository.count());
+        entityManager.clear();
+        CarTrip updatedTrip = carTripRepository.findById(tripId).orElseThrow();
+        assertEquals(LocalDateTime.of(2026, 10, 20, 8, 30), updatedTrip.getStart());
+        assertEquals(LocalDateTime.of(2026, 10, 20, 9, 45), updatedTrip.getEnd());
+        assertEquals(true, updatedTrip.getIsWayBack());
+        assertNotNull(updatedTrip.getDuration());
+    }
+
+    @Test
+    void testUpdateTrainLineStationAndTripFlow() throws Exception {
+        TrainLine line = new TrainLine();
+        line.setName("S1");
+        line.setDescription("Freising/Airport");
+        line = trainLineRepository.saveAndFlush(line);
+        Long lineId = line.getId();
+
+        mockMvc.perform(post("/train-lines")
+                        .with(csrf())
+                        .param("id", lineId.toString())
+                        .param("name", "S1 (Airport Line)")
+                        .param("description", "Airport Express"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train-lines"));
+
+        assertEquals(1, trainLineRepository.count());
+        entityManager.clear();
+        TrainLine updatedLine = trainLineRepository.findById(lineId).orElseThrow();
+        assertEquals("S1 (Airport Line)", updatedLine.getName());
+        assertEquals("Airport Express", updatedLine.getDescription());
+
+        TrainStation2 station = new TrainStation2("MUC", "Munich Airport");
+        station.addLine(updatedLine);
+        station = trainStation2Repository.saveAndFlush(station);
+        Long stationId = station.getId();
+
+        mockMvc.perform(post("/train-stations")
+                        .with(csrf())
+                        .param("id", stationId.toString())
+                        .param("ds100", "MMAP")
+                        .param("name", "Flughafen München Terminal")
+                        .param("lineId", updatedLine.getId().toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train-stations"));
+
+        assertEquals(1, trainStation2Repository.count());
+        entityManager.clear();
+        TrainStation2 updatedStation = trainStation2Repository.findById(stationId).orElseThrow();
+        assertEquals("MMAP", updatedStation.getDs100());
+        assertEquals("Flughafen München Terminal", updatedStation.getName());
+
+        TrainStation2 dest = trainStation2Repository.saveAndFlush(new TrainStation2("MNO", "Neufahrn"));
+
+        TrainTrip2 tt = new TrainTrip2(null, updatedLine, updatedStation, dest,
+                LocalDateTime.of(2026, 10, 21, 10, 0), LocalDateTime.of(2026, 10, 21, 10, 15), null);
+        tt = trainTrip2Repository.saveAndFlush(tt);
+        Long tripId = tt.getId();
+
+        mockMvc.perform(post("/train-trips")
+                        .with(csrf())
+                        .param("id", tripId.toString())
+                        .param("lineId", updatedLine.getId().toString())
+                        .param("origin", updatedStation.getId().toString())
+                        .param("destination", dest.getId().toString())
+                        .param("start", "2026-10-21T10:05")
+                        .param("end", "2026-10-21T10:22"))
+                .andExpect(status().isOk());
+
+        assertEquals(1, trainTrip2Repository.count());
+        entityManager.clear();
+        TrainTrip2 updatedTrip = trainTrip2Repository.findById(tripId).orElseThrow();
+        assertEquals(LocalDateTime.of(2026, 10, 21, 10, 5), updatedTrip.getStart());
+        assertEquals(LocalDateTime.of(2026, 10, 21, 10, 22), updatedTrip.getEnd());
     }
 }

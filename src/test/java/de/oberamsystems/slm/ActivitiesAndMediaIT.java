@@ -84,6 +84,9 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
     @Autowired
     private ReadingSessionRepository readingSessionRepository;
 
+    @Autowired
+    private jakarta.persistence.EntityManager entityManager;
+
     private MockMvc mockMvc;
 
     @BeforeEach
@@ -394,5 +397,252 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
         assertEquals(1, readingSessionRepository.count());
         ReadingSession saved = readingSessionRepository.findAll().getFirst();
         assertEquals(50.0F, saved.getReadingSpeed());
+    }
+
+    @Test
+    void testUpdateActivityAndTypeFlow() throws Exception {
+        ActivityType type = new ActivityType(null, "Woodworking");
+        type = activityTypeRepository.saveAndFlush(type);
+        Long typeId = type.getId();
+
+        mockMvc.perform(post("/activity-types")
+                        .with(csrf())
+                        .param("id", typeId.toString())
+                        .param("name", "Fine Woodworking"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/activity-types"));
+
+        assertEquals(1, activityTypeRepository.count());
+        entityManager.clear();
+        ActivityType updatedType = activityTypeRepository.findById(typeId).orElseThrow();
+        assertEquals("Fine Woodworking", updatedType.getName());
+
+        Activity act = new Activity();
+        act.setType(updatedType);
+        act.setTitle("Oak Table Build");
+        act.setLocation("Workshop");
+        act.setStart(LocalDateTime.of(2026, 10, 20, 14, 0));
+        act.setEnd(LocalDateTime.of(2026, 10, 20, 16, 0));
+        act = activityRepository.saveAndFlush(act);
+        Long actId = act.getId();
+
+        mockMvc.perform(post("/activities")
+                        .with(csrf())
+                        .param("id", actId.toString())
+                        .param("type", updatedType.getId().toString())
+                        .param("title", "Dining Table Finishing")
+                        .param("location", "Main Studio")
+                        .param("start", "2026-10-20T14:30")
+                        .param("end", "2026-10-20T17:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/activities"));
+
+        assertEquals(1, activityRepository.count());
+        entityManager.clear();
+        Activity updatedAct = activityRepository.findById(actId).orElseThrow();
+        assertEquals("Dining Table Finishing", updatedAct.getTitle());
+        assertEquals("Main Studio", updatedAct.getLocation());
+        assertEquals(LocalDateTime.of(2026, 10, 20, 14, 30), updatedAct.getStart());
+        assertEquals(LocalDateTime.of(2026, 10, 20, 17, 30), updatedAct.getEnd());
+        assertNotNull(updatedAct.getDuration());
+    }
+
+    @Test
+    void testUpdateBookEcosystemFlow() throws Exception {
+        Author author = new Author();
+        author.setFirstname("Martin");
+        author.setLastname("Fowler");
+        author.setBirthday(java.time.LocalDate.of(1963, 12, 18));
+        author = authorRepository.saveAndFlush(author);
+        Long authorId = author.getId();
+
+        mockMvc.perform(post("/authors")
+                        .with(csrf())
+                        .param("id", authorId.toString())
+                        .param("firstname", "Martin")
+                        .param("lastname", "Fowler (Refactored)")
+                        .param("birthday", "1963-12-18"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/authors"));
+
+        assertEquals(1, authorRepository.count());
+        entityManager.clear();
+        Author updatedAuthor = authorRepository.findById(authorId).orElseThrow();
+        assertEquals("Fowler (Refactored)", updatedAuthor.getLastname());
+
+        Press press = new Press();
+        press.setName("O'Reilly Media");
+        press.setHq("Sebastopol, CA");
+        press = pressRepository.saveAndFlush(press);
+        Long pressId = press.getId();
+
+        mockMvc.perform(post("/press")
+                        .with(csrf())
+                        .param("id", pressId.toString())
+                        .param("name", "O'Reilly Media Inc.")
+                        .param("hq", "Sebastopol, California"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/press"));
+
+        assertEquals(1, pressRepository.count());
+        entityManager.clear();
+        Press updatedPress = pressRepository.findById(pressId).orElseThrow();
+        assertEquals("O'Reilly Media Inc.", updatedPress.getName());
+        assertEquals("Sebastopol, California", updatedPress.getHq());
+
+        Book book = new Book();
+        book.setTitle("Refactoring");
+        book.setIsbn("9780201485677");
+        book.setAuthor(updatedAuthor);
+        book.setPress(updatedPress);
+        book.setPageCount(431);
+        book.setPrice(49.99F);
+        book = bookRepository.saveAndFlush(book);
+        Long bookId = book.getId();
+
+        mockMvc.perform(post("/books")
+                        .with(csrf())
+                        .param("id", bookId.toString())
+                        .param("title", "Refactoring (2nd Edition)")
+                        .param("isbn", "9780201485677")
+                        .param("author", updatedAuthor.getId().toString())
+                        .param("press", updatedPress.getId().toString())
+                        .param("pageCount", "448")
+                        .param("price", "54.99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/books"));
+
+        assertEquals(1, bookRepository.count());
+        entityManager.clear();
+        Book updatedBook = bookRepository.findById(bookId).orElseThrow();
+        assertEquals("Refactoring (2nd Edition)", updatedBook.getTitle());
+        assertEquals(448, updatedBook.getPageCount());
+        assertEquals(54.99F, updatedBook.getPrice());
+
+        ReadingSession rs = new ReadingSession();
+        rs.setBook(updatedBook);
+        rs.setStart(LocalDateTime.of(2026, 10, 20, 19, 0));
+        rs.setEnd(LocalDateTime.of(2026, 10, 20, 20, 0));
+        rs.setStartPageCount(1);
+        rs.setEndPageCount(31);
+        rs.setReadingSpeed(30.0F);
+        rs = readingSessionRepository.saveAndFlush(rs);
+        java.util.UUID sessionId = rs.getId();
+
+        mockMvc.perform(post("/reading-sessions")
+                        .with(csrf())
+                        .param("id", sessionId.toString())
+                        .param("book", updatedBook.getId().toString())
+                        .param("startPageCount", "1")
+                        .param("endPageCount", "61")
+                        .param("breakMinutes", "0")
+                        .param("start", "2026-10-20T19:00")
+                        .param("end", "2026-10-20T20:00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/reading-sessions"));
+
+        assertEquals(1, readingSessionRepository.count());
+        entityManager.clear();
+        ReadingSession updatedSession = readingSessionRepository.findById(sessionId).orElseThrow();
+        assertEquals(61, updatedSession.getEndPageCount());
+        assertEquals(60.0F, updatedSession.getReadingSpeed());
+    }
+
+    @Test
+    void testUpdateGameEcosystemFlow() throws Exception {
+        Publisher publisher = new Publisher();
+        publisher.setName("Valve");
+        publisher.setHq("Bellevue");
+        publisher = publisherRepository.saveAndFlush(publisher);
+        Long publisherId = publisher.getId();
+
+        mockMvc.perform(post("/publishers")
+                        .with(csrf())
+                        .param("id", publisherId.toString())
+                        .param("name", "Valve Corporation")
+                        .param("hq", "Bellevue, WA"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/publishers"));
+
+        assertEquals(1, publisherRepository.count());
+        entityManager.clear();
+        Publisher updatedPublisher = publisherRepository.findById(publisherId).orElseThrow();
+        assertEquals("Valve Corporation", updatedPublisher.getName());
+
+        Studio studio = new Studio();
+        studio.setName("Valve Software");
+        studio.setHq("Bellevue");
+        studio = studioRepository.saveAndFlush(studio);
+        Long studioId = studio.getId();
+
+        mockMvc.perform(post("/studios")
+                        .with(csrf())
+                        .param("id", studioId.toString())
+                        .param("name", "Valve Studios")
+                        .param("hq", "Bellevue, WA"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/studios"));
+
+        assertEquals(1, studioRepository.count());
+        entityManager.clear();
+        Studio updatedStudio = studioRepository.findById(studioId).orElseThrow();
+        assertEquals("Valve Studios", updatedStudio.getName());
+
+        Manufacturer m = manufacturerRepository.saveAndFlush(new Manufacturer(null, "Valve Corp", "Bellevue", null));
+        Vendor v = vendorRepository.saveAndFlush(new Vendor(null, "Steam Store"));
+        DeviceType dt = deviceTypeRepository.saveAndFlush(new DeviceType(null, "Handheld Console"));
+
+        Device dev = new Device();
+        dev.setName("Steam Deck");
+        dev.setModelName("LCD 512GB");
+        dev.setManufacturer(m);
+        dev.setVendor(v);
+        dev.setDeviceType(dt);
+        dev.setPrice(549.0F);
+        dev = deviceRepository.saveAndFlush(dev);
+        Long devId = dev.getId();
+
+        mockMvc.perform(post("/devices")
+                        .with(csrf())
+                        .param("id", devId.toString())
+                        .param("name", "Steam Deck OLED")
+                        .param("modelName", "OLED 1TB")
+                        .param("manufacturer", m.getId().toString())
+                        .param("vendor", v.getId().toString())
+                        .param("deviceType", dt.getId().toString())
+                        .param("price", "649.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/devices"));
+
+        assertEquals(1, deviceRepository.count());
+        entityManager.clear();
+        Device updatedDev = deviceRepository.findById(devId).orElseThrow();
+        assertEquals("Steam Deck OLED", updatedDev.getName());
+        assertEquals("OLED 1TB", updatedDev.getModelName());
+        assertEquals(649.0F, updatedDev.getPrice());
+
+        Game game = new Game();
+        game.setTitle("Half-Life: Alyx");
+        game.setPublisher(updatedPublisher);
+        game.setStudio(updatedStudio);
+        game.setPrice(59.99F);
+        game = gameRepository.saveAndFlush(game);
+        Long gameId = game.getId();
+
+        mockMvc.perform(post("/games")
+                        .with(csrf())
+                        .param("id", gameId.toString())
+                        .param("title", "Half-Life: Alyx (Definitive)")
+                        .param("publisher", updatedPublisher.getId().toString())
+                        .param("studio", updatedStudio.getId().toString())
+                        .param("price", "49.99"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/games"));
+
+        assertEquals(1, gameRepository.count());
+        entityManager.clear();
+        Game updatedGame = gameRepository.findById(gameId).orElseThrow();
+        assertEquals("Half-Life: Alyx (Definitive)", updatedGame.getTitle());
+        assertEquals(49.99F, updatedGame.getPrice());
     }
 }

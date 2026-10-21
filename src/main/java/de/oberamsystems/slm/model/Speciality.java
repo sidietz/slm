@@ -31,6 +31,10 @@ public class Speciality {
 		return id;
 	}
 
+	public void setId(Long id) {
+		this.id = id;
+	}
+
 	@Override
 	public String toString() {
 		return String.format("Speciality [id=%s, title=%s]", id, title);
