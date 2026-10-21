@@ -670,7 +670,7 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/activities"));
         assertEquals(1, activityRepository.count());
 
-        // 3. Activity via modal with empty id and omitted type (tests fallback)
+        // 3. Activity via modal with empty id and omitted type (must be REJECTED via validation)
         mockMvc.perform(post("/activities")
                         .with(csrf())
                         .param("id", "")
@@ -678,8 +678,9 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
                         .param("start", "2026-10-21T11:00")
                         .param("end", "2026-10-21T11:45"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/activities"));
-        assertEquals(2, activityRepository.count());
+                .andExpect(redirectedUrl("/activities"))
+                .andExpect(flash().attribute("errorMessage", "Activity type is required."));
+        assertEquals(1, activityRepository.count(), "Activity without type must be rejected");
 
         // 4. Author via modal with empty id
         mockMvc.perform(post("/authors")
@@ -716,7 +717,7 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/books"));
         assertEquals(1, bookRepository.count());
 
-        // 7. Book via modal with empty id and omitted author/press (tests fallback)
+        // 7. Book via modal with empty id and omitted author/press (must be REJECTED via validation)
         mockMvc.perform(post("/books")
                         .with(csrf())
                         .param("id", "")
@@ -724,8 +725,9 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
                         .param("pageCount", "430")
                         .param("price", "39.90"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/books"));
-        assertEquals(2, bookRepository.count());
+                .andExpect(redirectedUrl("/books"))
+                .andExpect(flash().attribute("errorMessage", "Author is required."));
+        assertEquals(1, bookRepository.count(), "Book without author must be rejected");
 
         // 8. Publisher via modal with empty id
         mockMvc.perform(post("/publishers")
@@ -759,15 +761,16 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/games"));
         assertEquals(1, gameRepository.count());
 
-        // 11. Game via modal with empty id and omitted publisher/studio (tests fallback)
+        // 11. Game via modal with empty id and omitted publisher/studio (must be REJECTED via validation)
         mockMvc.perform(post("/games")
                         .with(csrf())
                         .param("id", "")
                         .param("title", "Super Mario Odyssey")
                         .param("price", "59.99"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/games"));
-        assertEquals(2, gameRepository.count());
+                .andExpect(redirectedUrl("/games"))
+                .andExpect(flash().attribute("errorMessage", "Publisher is required."));
+        assertEquals(1, gameRepository.count(), "Game without publisher must be rejected");
 
         // 12. Manufacturer & Vendor via modal
         mockMvc.perform(post("/manufacturers")
@@ -803,14 +806,15 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/devices"));
         assertEquals(1, deviceRepository.count());
 
-        // 14. Device via modal with empty id and omitted relations (tests fallback)
+        // 14. Device via modal with empty id and omitted relations (must be REJECTED via validation)
         mockMvc.perform(post("/devices")
                         .with(csrf())
                         .param("id", "")
                         .param("name", "Pro Controller")
                         .param("price", "69.99"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/devices"));
-        assertEquals(2, deviceRepository.count());
+                .andExpect(redirectedUrl("/devices"))
+                .andExpect(flash().attribute("errorMessage", "Device type is required."));
+        assertEquals(1, deviceRepository.count(), "Device without relations must be rejected");
     }
 }

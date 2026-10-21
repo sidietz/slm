@@ -18,6 +18,11 @@
             <a href="/points" class="btn btn-outline-secondary btn-sm"><i class="bi bi-geo-alt me-1"></i> Points</a>
         </div>
 
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}">Validation error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
         <div class="row g-4 mb-5">
             <!-- Full-Width Drive History Table Card -->
             <div class="col-12">

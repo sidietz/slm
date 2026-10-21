@@ -320,7 +320,7 @@ public class FinanceManagementIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/purchases"));
         assertEquals(1, purchaseRepository.count());
 
-        // 6. Purchase via modal with empty id and omitted vendor (tests fallback)
+        // 6. Purchase via modal with empty id and omitted vendor (must be REJECTED via validation)
         mockMvc.perform(post("/purchases")
                         .with(csrf())
                         .param("id", "")
@@ -328,7 +328,8 @@ public class FinanceManagementIT extends AbstractIntegrationTest {
                         .param("price", "19.99")
                         .param("purchaseDate", "2026-10-21"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/purchases"));
-        assertEquals(2, purchaseRepository.count());
+                .andExpect(redirectedUrl("/purchases"))
+                .andExpect(flash().attribute("errorMessage", "Vendor is required for purchase."));
+        assertEquals(1, purchaseRepository.count(), "Purchase without vendor must be rejected");
     }
 }

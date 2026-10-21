@@ -20,25 +20,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Added integration test `testAddTrainTripViaModalForm` in [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) verifying train trip creation with empty string `id`, `lineId`, and omitted line parameter fallback.
 - System-wide audit and hardening of all modal-first entity creation endpoints against primary key type conversion issues (`id=""`, `id <= 0`) and `NOT NULL` foreign key / column constraint violations:
   - Universal defensive non-positive ID reset (`id <= 0` -> `null`) across all controller handlers: [`PurchaseController.java`](src/main/java/de/oberamsystems/slm/controller/PurchaseController.java), [`ActivityController.java`](src/main/java/de/oberamsystems/slm/controller/ActivityController.java), [`BookController.java`](src/main/java/de/oberamsystems/slm/controller/BookController.java), [`GameController.java`](src/main/java/de/oberamsystems/slm/controller/GameController.java), [`DoctorController.java`](src/main/java/de/oberamsystems/slm/controller/DoctorController.java), [`RouteController.java`](src/main/java/de/oberamsystems/slm/controller/RouteController.java), [`HabitController.java`](src/main/java/de/oberamsystems/slm/controller/HabitController.java), [`SportController.java`](src/main/java/de/oberamsystems/slm/controller/SportController.java), [`LearningController.java`](src/main/java/de/oberamsystems/slm/controller/LearningController.java), [`ContractController.java`](src/main/java/de/oberamsystems/slm/controller/ContractController.java), [`EmployerController.java`](src/main/java/de/oberamsystems/slm/controller/EmployerController.java), [`DiaryEntryController.java`](src/main/java/de/oberamsystems/slm/controller/DiaryEntryController.java), [`GratitudeController.java`](src/main/java/de/oberamsystems/slm/controller/GratitudeController.java), [`MoodController.java`](src/main/java/de/oberamsystems/slm/controller/MoodController.java), [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), [`HumanEventController.java`](src/main/java/de/oberamsystems/slm/controller/HumanEventController.java), [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java), and [`TrainTripController2.java`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java).
-  - Implemented safe relation and mandatory property fallbacks for unselected or omitted foreign keys and attributes:
-    - Vendor in `PurchaseController` ([`purchases.html`](src/main/resources/templates/purchases.html) updated with `required` and `*`).
-    - Speciality and Doctor in `DoctorController`.
-    - ActivityType in `ActivityController`.
-    - Author, Press, and ISBN in `BookController`.
-    - Publisher, Studio, DeviceType, Vendor, and Manufacturer in `GameController`.
-    - Start point, End point, Car, Route, Manufacturer, and Vendor in `RouteController`.
-    - Habit in `HabitController`.
-    - SportType in `SportController`.
-    - Human in `HumanEventController`.
-  - Added comprehensive modal creation integration tests validating `param("id", "")` and fallback handling across all domains:
-    - [`FinanceManagementIT.java`](src/test/java/de/oberamsystems/slm/FinanceManagementIT.java) (`testModalCreateFlowWithEmptyIdParam`)
+  - Eliminated arbitrary entity fallbacks and implemented strict validation rejection across all creation endpoints:
+    - Replaced silent fallback assignment (`*.getFirst()`, synthetic placeholder ISBNs) with explicit validation rejection, aborting database persistence and communicating failure via flash attribute `errorMessage` to the client.
+    - Protected endpoints and required fields:
+      - [`DoctorController.java`](src/main/java/de/oberamsystems/slm/controller/DoctorController.java): rejected appointments with missing/invalid Doctor, and doctors with missing/invalid Speciality.
+      - [`PurchaseController.java`](src/main/java/de/oberamsystems/slm/controller/PurchaseController.java): rejected purchases with missing/invalid Vendor.
+      - [`ActivityController.java`](src/main/java/de/oberamsystems/slm/controller/ActivityController.java): rejected activities with missing/invalid ActivityType.
+      - [`BookController.java`](src/main/java/de/oberamsystems/slm/controller/BookController.java): rejected books with missing/invalid Author, missing/invalid Press, or blank/missing ISBN.
+      - [`GameController.java`](src/main/java/de/oberamsystems/slm/controller/GameController.java): rejected games with missing/invalid Publisher or Studio; rejected devices with missing/invalid DeviceType, Vendor, or Manufacturer.
+      - [`RouteController.java`](src/main/java/de/oberamsystems/slm/controller/RouteController.java): rejected routes with missing/invalid Start or End points; rejected car trips with missing/invalid Car or Route; rejected cars with missing/invalid Manufacturer or Vendor.
+      - [`HabitController.java`](src/main/java/de/oberamsystems/slm/controller/HabitController.java): rejected habit entries with missing/invalid Habit.
+      - [`SportController.java`](src/main/java/de/oberamsystems/slm/controller/SportController.java): rejected sport sessions with missing/invalid SportType.
+      - [`HumanEventController.java`](src/main/java/de/oberamsystems/slm/controller/HumanEventController.java): rejected human events with missing/invalid primary contact.
+      - [`TrainTripController2.java`](src/main/java/de/oberamsystems/slm/controller/TrainTripController2.java): rejected train trips with missing/invalid TrainLine, Origin station, or Destination station.
+  - Added dismissible Bootstrap alert banners (`<div th:if="${errorMessage}" class="alert alert-danger ...">`) across all affected Thymeleaf templates: [`doctors.html`](src/main/resources/templates/doctors.html), [`appointments.html`](src/main/resources/templates/appointments.html), [`purchases.html`](src/main/resources/templates/purchases.html), [`books.html`](src/main/resources/templates/books.html), [`games.html`](src/main/resources/templates/games.html), [`devices.html`](src/main/resources/templates/devices.html), [`routes.html`](src/main/resources/templates/routes.html), [`cars.html`](src/main/resources/templates/cars.html), [`car-trips.html`](src/main/resources/templates/car-trips.html), [`activities.html`](src/main/resources/templates/activities.html), [`habit-entries.html`](src/main/resources/templates/habit-entries.html), [`sports.html`](src/main/resources/templates/sports.html), [`human-events.html`](src/main/resources/templates/human-events.html), and [`train-trips.html`](src/main/resources/templates/train-trips.html).
+  - Updated domain integration tests to assert rejection and state non-pollution when mandatory relations are omitted:
     - [`DoctorControllerIT.java`](src/test/java/de/oberamsystems/slm/DoctorControllerIT.java) (`testModalCreateDoctorAndAppointmentWithEmptyIdParam`)
+    - [`FinanceManagementIT.java`](src/test/java/de/oberamsystems/slm/FinanceManagementIT.java) (`testModalCreateFlowWithEmptyIdParam`)
     - [`ActivitiesAndMediaIT.java`](src/test/java/de/oberamsystems/slm/ActivitiesAndMediaIT.java) (`testModalCreateActivitiesAndMediaWithEmptyIdParam`)
-    - [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) (`testModalCreateTransitAndMobilityWithEmptyIdParam`)
+    - [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) (`testModalCreateTransitAndMobilityWithEmptyIdParam`, `testAddTrainTripViaModalForm`)
     - [`WellnessAndHabitsIT.java`](src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java) (`testModalCreateWellnessAndHabitsWithEmptyIdParam`)
+    - [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) (`testModalCreateHumanEventWithEmptyIdParam`)
     - [`PersonalJournalIT.java`](src/test/java/de/oberamsystems/slm/PersonalJournalIT.java) (`testModalCreateDiaryAndGratitudeWithEmptyIdParam`)
     - [`AcademicIT.java`](src/test/java/de/oberamsystems/slm/AcademicIT.java) (`testModalCreateCourseWithEmptyIdParam`)
-    - [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) (`testModalCreateHumanEventWithEmptyIdParam`)
 
 ## [0.0.3-rc7] - 2026-10-21
 

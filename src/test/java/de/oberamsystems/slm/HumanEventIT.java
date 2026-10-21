@@ -26,6 +26,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
@@ -174,16 +175,17 @@ public class HumanEventIT extends AbstractIntegrationTest {
 		assertEquals("Grace", event.getHuman().getFirstname());
 		assertNotNull(event.getId());
 
-		// 2. Submit event via modal form with empty id and omitted humanId (tests fallback)
+		// 2. Submit event via modal form with empty id and omitted humanId (tests validation rejection)
 		mockMvc.perform(post("/human-events")
 						.with(csrf())
 						.param("id", "")
 						.param("eventType", "WORK_ANNIVERSARY")
 						.param("eventDate", "2020-05-01"))
 				.andExpect(status().is3xxRedirection())
-				.andExpect(redirectedUrl("/human-events"));
+				.andExpect(redirectedUrl("/human-events"))
+				.andExpect(flash().attribute("errorMessage", "Contact person is required."));
 
-		assertEquals(2, eventRepo.count());
+		assertEquals(1, eventRepo.count());
 	}
 }
 

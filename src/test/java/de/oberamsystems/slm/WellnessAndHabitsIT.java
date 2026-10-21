@@ -289,14 +289,15 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/habit-entries"));
         assertEquals(1, habitEntryRepository.count());
 
-        // 3. HabitEntry via modal with empty id and omitted habit (tests fallback)
+        // 3. HabitEntry via modal with empty id and omitted habit (tests validation rejection)
         mockMvc.perform(post("/habit-entries")
                         .with(csrf())
                         .param("id", "")
                         .param("lastDone", "2026-10-21T13:00"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/habit-entries"));
-        assertEquals(2, habitEntryRepository.count());
+                .andExpect(redirectedUrl("/habit-entries"))
+                .andExpect(flash().attribute("errorMessage", "Habit is required."));
+        assertEquals(1, habitEntryRepository.count());
 
         // 4. Mood via modal with empty id
         mockMvc.perform(post("/moods")

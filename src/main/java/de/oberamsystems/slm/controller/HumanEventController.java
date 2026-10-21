@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import de.oberamsystems.slm.model.EventType;
 import de.oberamsystems.slm.model.Human;
@@ -64,18 +65,24 @@ public class HumanEventController {
 		return "human-events";
 	}
 
+	public String saveEvent(HumanEvent event, Long humanId, Long secondaryHumanId) {
+		return saveEvent(event, humanId, secondaryHumanId, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping({"/human-events", "/events"})
 	public String saveEvent(@ModelAttribute HumanEvent event,
 	                         @RequestParam(required = false) Long humanId,
-	                         @RequestParam(required = false) Long secondaryHumanId) {
+	                         @RequestParam(required = false) Long secondaryHumanId,
+	                         RedirectAttributes redirectAttributes) {
 		if (humanId != null && humanId > 0) {
 			humanRepo.findById(humanId).ifPresent(event::setHuman);
 		}
 		if (secondaryHumanId != null && secondaryHumanId > 0) {
 			humanRepo.findById(secondaryHumanId).ifPresent(event::setSecondaryHuman);
 		}
-		if (event.getHuman() == null) {
-			humanRepo.findAll().stream().findFirst().ifPresent(event::setHuman);
+		if (event.getHuman() == null || event.getHuman().getId() == null || !humanRepo.existsById(event.getHuman().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Contact person is required.");
+			return "redirect:/human-events";
 		}
 		if (event.getTitle() == null || event.getTitle().trim().isEmpty()) {
 			String contactName = event.getHuman() != null ? event.getHuman().getFullName() : "Contact";

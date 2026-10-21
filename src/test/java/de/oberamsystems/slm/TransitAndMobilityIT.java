@@ -438,7 +438,7 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         assertEquals(LocalDateTime.of(2026, 10, 21, 7, 19), savedTrip.getStart());
         assertEquals(LocalDateTime.of(2026, 10, 21, 7, 55), savedTrip.getEnd());
 
-        // 2. Also verify submitting with omitted lineId defaults to available line gracefully
+        // 2. Also verify submitting with omitted lineId is REJECTED via validation
         mockMvc.perform(post("/train-trips")
                         .with(csrf())
                         .param("id", "")
@@ -446,9 +446,10 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
                         .param("destination", dest.getId().toString())
                         .param("start", "2026-10-21T08:00")
                         .param("end", "2026-10-21T08:45"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("errorMessage", "Train line is required."));
 
-        assertEquals(2, trainTrip2Repository.count());
+        assertEquals(1, trainTrip2Repository.count(), "Train trip without line must be rejected");
     }
 
     @Test
@@ -480,15 +481,16 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/routes"));
         assertEquals(1, routeRepository.count());
 
-        // 3. Route via modal with empty id and omitted start/end (tests fallback)
+        // 3. Route via modal with empty id and omitted start/end (must be REJECTED via validation)
         mockMvc.perform(post("/routes")
                         .with(csrf())
                         .param("id", "")
                         .param("name", "City Center Loop")
                         .param("driveDistance", "2.0"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/routes"));
-        assertEquals(2, routeRepository.count());
+                .andExpect(redirectedUrl("/routes"))
+                .andExpect(flash().attribute("errorMessage", "Start and end points are required."));
+        assertEquals(1, routeRepository.count(), "Route without points must be rejected");
         Route route = routeRepository.findAll().getFirst();
 
         // 4. Car via modal with empty id
@@ -520,15 +522,16 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/car-trips"));
         assertEquals(1, carTripRepository.count());
 
-        // 6. CarTrip via modal with empty id and omitted car/route (tests fallback)
+        // 6. CarTrip via modal with empty id and omitted car/route (must be REJECTED via validation)
         mockMvc.perform(post("/car-trips")
                         .with(csrf())
                         .param("id", "")
                         .param("start", "2026-10-21T18:00")
                         .param("end", "2026-10-21T18:30"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/car-trips"));
-        assertEquals(2, carTripRepository.count());
+                .andExpect(redirectedUrl("/car-trips"))
+                .andExpect(flash().attribute("errorMessage", "Car is required."));
+        assertEquals(1, carTripRepository.count(), "Car trip without car must be rejected");
 
         // 7. TrainLine via modal with empty id
         mockMvc.perform(post("/train-lines")

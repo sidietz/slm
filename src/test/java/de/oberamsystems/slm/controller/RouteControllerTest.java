@@ -62,6 +62,8 @@ public class RouteControllerTest {
         Route r2 = new Route();
         r2.setStart(p1);
         r2.setEnd(p2);
+        when(pointRepo.existsById(1L)).thenReturn(true);
+        when(pointRepo.existsById(2L)).thenReturn(true);
         when(repo.calculateAirDistance(1L, 2L)).thenReturn(13.45);
         String view2b = controller.submitBooks(r2, model);
         assertEquals("redirect:/routes", view2b);

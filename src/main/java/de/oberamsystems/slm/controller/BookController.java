@@ -23,6 +23,8 @@ import de.oberamsystems.slm.model.BookGenreEnum;
 import de.oberamsystems.slm.model.Author;
 
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 @Controller
 public class BookController {
 
@@ -52,33 +54,28 @@ public class BookController {
 		return "books";
 	}
 	
+	public String submitBooks(Book tt, Model model) {
+		return submitBooks(tt, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/books")
-	public String submitBooks(@ModelAttribute Book tt, Model model) {
-		model.addAttribute("books", repo.findAll(Sort.by(Sort.Direction.ASC, "title")));
-		model.addAttribute("authors", authorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
-		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		model.addAttribute("types", BookTypeEnum.values());
-		model.addAttribute("genres", BookGenreEnum.values());
-		if (tt.getAuthor() == null || tt.getAuthor().getId() == null) {
-			List<Author> authors = authorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname"));
-			if (!authors.isEmpty()) {
-				tt.setAuthor(authors.getFirst());
-			}
+	public String submitBooks(@ModelAttribute Book tt, Model model, RedirectAttributes redirectAttributes) {
+		if (tt.getAuthor() == null || tt.getAuthor().getId() == null || !authorRepo.existsById(tt.getAuthor().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Author is required.");
+			return "redirect:/books";
 		}
-		if (tt.getPress() == null || tt.getPress().getId() == null) {
-			List<Press> presses = pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
-			if (!presses.isEmpty()) {
-				tt.setPress(presses.getFirst());
-			}
+		if (tt.getPress() == null || tt.getPress().getId() == null || !pressRepo.existsById(tt.getPress().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Press / Imprint is required.");
+			return "redirect:/books";
 		}
 		if (tt.getIsbn() == null || tt.getIsbn().isBlank()) {
-			tt.setIsbn(String.format("%013d", Math.abs(System.nanoTime() % 10000000000000L)));
+			redirectAttributes.addFlashAttribute("errorMessage", "ISBN is required.");
+			return "redirect:/books";
 		}
 		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
 			tt.setId(null);
 		}
 		repo.save(tt);
-		model.addAttribute("book", tt);
 		return "redirect:/books";
 	}
 	

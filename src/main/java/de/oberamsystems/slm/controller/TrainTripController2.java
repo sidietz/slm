@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import de.oberamsystems.slm.model.TrainLine;
 import de.oberamsystems.slm.model.TrainLineRepository;
@@ -73,7 +74,8 @@ public class TrainTripController2 {
 								   @RequestParam(required = false) Long lineId,
 								   @RequestParam(required = false) Long line,
 								   @ModelAttribute TrainTrip2 tt,
-								   Model model) {
+								   Model model,
+								   RedirectAttributes redirectAttributes) {
 		Long effectiveLineId = null;
 		if (lineId != null && lineId > 0) {
 			effectiveLineId = lineId;
@@ -81,35 +83,29 @@ public class TrainTripController2 {
 			effectiveLineId = line;
 		} else if (tt.getLine() != null && tt.getLine().getId() != null && tt.getLine().getId() > 0) {
 			effectiveLineId = tt.getLine().getId();
-		} else if (id != null && id > 0) {
-			effectiveLineId = id;
 		}
 
-		if (effectiveLineId != null && effectiveLineId > 0) {
-			try {
-				tt.setLine(lineRepo.getReferenceById(effectiveLineId));
-			} catch (Exception ignored) {
-			}
-		}
-		if (tt.getLine() == null) {
-			List<TrainLine> sortedLines = getSortedLines();
-			if (!sortedLines.isEmpty()) {
-				effectiveLineId = sortedLines.getFirst().getId();
-				tt.setLine(sortedLines.getFirst());
-			}
+		if (effectiveLineId != null && effectiveLineId > 0 && lineRepo.existsById(effectiveLineId)) {
+			tt.setLine(lineRepo.getReferenceById(effectiveLineId));
 		}
 
-		if (tt.getOrigin() == null || tt.getOrigin().getId() == null) {
-			List<TrainStation2> allStations = stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
-			if (!allStations.isEmpty()) {
-				tt.setOrigin(allStations.getFirst());
+		if (tt.getLine() == null || tt.getLine().getId() == null || !lineRepo.existsById(tt.getLine().getId())) {
+			if (redirectAttributes != null) {
+				redirectAttributes.addFlashAttribute("errorMessage", "Train line is required.");
 			}
+			model.addAttribute("errorMessage", "Train line is required.");
+			populateModel(model, effectiveLineId, tt);
+			return "train-trips";
 		}
-		if (tt.getDestination() == null || tt.getDestination().getId() == null) {
-			List<TrainStation2> allStations = stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
-			if (!allStations.isEmpty()) {
-				tt.setDestination(allStations.getFirst());
+
+		if (tt.getOrigin() == null || tt.getOrigin().getId() == null || !stationRepo.existsById(tt.getOrigin().getId())
+				|| tt.getDestination() == null || tt.getDestination().getId() == null || !stationRepo.existsById(tt.getDestination().getId())) {
+			if (redirectAttributes != null) {
+				redirectAttributes.addFlashAttribute("errorMessage", "Origin and destination stations are required.");
 			}
+			model.addAttribute("errorMessage", "Origin and destination stations are required.");
+			populateModel(model, effectiveLineId, tt);
+			return "train-trips";
 		}
 
 		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
@@ -117,18 +113,21 @@ public class TrainTripController2 {
 		}
 
 		repo.save(tt);
+		populateModel(model, effectiveLineId, tt);
+		return "train-trips";
+	}
 
+	public String submitTrainTrips(Long id, TrainTrip2 tt, Model model) {
+		return submitTrainTrips(id, null, null, tt, model, null);
+	}
+
+	private void populateModel(Model model, Long effectiveLineId, TrainTrip2 tt) {
 		model.addAttribute("traintrips2", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		model.addAttribute("lineId", effectiveLineId);
 		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lines", getSortedLines());
 		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		return "train-trips";
-	}
-
-	public String submitTrainTrips(Long id, TrainTrip2 tt, Model model) {
-		return submitTrainTrips(id, null, null, tt, model);
 	}
 	
 	@GetMapping("/train-stations")

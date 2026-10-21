@@ -17,6 +17,8 @@ import de.oberamsystems.slm.model.PurchaseRepository;
 import de.oberamsystems.slm.model.Vendor;
 
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 @Controller
 public class PurchaseController {
 
@@ -46,29 +48,20 @@ public class PurchaseController {
 		return "purchases";
 	}
 	
-	@PostMapping("/purchases")
-	public String submitPurchases(@ModelAttribute Purchase tt, Model model) {
-		List<Purchase> purchases = repo.findAll(Sort.by(Sort.Direction.DESC, "purchaseDate"));
-		float totalPrice = 0;
-		
-		for (Purchase p : purchases) {
-			totalPrice = totalPrice + p.getPrice();
-		}
+	public String submitPurchases(Purchase tt, Model model) {
+		return submitPurchases(tt, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
 
-		model.addAttribute("purchases", purchases);
-		model.addAttribute("totalPrice", totalPrice);
-		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		if (tt.getVendor() == null || tt.getVendor().getId() == null) {
-			List<Vendor> vendors = vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
-			if (!vendors.isEmpty()) {
-				tt.setVendor(vendors.getFirst());
-			}
+	@PostMapping("/purchases")
+	public String submitPurchases(@ModelAttribute Purchase tt, Model model, RedirectAttributes redirectAttributes) {
+		if (tt.getVendor() == null || tt.getVendor().getId() == null || !vendorRepo.existsById(tt.getVendor().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Vendor is required for purchase.");
+			return "redirect:/purchases";
 		}
 		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
 			tt.setId(null);
 		}
 		repo.save(tt);
-		model.addAttribute("purchase", tt);
 		return "redirect:/purchases";
 	}
 }

@@ -17,6 +17,7 @@ import de.oberamsystems.slm.model.SportType;
 import de.oberamsystems.slm.model.SportTypeRepository;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class SportController {
@@ -40,21 +41,20 @@ public class SportController {
 		return "sports";
 	}
 	
+	public String submitSports(SportSession sport, Model model) {
+		return submitSports(sport, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/sports")
-	public String submitSports(@ModelAttribute SportSession sport, Model model) {
-		model.addAttribute("sports", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
-		model.addAttribute("sportTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		if (sport.getType() == null || sport.getType().getId() == null) {
-			java.util.List<SportType> types = typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
-			if (!types.isEmpty()) {
-				sport.setType(types.getFirst());
-			}
+	public String submitSports(@ModelAttribute SportSession sport, Model model, RedirectAttributes redirectAttributes) {
+		if (sport.getType() == null || sport.getType().getId() == null || !typeRepo.existsById(sport.getType().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Sport type is required.");
+			return "redirect:/sports";
 		}
 		if (sport.getId() != null && !repo.existsById(sport.getId())) {
 			sport.setId(null);
 		}
 		repo.save(sport);
-		model.addAttribute("sport", sport);
 		return "redirect:/sports";
 	}
 	

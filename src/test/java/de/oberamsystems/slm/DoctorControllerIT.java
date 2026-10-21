@@ -297,7 +297,7 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/doctors"));
         assertEquals(1, doctorRepository.count());
 
-        // 3. Doctor via modal with empty id and omitted speciality (tests fallback)
+        // 3. Doctor via modal with empty id and omitted speciality (must be REJECTED via validation)
         mockMvc.perform(post("/doctors")
                         .with(csrf())
                         .param("id", "")
@@ -305,8 +305,9 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
                         .param("lastname", "Jung")
                         .param("city", "Zurich"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/doctors"));
-        assertEquals(2, doctorRepository.count());
+                .andExpect(redirectedUrl("/doctors"))
+                .andExpect(flash().attribute("errorMessage", "Doctor speciality is required."));
+        assertEquals(1, doctorRepository.count(), "Doctor submission without speciality must be rejected");
         Doctor doc = doctorRepository.findAll().getFirst();
 
         // 4. Appointment via modal with empty id and explicit doctor
@@ -321,7 +322,7 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/appointments"));
         assertEquals(1, appointmentRepository.count());
 
-        // 5. Appointment via modal with empty id and omitted doctor (tests fallback)
+        // 5. Appointment via modal with empty id and omitted doctor (must be REJECTED via validation)
         mockMvc.perform(post("/appointments")
                         .with(csrf())
                         .param("id", "")
@@ -329,7 +330,8 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
                         .param("end", "2026-11-12T09:30")
                         .param("comment", "Routine"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/appointments"));
-        assertEquals(2, appointmentRepository.count());
+                .andExpect(redirectedUrl("/appointments"))
+                .andExpect(flash().attribute("errorMessage", "Doctor is required for appointment."));
+        assertEquals(1, appointmentRepository.count(), "Appointment submission without doctor must be rejected");
     }
 }
