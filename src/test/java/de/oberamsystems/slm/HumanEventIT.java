@@ -131,9 +131,10 @@ public class HumanEventIT extends AbstractIntegrationTest {
 		mockMvc.perform(get("/humans"))
 				.andExpect(status().isOk());
 
-		// 2. Submit new lecturer contact via POST /humans
+		// 2. Submit new lecturer contact via POST /humans (including empty id param from modal form)
 		mockMvc.perform(post("/humans")
 				.with(csrf())
+				.param("id", "")
 				.param("firstname", "Donald")
 				.param("lastname", "Knuth")
 				.param("birthday", "1938-01-10")

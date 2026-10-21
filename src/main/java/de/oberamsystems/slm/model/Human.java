@@ -14,7 +14,7 @@ public class Human {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	public long id;
+	private Long id;
 	private String firstname;
 	private String lastname;
 	@Column(name = "birthday", columnDefinition = "DATE")
@@ -47,7 +47,7 @@ public class Human {
 	public Human() {
 	}
 
-	public Human(long id, String firstname, String lastname, Date birthday, HumanCategory category) {
+	public Human(Long id, String firstname, String lastname, Date birthday, HumanCategory category) {
 		super();
 		this.id = id;
 		this.firstname = firstname;
@@ -56,11 +56,11 @@ public class Human {
 		this.category = category;
 	}
 	
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc8] - 2026-10-21
+
+### Fixed
+- Fixed `MethodArgumentNotValidException` when creating new contacts (e.g. lecturers) via modal forms submitting `id=""` (`Failed to convert property value of type 'java.lang.String' to required type 'long' for property 'id'`):
+  - Boxed primary key `id` from primitive `long` to `Long` in [`Human.java`](src/main/java/de/oberamsystems/slm/model/Human.java), [`Purchase.java`](src/main/java/de/oberamsystems/slm/model/Purchase.java), [`Contract.java`](src/main/java/de/oberamsystems/slm/model/Contract.java), [`Contractor.java`](src/main/java/de/oberamsystems/slm/model/Contractor.java), [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SportType.java`](src/main/java/de/oberamsystems/slm/model/SportType.java), [`Address.java`](src/main/java/de/oberamsystems/slm/model/Address.java), and [`LastDoneHabitEntry.java`](src/main/java/de/oberamsystems/slm/model/LastDoneHabitEntry.java).
+  - Implemented global `StringTrimmerEditor(true)` in [`GlobalBindingInitializer.java`](src/main/java/de/oberamsystems/slm/config/GlobalBindingInitializer.java) converting empty or whitespace strings in form submissions directly to `null`.
+  - Added defensive non-positive ID check (`human.getId() <= 0`) in [`HumanController.java`](src/main/java/de/oberamsystems/slm/controller/HumanController.java) to reset incoming empty IDs to `null` and safely guarded `syncHumanEvents`.
+  - Added dedicated integration tests `testAddLecturerViaModalFormWithEmptyIdParam` in [`SocialAndPeopleIT.java`](src/test/java/de/oberamsystems/slm/SocialAndPeopleIT.java) and updated `testAddLecturerInHumansSection` in [`HumanEventIT.java`](src/test/java/de/oberamsystems/slm/HumanEventIT.java) to submit empty string `id` parameters.
+
 ## [0.0.3-rc7] - 2026-10-21
 
 ### Added

@@ -4,14 +4,14 @@ import java.time.LocalDateTime;
 
 public class LastDoneHabitEntry {
 	
-	private long id;
+	private Long id;
 	private LocalDateTime date;
 	private String difference;
 	
 	public LastDoneHabitEntry() {
 	}
 
-	public LastDoneHabitEntry(long id, LocalDateTime date, String difference) {
+	public LastDoneHabitEntry(Long id, LocalDateTime date, String difference) {
 		super();
 		this.id = id;
 		this.date = date;
@@ -34,7 +34,11 @@ public class LastDoneHabitEntry {
 		this.difference = difference;
 	}
 
-	public long getId() {
+	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 }

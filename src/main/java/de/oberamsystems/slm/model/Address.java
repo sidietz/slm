@@ -7,7 +7,7 @@ public class Address {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    private Long id;
 
     // Many addresses can belong to one human
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -24,7 +24,7 @@ public class Address {
     public Address() {
     }
 
-    public Address(long id, Human human, String street, Integer streetnumber, String plz, String place,
+    public Address(Long id, Human human, String street, Integer streetnumber, String plz, String place,
 			String country) {
 		this.id = id;
 		this.human = human;
@@ -37,6 +37,10 @@ public class Address {
 
 	public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public Human getHuman() {

@@ -43,6 +43,9 @@ public class HumanController {
 	
 	@PostMapping({"/humans"})
 	public String submitHumans(@ModelAttribute Human human, Model model) {
+		if (human.getId() != null && human.getId() <= 0) {
+			human.setId(null);
+		}
 		Human saved = repo.save(human);
 		syncHumanEvents(saved);
 
@@ -54,7 +57,7 @@ public class HumanController {
 	}
 
 	private void syncHumanEvents(Human human) {
-		if (human == null || human.getId() <= 0) {
+		if (human == null || human.getId() == null || human.getId() <= 0) {
 			return;
 		}
 
