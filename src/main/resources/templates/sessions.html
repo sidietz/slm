@@ -486,6 +486,20 @@
                                     <button th:if="${s.end == null}" type="button" class="btn btn-sm btn-outline-primary px-2 py-1" data-bs-toggle="modal" data-bs-target="#stopSessionModal" th:data-session-id="${s.id}" onclick="setStopModalTarget(this)" title="Finish with Review">
                                         <i class="bi bi-pencil-square"></i>
                                     </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary px-2 py-1"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#newSessionModal"
+                                            title="Edit Session"
+                                            th:data-session-id="${s.id}"
+                                            th:data-session-type="${#strings.toLowerCase(#strings.replace(s.getClass().getSimpleName(), 'Session', ''))}"
+                                            th:data-start="${s.start}"
+                                            th:data-end="${s.end}"
+                                            th:data-break="${s.breakDuration != null ? s.breakDuration.toMinutes() : 0}"
+                                            th:data-comment="${s.comment}"
+                                            th:data-focus="${s.focusRating}"
+                                            th:data-outcome="${s.outcomeSummary}">
+                                        <i class="bi bi-pencil"></i>
+                                    </button>
                                     <form th:action="@{/sessions/delete/{id}(id=${s.id})}" method="post" onsubmit="return confirm('Delete this session?');" class="d-inline">
                                         <input type="hidden" name="returnType" th:value="${activeType}" />
                                         <button type="submit" class="btn btn-sm btn-outline-danger border-0">
@@ -594,6 +608,7 @@
 
                     <!-- CODING FORM -->
                     <form id="form-coding" th:action="@{/sessions/coding}" th:object="${codingSession}" method="post">
+                        <input type="hidden" th:field="*{id}" id="codingId" />
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Project Name</label>
@@ -655,6 +670,7 @@
 
                     <!-- WORKING FORM -->
                     <form id="form-working" th:action="@{/sessions/working}" th:object="${workingSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="workingId" />
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Employer / Client</label>
@@ -720,6 +736,7 @@
 
                     <!-- LEARNING FORM -->
                     <form id="form-learning" th:action="@{/sessions/learning}" th:object="${learningSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="learningId" />
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-semibold">Learning Item</label>
@@ -766,6 +783,7 @@
 
                     <!-- GAMING FORM -->
                     <form id="form-gaming" th:action="@{/sessions/gaming}" th:object="${gamingSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="gamingId" />
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Game</label>
@@ -808,6 +826,7 @@
 
                     <!-- READING FORM -->
                     <form id="form-reading" th:action="@{/sessions/reading}" th:object="${readingSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="readingId" />
                         <div class="row g-3">
                             <div class="col-md-12">
                                 <label class="form-label fw-semibold">Book</label>
@@ -852,6 +871,7 @@
 
                     <!-- MEDITATION FORM -->
                     <form id="form-meditation" th:action="@{/sessions/meditation}" th:object="${meditationSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="meditationId" />
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Start Time</label>
@@ -886,6 +906,7 @@
 
                     <!-- SPORT FORM -->
                     <form id="form-sport" th:action="@{/sessions/sport}" th:object="${sportSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="sportId" />
                         <div class="row g-3">
                             <div class="col-md-12">
                                 <label class="form-label fw-semibold">Sport Type</label>
@@ -926,6 +947,7 @@
 
                     <!-- SLEEP FORM -->
                     <form id="form-sleep" th:action="@{/sessions/sleep}" th:object="${sleepSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="sleepId" />
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label fw-semibold">Bedtime (Start)</label>
@@ -1001,6 +1023,7 @@
 
                     <!-- LECTURE FORM -->
                     <form id="form-lecture" th:action="@{/sessions/lecture}" th:object="${lectureSession}" method="post" style="display: none;">
+                        <input type="hidden" th:field="*{id}" id="lectureId" />
                         <div class="row g-3">
                             <div class="col-md-8">
                                 <label class="form-label fw-semibold">Course / Module</label>
@@ -1218,6 +1241,58 @@
 
             setInterval(updateLiveTimers, 1000);
             updateLiveTimers();
+
+            const newSessionModal = document.getElementById('newSessionModal');
+            if (newSessionModal) {
+                newSessionModal.addEventListener('show.bs.modal', (event) => {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-session-id') : null;
+                    const type = button ? button.getAttribute('data-session-type') : null;
+                    const modalLabel = document.getElementById('newSessionModalLabel');
+
+                    if (id && type) {
+                        modalLabel.innerHTML = '<i class="bi bi-pencil-square me-2"></i> Edit Session';
+                        const radio = document.getElementById('type' + type.charAt(0).toUpperCase() + type.slice(1));
+                        if (radio) {
+                            radio.checked = true;
+                            switchModalForm(type);
+                        }
+                        const idInput = document.getElementById(type + 'Id');
+                        if (idInput) idInput.value = id;
+
+                        const form = document.getElementById('form-' + type);
+                        if (form) {
+                            const startInput = form.querySelector('input[name="start"]');
+                            if (startInput && button.getAttribute('data-start')) startInput.value = button.getAttribute('data-start');
+                            const endInput = form.querySelector('input[name="end"]');
+                            if (endInput && button.getAttribute('data-end')) endInput.value = button.getAttribute('data-end');
+                            const breakInput = form.querySelector('input[name="breakMinutes"]');
+                            if (breakInput && button.getAttribute('data-break')) breakInput.value = button.getAttribute('data-break');
+                            const commentInput = form.querySelector('input[name="comment"], textarea[name="comment"]');
+                            if (commentInput && button.getAttribute('data-comment')) commentInput.value = button.getAttribute('data-comment');
+                            const outcomeInput = form.querySelector('input[name="outcomeSummary"], textarea[name="outcomeSummary"]');
+                            if (outcomeInput && button.getAttribute('data-outcome')) outcomeInput.value = button.getAttribute('data-outcome');
+                        }
+                    } else {
+                        modalLabel.innerHTML = '<i class="bi bi-stopwatch-fill me-2"></i> Log New Session';
+                        ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep', 'lecture'].forEach(t => {
+                            const f = document.getElementById('form-' + t);
+                            if (f) f.reset();
+                            const idIn = document.getElementById(t + 'Id');
+                            if (idIn) idIn.value = '';
+                        });
+                    }
+                });
+
+                newSessionModal.addEventListener('hidden.bs.modal', () => {
+                    ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep', 'lecture'].forEach(t => {
+                        const f = document.getElementById('form-' + t);
+                        if (f) f.reset();
+                        const idIn = document.getElementById(t + 'Id');
+                        if (idIn) idIn.value = '';
+                    });
+                });
+            }
         });
     </script>
     <footer th:replace="~{fragments/layout :: footer}"></footer>

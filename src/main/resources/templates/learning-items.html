@@ -8,62 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Learning Items', 'Catalog courses, topics, books, technologies, and mastery progress', 'bi bi-journal-bookmark', 'theme-habit', '/habit-management', 'Habit Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Learning Item Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-primary"><i class="bi bi-plus-circle me-2"></i>Add Learning Item</h2>
-            <form th:action="@{/learning-items}" th:object="${learningitem}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Title <span class="text-danger">*</span></label>
-                        <input type="text" th:field="*{title}" class="form-control" placeholder="e.g. Distributed Systems in Go, RFC 9562" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Author / Creator</label>
-                        <input type="text" th:field="*{author}" class="form-control" placeholder="Author name, instructor, or organization..." />
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Source</label>
-                        <select class="form-select" th:field="*{source}">
-                            <option value="">-- Select Source --</option>
-                            <option th:each="s : ${sources}" th:value="${s}" th:text="${s}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Status</label>
-                        <select class="form-select" th:field="*{status}">
-                            <option value="">-- Select Status --</option>
-                            <option th:each="st : ${statuss}" th:value="${st}" th:text="${st}"></option>
-                        </select>
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Progress (%)</label>
-                        <input type="number" step="1" min="0" max="100" th:field="*{progress}" class="form-control" placeholder="0 - 100" />
-                    </div>
-
-                    <div class="col-md-6">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" th:field="*{start}" class="form-control" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Target / End Date</label>
-                        <input type="date" th:field="*{end}" class="form-control" />
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Description / Summary</label>
-                        <input type="text" th:field="*{description}" class="form-control" placeholder="Key objectives, syllabus, or links..." />
-                    </div>
-
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-primary px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Learning Item
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Learning Items Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -71,9 +15,14 @@
                     <i class="bi bi-journal-bookmark me-2 text-primary"></i>Learning Library
                     <span class="badge bg-primary-subtle text-primary ms-2 fs-6" th:text="${items != null ? items.size() : 0}">0</span>
                 </h2>
-                <a th:href="@{/learning-sessions}" class="btn btn-outline-primary btn-sm">
-                    <i class="bi bi-mortarboard me-1"></i> Log Study Session
-                </a>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-primary btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#learningItemModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Learning Item
+                    </button>
+                    <a th:href="@{/learning-sessions}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-mortarboard me-1"></i> Log Study Session
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -86,11 +35,12 @@
                             <th>Progress</th>
                             <th>Timeframe</th>
                             <th>Last Updated</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${items == null or items.empty}">
-                            <td colspan="6" class="text-center py-4 text-muted">
+                            <td colspan="7" class="text-center py-4 text-muted">
                                 No learning items recorded yet. Create your first learning item above!
                             </td>
                         </tr>
@@ -119,12 +69,134 @@
                                 <span th:text="${e.end != null ? #temporals.format(e.end, 'dd.MM.yyyy') : '-'}">01.06.2026</span>
                             </td>
                             <td class="small text-muted" th:text="${e.lastUpdated != null ? #temporals.format(e.lastUpdated, 'dd.MM.yyyy HH:mm') : '-'}">01.01.2026 12:00</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-primary"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#learningItemModal"
+                                        th:data-id="${e.id}"
+                                        th:data-title="${e.title}"
+                                        th:data-author="${e.author}"
+                                        th:data-source="${e.source}"
+                                        th:data-status="${e.status}"
+                                        th:data-progress="${e.progress}"
+                                        th:data-start="${e.start}"
+                                        th:data-end="${e.end}"
+                                        th:data-description="${e.description}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Learning Item Modal (Add / Edit) -->
+        <div class="modal fade" id="learningItemModal" tabindex="-1" aria-labelledby="learningItemModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/learning-items}" th:object="${learningitem}" method="post" id="learningItemForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="learningItemModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-primary"></i>Add Learning Item
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="learningItemId" />
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Title <span class="text-danger">*</span></label>
+                                    <input type="text" th:field="*{title}" id="learningItemTitle" class="form-control" placeholder="e.g. Distributed Systems in Go, RFC 9562" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Author / Creator</label>
+                                    <input type="text" th:field="*{author}" id="learningItemAuthor" class="form-control" placeholder="Author name, instructor, or organization..." />
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Source</label>
+                                    <select class="form-select" th:field="*{source}" id="learningItemSource">
+                                        <option value="">-- Select Source --</option>
+                                        <option th:each="s : ${sources}" th:value="${s}" th:text="${s}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Status</label>
+                                    <select class="form-select" th:field="*{status}" id="learningItemStatus">
+                                        <option value="">-- Select Status --</option>
+                                        <option th:each="st : ${statuss}" th:value="${st}" th:text="${st}"></option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Progress (%)</label>
+                                    <input type="number" step="1" min="0" max="100" th:field="*{progress}" id="learningItemProgress" class="form-control" placeholder="0 - 100" />
+                                </div>
+
+                                <div class="col-md-6">
+                                    <label class="form-label">Start Date</label>
+                                    <input type="date" th:field="*{start}" id="learningItemStart" class="form-control" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Target / End Date</label>
+                                    <input type="date" th:field="*{end}" id="learningItemEnd" class="form-control" />
+                                </div>
+
+                                <div class="col-12">
+                                    <label class="form-label">Description / Summary</label>
+                                    <input type="text" th:field="*{description}" id="learningItemDescription" class="form-control" placeholder="Key objectives, syllabus, or links..." />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-primary px-4 fw-semibold" id="learningItemSubmitBtn">
+                                <i class="bi bi-save me-1"></i> Save Learning Item
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const learningItemModal = document.getElementById('learningItemModal');
+            if (learningItemModal) {
+                learningItemModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('learningItemModalTitle');
+                    const submitBtn = document.getElementById('learningItemSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-primary"></i>Edit Learning Item';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Learning Item';
+                        document.getElementById('learningItemId').value = id;
+                        document.getElementById('learningItemTitle').value = button.getAttribute('data-title') || '';
+                        document.getElementById('learningItemAuthor').value = button.getAttribute('data-author') || '';
+                        document.getElementById('learningItemSource').value = button.getAttribute('data-source') || '';
+                        document.getElementById('learningItemStatus').value = button.getAttribute('data-status') || '';
+                        document.getElementById('learningItemProgress').value = button.getAttribute('data-progress') || '';
+                        document.getElementById('learningItemStart').value = button.getAttribute('data-start') || '';
+                        document.getElementById('learningItemEnd').value = button.getAttribute('data-end') || '';
+                        document.getElementById('learningItemDescription').value = button.getAttribute('data-description') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-primary"></i>Add Learning Item';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Learning Item';
+                        document.getElementById('learningItemForm').reset();
+                        document.getElementById('learningItemId').value = '';
+                    }
+                });
+
+                learningItemModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('learningItemForm').reset();
+                    document.getElementById('learningItemId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

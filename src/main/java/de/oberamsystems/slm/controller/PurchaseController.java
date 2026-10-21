@@ -41,7 +41,7 @@ public class PurchaseController {
 		model.addAttribute("totalPrice", totalPrice);
 		Purchase p = new Purchase();
 		p.setPurchaseDate(LocalDate.now());
-		model.addAttribute("purchase", new Purchase());
+		model.addAttribute("purchase", p);
 		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "purchases";
 	}

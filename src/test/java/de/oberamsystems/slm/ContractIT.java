@@ -98,5 +98,21 @@ public class ContractIT extends AbstractIntegrationTest {
         entityManager.refresh(inactiveContract);
         assertEquals(Contract.ContractStatus.TERMINATED, inactiveContract.getCalculatedStatus());
         assertEquals(0, inactiveContract.getDaysRemaining(), "Terminated contract must have 0 days remaining");
+
+        // 5. Test Editing existing contract
+        futureContract.setTitle("Internet 1000 Ultra");
+        futureContract.setFee(64.99f);
+        futureContract = contractRepository.saveAndFlush(futureContract);
+        assertEquals("Internet 1000 Ultra", futureContract.getTitle());
+        assertEquals(64.99f, futureContract.getFee());
+
+        // 6. Test Direct Termination flow
+        futureContract.setActive(false);
+        futureContract.setCanceled(true);
+        futureContract.setTerminationDate(LocalDate.now());
+        futureContract = contractRepository.saveAndFlush(futureContract);
+        entityManager.refresh(futureContract);
+        assertEquals(Contract.ContractStatus.TERMINATED, futureContract.getCalculatedStatus());
+        assertEquals(0, futureContract.getDaysRemaining(), "Terminated contract must have 0 days remaining");
     }
 }

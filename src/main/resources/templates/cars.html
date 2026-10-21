@@ -36,11 +36,17 @@
                 </div>
             </div>
 
+            <!-- Full-Width Vehicles Table Card -->
             <div class="col-12">
                 <div class="card slm-table-card shadow-sm">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-list-check me-2 text-primary"></i>Vehicle Fleet</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(cars)} + ' vehicles'">0 vehicles</span>
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-list-check me-2 text-primary"></i>Vehicle Fleet</h5>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(cars)} + ' vehicles'">0 vehicles</span>
+                        </div>
+                        <button type="button" class="btn btn-primary fw-semibold" onclick="openCreateCarModal()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Vehicle
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0 text-nowrap">
@@ -60,7 +66,8 @@
                                     <th>Sell Price</th>
                                     <th>Buy Km</th>
                                     <th>Sell Km</th>
-                                    <th class="pe-3">€ / 100km</th>
+                                    <th>€ / 100km</th>
+                                    <th class="text-end pe-3" style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -88,98 +95,171 @@
                                     <td class="text-muted" th:text="${e.sellPrice}"></td>
                                     <td th:text="${e.purchaseKilometers}"></td>
                                     <td th:text="${e.sellKilometers}"></td>
-                                    <td class="pe-3 fw-semibold text-primary" th:text="${e.pricePer100km}"></td>
+                                    <td class="fw-semibold text-primary" th:text="${e.pricePer100km}"></td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Edit Vehicle"
+                                                th:data-id="${e.id}"
+                                                th:data-vin="${e.vin}"
+                                                th:data-name="${e.name}"
+                                                th:data-model-name="${e.modelName}"
+                                                th:data-key-number="${e.keyNumber}"
+                                                th:data-manufacturer-id="${e.manufacturer != null ? e.manufacturer.id : ''}"
+                                                th:data-vendor-id="${e.vendor != null ? e.vendor.id : ''}"
+                                                th:data-purchase-date="${e.purchaseDate}"
+                                                th:data-approval-date="${e.approvalDate}"
+                                                th:data-manufacturing-date="${e.manufacturingDate}"
+                                                th:data-purchase-price="${e.purchasePrice}"
+                                                th:data-sell-price="${e.sellPrice}"
+                                                th:data-purchase-kilometers="${e.purchaseKilometers}"
+                                                th:data-sell-kilometers="${e.sellKilometers}"
+                                                onclick="populateEditCarModal(this)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(cars)}">
-                                    <td colspan="15" class="text-center py-4 text-muted">No vehicles registered yet.</td>
+                                    <td colspan="16" class="text-center py-4 text-muted">No vehicles registered yet. Click "Add Vehicle" above to register your first car.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-12">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Add New Vehicle</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/cars}" th:object="${car}" method="post">
-                            <div class="row g-3 mb-3">
-                                <div class="col-md-3">
-                                    <label for="vin" class="form-label">VIN <span class="text-danger">*</span></label>
-                                    <input type="text" id="vin" th:field="*{vin}" class="form-control" placeholder="17-character VIN" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="name" class="form-label">Vehicle Name <span class="text-danger">*</span></label>
-                                    <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="e.g. Daily Commuter" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="modelName" class="form-label">Model Name <span class="text-danger">*</span></label>
-                                    <input type="text" id="modelName" th:field="*{modelName}" class="form-control" placeholder="e.g. Golf VIII, Model 3" required>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="keyNumber" class="form-label">Key Number (HSN/TSN) <span class="text-danger">*</span></label>
-                                    <input type="text" id="keyNumber" th:field="*{keyNumber}" class="form-control" placeholder="e.g. 0603/BVP" required>
-                                </div>
-
-                                <div class="col-md-3">
-                                    <label for="manufacturer" class="form-label">Manufacturer</label>
-                                    <select id="manufacturer" class="form-select" th:field="*{manufacturer}">
-                                        <option th:each="s : ${manufacturers}" th:value="${s.id}" th:text="${s.name}"></option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="vendor" class="form-label">Vendor</label>
-                                    <select id="vendor" class="form-select" th:field="*{vendor}">
-                                        <option th:each="s : ${vendors}" th:value="${s.id}" th:text="${s.name}"></option>
-                                    </select>
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="purchaseDate" class="form-label">Purchase Date <span class="text-danger">*</span></label>
-                                    <input type="date" id="purchaseDate" th:field="*{purchaseDate}" class="form-control" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="approvalDate" class="form-label">Approval Date <span class="text-danger">*</span></label>
-                                    <input type="date" id="approvalDate" th:field="*{approvalDate}" class="form-control" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="manufacturingDate" class="form-label">Mfg Date <span class="text-danger">*</span></label>
-                                    <input type="date" id="manufacturingDate" th:field="*{manufacturingDate}" class="form-control" required>
-                                </div>
-
-                                <div class="col-md-2">
-                                    <label for="purchasePrice" class="form-label">Purchase Price (€)</label>
-                                    <input type="number" id="purchasePrice" step="0.01" th:field="*{purchasePrice}" class="form-control" placeholder="0.00">
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="sellPrice" class="form-label">Sell Price (€)</label>
-                                    <input type="number" id="sellPrice" step="0.01" th:field="*{sellPrice}" class="form-control" placeholder="0.00">
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="purchaseKilometers" class="form-label">Purchase Km</label>
-                                    <input type="number" id="purchaseKilometers" step="1" th:field="*{purchaseKilometers}" class="form-control" placeholder="0">
-                                </div>
-                                <div class="col-md-2">
-                                    <label for="sellKilometers" class="form-label">Sell Km</label>
-                                    <input type="number" id="sellKilometers" step="1" th:field="*{sellKilometers}" class="form-control" placeholder="0">
-                                </div>
-                                <div class="col-md-4">
-                                    <label for="pricePer100km" class="form-label">Price per 100km (€)</label>
-                                    <input type="number" id="pricePer100km" step="0.01" th:field="*{pricePer100km}" class="form-control" placeholder="0.00">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary px-4 py-2">
-                                <i class="bi bi-plus-circle me-1"></i> Register Vehicle
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
+    <!-- Dual-Purpose Modal for Adding and Editing Cars -->
+    <div class="modal fade" id="carModal" tabindex="-1" aria-labelledby="carModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="carModalLabel">
+                        <i class="bi bi-car-front me-2 text-primary"></i>Add Vehicle
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="carForm" th:action="@{/cars}" method="post">
+                    <input type="hidden" id="modalCarId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label for="modalVin" class="form-label fw-semibold">VIN <span class="text-danger">*</span></label>
+                                <input type="text" id="modalVin" name="vin" class="form-control" placeholder="17-character VIN" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalName" class="form-label fw-semibold">Vehicle Name <span class="text-danger">*</span></label>
+                                <input type="text" id="modalName" name="name" class="form-control" placeholder="e.g. Daily Commuter" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalModelName" class="form-label fw-semibold">Model Name <span class="text-danger">*</span></label>
+                                <input type="text" id="modalModelName" name="modelName" class="form-control" placeholder="e.g. Golf VIII, Model 3" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalKeyNumber" class="form-label fw-semibold">Key Number (HSN/TSN) <span class="text-danger">*</span></label>
+                                <input type="text" id="modalKeyNumber" name="keyNumber" class="form-control" placeholder="e.g. 0603/BVP" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="modalManufacturer" class="form-label fw-semibold">Manufacturer</label>
+                                <select id="modalManufacturer" name="manufacturer" class="form-select">
+                                    <option value="">— Select Manufacturer —</option>
+                                    <option th:each="s : ${manufacturers}" th:value="${s.id}" th:text="${s.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalVendor" class="form-label fw-semibold">Vendor</label>
+                                <select id="modalVendor" name="vendor" class="form-select">
+                                    <option value="">— Select Vendor —</option>
+                                    <option th:each="s : ${vendors}" th:value="${s.id}" th:text="${s.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="modalPurchaseDate" class="form-label fw-semibold">Purchase Date <span class="text-danger">*</span></label>
+                                <input type="date" id="modalPurchaseDate" name="purchaseDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="modalApprovalDate" class="form-label fw-semibold">Approval Date <span class="text-danger">*</span></label>
+                                <input type="date" id="modalApprovalDate" name="approvalDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="modalManufacturingDate" class="form-label fw-semibold">Mfg Date <span class="text-danger">*</span></label>
+                                <input type="date" id="modalManufacturingDate" name="manufacturingDate" class="form-control" required>
+                            </div>
+
+                            <div class="col-md-3">
+                                <label for="modalPurchasePrice" class="form-label fw-semibold">Buy Price (€) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" id="modalPurchasePrice" name="purchasePrice" class="form-control" placeholder="0.00" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalSellPrice" class="form-label fw-semibold">Sell Price (€)</label>
+                                <input type="number" step="0.01" id="modalSellPrice" name="sellPrice" class="form-control" placeholder="0.00">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalPurchaseKilometers" class="form-label fw-semibold">Buy Km <span class="text-danger">*</span></label>
+                                <input type="number" id="modalPurchaseKilometers" name="purchaseKilometers" class="form-control" placeholder="0" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="modalSellKilometers" class="form-label fw-semibold">Sell Km</label>
+                                <input type="number" id="modalSellKilometers" name="sellKilometers" class="form-control" placeholder="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalCarSubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Vehicle
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateCarModal() {
+            document.getElementById('carForm').reset();
+            document.getElementById('modalCarId').value = '';
+            document.getElementById('carModalLabel').innerHTML = '<i class="bi bi-car-front me-2 text-primary"></i>Add Vehicle';
+            document.getElementById('modalCarSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Vehicle';
+            document.getElementById('modalCarSubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('modalPurchaseDate').value = today;
+            document.getElementById('modalApprovalDate').value = today;
+            document.getElementById('modalManufacturingDate').value = today;
+
+            const modal = new bootstrap.Modal(document.getElementById('carModal'));
+            modal.show();
+        }
+
+        function populateEditCarModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalCarId').value = ds.id || '';
+            document.getElementById('modalVin').value = ds.vin || '';
+            document.getElementById('modalName').value = ds.name || '';
+            document.getElementById('modalModelName').value = ds.modelName || '';
+            document.getElementById('modalKeyNumber').value = ds.keyNumber || '';
+            document.getElementById('modalManufacturer').value = ds.manufacturerId || '';
+            document.getElementById('modalVendor').value = ds.vendorId || '';
+            document.getElementById('modalPurchaseDate').value = ds.purchaseDate || '';
+            document.getElementById('modalApprovalDate').value = ds.approvalDate || '';
+            document.getElementById('modalManufacturingDate').value = ds.manufacturingDate || '';
+            document.getElementById('modalPurchasePrice').value = ds.purchasePrice || '';
+            document.getElementById('modalSellPrice').value = ds.sellPrice || '';
+            document.getElementById('modalPurchaseKilometers').value = ds.purchaseKilometers || '';
+            document.getElementById('modalSellKilometers').value = ds.sellKilometers || '';
+
+            document.getElementById('carModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Vehicle #${ds.id}`;
+            document.getElementById('modalCarSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Vehicle';
+            document.getElementById('modalCarSubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('carModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

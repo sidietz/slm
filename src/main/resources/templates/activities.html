@@ -8,45 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Activities', 'Track daily tasks, general activities, and personal time investments', 'bi bi-card-checklist', 'theme-activity', '/activity-management', 'Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Activity Form Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-danger"><i class="bi bi-plus-circle me-2"></i>Log New Activity</h2>
-            <form th:action="@{/activities}" th:object="${activity}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <label class="form-label">Activity Title <span class="text-danger">*</span></label>
-                        <input type="text" th:field="*{title}" class="form-control" placeholder="e.g. Clean garage, write documentation" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label">Category <span class="text-danger">*</span></label>
-                        <select class="form-select" th:field="*{type}" required>
-                            <option value="">-- Select Category --</option>
-                            <option th:each="category : ${activityTypes}" th:value="${category.id}" th:text="${category.name}"></option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Location / Place</label>
-                        <input type="text" th:field="*{location}" class="form-control" placeholder="Home, Office, Garden..." />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Start Time <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{start}" class="form-control" required />
-                    </div>
-                    <div class="col-md-4">
-                        <label class="form-label">End Time <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{end}" class="form-control" required />
-                    </div>
-
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-danger px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Activity
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Activities Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -54,9 +15,14 @@
                     <i class="bi bi-list-check me-2 text-danger"></i>Logged Activities
                     <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${activities != null ? activities.size() : 0}">0</span>
                 </h2>
-                <a th:href="@{/activity-types}" class="btn btn-outline-secondary btn-sm">
-                    <i class="bi bi-tags me-1"></i> Manage Categories
-                </a>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#activityModal">
+                        <i class="bi bi-plus-circle me-1"></i> Log Activity
+                    </button>
+                    <a th:href="@{/activity-types}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-tags me-1"></i> Manage Categories
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -68,11 +34,12 @@
                             <th>Location</th>
                             <th>Start</th>
                             <th>End</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${activities == null or activities.empty}">
-                            <td colspan="5" class="text-center py-4 text-muted">
+                            <td colspan="6" class="text-center py-4 text-muted">
                                 <i class="bi bi-inbox fs-2 d-block mb-2"></i>
                                 No activities recorded yet. Log your first activity above!
                             </td>
@@ -87,12 +54,111 @@
                             <td class="text-muted" th:text="${activity.location != null and !activity.location.empty ? activity.location : '-'}">Place</td>
                             <td class="small" th:text="${#temporals.format(activity.start, 'dd.MM.yyyy HH:mm')}">01.01.2026 10:00</td>
                             <td class="small" th:text="${#temporals.format(activity.end, 'dd.MM.yyyy HH:mm')}">01.01.2026 11:30</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#activityModal"
+                                        th:data-id="${activity.id}"
+                                        th:data-title="${activity.title}"
+                                        th:data-type="${activity.type != null ? activity.type.id : ''}"
+                                        th:data-location="${activity.location}"
+                                        th:data-start="${activity.start}"
+                                        th:data-end="${activity.end}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Activity Modal (Add / Edit) -->
+        <div class="modal fade" id="activityModal" tabindex="-1" aria-labelledby="activityModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/activities}" th:object="${activity}" method="post" id="activityForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="activityModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-danger"></i>Log New Activity
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="activityId" />
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="form-label">Activity Title <span class="text-danger">*</span></label>
+                                    <input type="text" th:field="*{title}" id="activityTitle" class="form-control" placeholder="e.g. Clean garage, write documentation" required />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Category <span class="text-danger">*</span></label>
+                                    <select class="form-select" th:field="*{type}" id="activityType" required>
+                                        <option value="">-- Select Category --</option>
+                                        <option th:each="category : ${activityTypes}" th:value="${category.id}" th:text="${category.name}"></option>
+                                    </select>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="form-label">Location / Place</label>
+                                    <input type="text" th:field="*{location}" id="activityLocation" class="form-control" placeholder="Home, Office, Garden..." />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Start Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" th:field="*{start}" id="activityStart" class="form-control" required />
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">End Time <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" th:field="*{end}" id="activityEnd" class="form-control" required />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold" id="activitySubmitBtn">
+                                <i class="bi bi-save me-1"></i> Save Activity
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const activityModal = document.getElementById('activityModal');
+            if (activityModal) {
+                activityModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('activityModalTitle');
+                    const submitBtn = document.getElementById('activitySubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Edit Activity';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Activity';
+                        document.getElementById('activityId').value = id;
+                        document.getElementById('activityTitle').value = button.getAttribute('data-title') || '';
+                        document.getElementById('activityType').value = button.getAttribute('data-type') || '';
+                        document.getElementById('activityLocation').value = button.getAttribute('data-location') || '';
+                        document.getElementById('activityStart').value = button.getAttribute('data-start') || '';
+                        document.getElementById('activityEnd').value = button.getAttribute('data-end') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-danger"></i>Log New Activity';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Save Activity';
+                        document.getElementById('activityForm').reset();
+                        document.getElementById('activityId').value = '';
+                    }
+                });
+
+                activityModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('activityForm').reset();
+                    document.getElementById('activityId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

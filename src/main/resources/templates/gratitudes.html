@@ -8,28 +8,6 @@
     <header th:replace="~{fragments/layout :: header('Gratitudes', 'Cultivate positive reflection and mindful appreciation of life', 'bi bi-heart', 'theme-habit', '/habit-management', 'Habit Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Gratitude Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-danger"><i class="bi bi-plus-circle me-2"></i>Record Gratitude</h2>
-            <form th:action="@{/gratitudes}" th:object="${gratitude}" method="post">
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label class="form-label">Date <span class="text-danger">*</span></label>
-                        <input type="date" th:field="*{date}" class="form-control" required />
-                    </div>
-                    <div class="col-md-8">
-                        <label class="form-label">What are you grateful for today? <span class="text-danger">*</span></label>
-                        <textarea class="form-control" rows="3" th:field="*{description}" placeholder="A quiet morning, a good cup of coffee, a productive pair programming session..." required></textarea>
-                    </div>
-                    <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-danger px-4 fw-semibold">
-                            <i class="bi bi-heart-fill me-1"></i> Save Gratitude
-                        </button>
-                    </div>
-                </div>
-            </form>
-        </section>
-
         <!-- Gratitudes Table Card -->
         <section class="card slm-table-card">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -37,6 +15,9 @@
                     <i class="bi bi-heart me-2 text-danger"></i>Gratitude Journal
                     <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${gratitudes != null ? gratitudes.size() : 0}">0</span>
                 </h2>
+                <button type="button" class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#gratitudeModal">
+                    <i class="bi bi-plus-circle me-1"></i> Record Gratitude
+                </button>
             </div>
 
             <div class="table-responsive">
@@ -45,23 +26,101 @@
                         <tr>
                             <th style="width: 140px;">Date</th>
                             <th>Gratitude Entry</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${gratitudes == null or gratitudes.empty}">
-                            <td colspan="2" class="text-center py-4 text-muted">
+                            <td colspan="3" class="text-center py-4 text-muted">
                                 No gratitude entries recorded yet. Record what you appreciate today!
                             </td>
                         </tr>
                         <tr th:each="e : ${gratitudes}">
                             <td class="small fw-semibold text-dark" th:text="${#temporals.format(e.date, 'dd.MM.yyyy')}">01.01.2026</td>
                             <td th:text="${e.description}">Description</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#gratitudeModal"
+                                        th:data-id="${e.id}"
+                                        th:data-date="${e.date}"
+                                        th:data-description="${e.description}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Gratitude Modal (Add / Edit) -->
+        <div class="modal fade" id="gratitudeModal" tabindex="-1" aria-labelledby="gratitudeModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/gratitudes}" th:object="${gratitude}" method="post" id="gratitudeForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="gratitudeModalTitle">
+                                <i class="bi bi-heart me-2 text-danger"></i>Record Gratitude
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="gratitudeId" />
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="form-label">Date <span class="text-danger">*</span></label>
+                                    <input type="date" th:field="*{date}" id="gratitudeDate" class="form-control" style="max-width: 250px;" required />
+                                </div>
+                                <div class="col-md-12">
+                                    <label class="form-label">What are you grateful for today? <span class="text-danger">*</span></label>
+                                    <textarea class="form-control" rows="4" th:field="*{description}" id="gratitudeDescription" placeholder="A quiet morning, a good cup of coffee, a productive pair programming session..." required></textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold" id="gratitudeSubmitBtn">
+                                <i class="bi bi-heart-fill me-1"></i> Save Gratitude
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const gratitudeModal = document.getElementById('gratitudeModal');
+            if (gratitudeModal) {
+                gratitudeModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('gratitudeModalTitle');
+                    const submitBtn = document.getElementById('gratitudeSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Edit Gratitude';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Gratitude';
+                        document.getElementById('gratitudeId').value = id;
+                        document.getElementById('gratitudeDate').value = button.getAttribute('data-date') || '';
+                        document.getElementById('gratitudeDescription').value = button.getAttribute('data-description') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-heart me-2 text-danger"></i>Record Gratitude';
+                        submitBtn.innerHTML = '<i class="bi bi-heart-fill me-1"></i> Save Gratitude';
+                        document.getElementById('gratitudeForm').reset();
+                        document.getElementById('gratitudeId').value = '';
+                    }
+                });
+
+                gratitudeModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('gratitudeForm').reset();
+                    document.getElementById('gratitudeId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

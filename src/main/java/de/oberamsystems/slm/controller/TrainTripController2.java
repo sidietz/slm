@@ -87,8 +87,14 @@ public class TrainTripController2 {
 		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lines", getSortedLines());
 		log.warn(String.format("lineId: %d", tsdto.getLineId()));
-		TrainStation2 ts = new TrainStation2(tsdto.getDs100(), tsdto.getName());
-		ts.addLine(lineRepo.getReferenceById(tsdto.getLineId()));
+		TrainStation2 ts = (tsdto.getId() != null)
+				? stationRepo.findById(tsdto.getId()).orElseGet(() -> new TrainStation2(tsdto.getDs100(), tsdto.getName()))
+				: new TrainStation2(tsdto.getDs100(), tsdto.getName());
+		ts.setDs100(tsdto.getDs100());
+		ts.setName(tsdto.getName());
+		if (tsdto.getLineId() != null && tsdto.getLineId() > 0) {
+			ts.addLine(lineRepo.getReferenceById(tsdto.getLineId()));
+		}
 		stationRepo.save(ts);
 		model.addAttribute("trainstation", new TrainStation2Dto());
 		return "redirect:/train-stations";

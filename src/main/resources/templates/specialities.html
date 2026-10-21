@@ -16,55 +16,111 @@
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-lg-7">
-                <div class="card slm-table-card shadow-sm h-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-tags me-2 text-primary"></i>Configured Specialities</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(specialities)} + ' specialities'">0 specialities</span>
+            <!-- Full-Width Specialities Table Card -->
+            <div class="col-12">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-tags me-2 text-primary"></i>Configured Specialities</h5>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(specialities)} + ' specialities'">0 specialities</span>
+                        </div>
+                        <button type="button" class="btn btn-primary fw-semibold" onclick="openCreateSpecialityModal()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Speciality
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
                                     <th class="ps-3" style="width: 80px;">ID</th>
-                                    <th class="pe-3">Title</th>
+                                    <th>Title</th>
+                                    <th class="text-end pe-3" style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr th:each="e : ${specialities}">
                                     <td class="ps-3 text-secondary font-monospace small" th:text="${e.id}"></td>
-                                    <td class="pe-3 fw-semibold text-dark" th:text="${e.title}"></td>
+                                    <td class="fw-semibold text-dark">
+                                        <i class="bi bi-mortarboard me-2 text-muted"></i>
+                                        <span th:text="${e.title}"></span>
+                                    </td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Edit Speciality"
+                                                th:data-id="${e.id}"
+                                                th:data-title="${e.title}"
+                                                onclick="populateEditSpecialityModal(this)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(specialities)}">
-                                    <td colspan="2" class="text-center py-4 text-muted">No specialities configured yet.</td>
+                                    <td colspan="3" class="text-center py-4 text-muted">No specialities configured yet. Click "Add Speciality" above to define your first medical speciality.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-5">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Speciality</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/specialities}" th:object="${speciality}" method="post">
-                            <div class="mb-4">
-                                <label for="title" class="form-label">Speciality Title <span class="text-danger">*</span></label>
-                                <input type="text" id="title" th:field="*{title}" class="form-control" placeholder="e.g. Ophthalmology, Dermatology" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="bi bi-plus-circle me-1"></i> Add Speciality
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
+    <!-- Dual-Purpose Modal for Adding and Editing Specialities -->
+    <div class="modal fade" id="specialityModal" tabindex="-1" aria-labelledby="specialityModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="specialityModalLabel">
+                        <i class="bi bi-mortarboard me-2 text-primary"></i>Add Speciality
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="specialityForm" th:action="@{/specialities}" method="post">
+                    <input type="hidden" id="modalSpecialityId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label for="modalSpecialityTitle" class="form-label fw-semibold">Speciality Title <span class="text-danger">*</span></label>
+                            <input type="text" id="modalSpecialityTitle" name="title" class="form-control" placeholder="e.g. Ophthalmology, Dermatology, Cardiology" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalSpecialitySubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Speciality
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateSpecialityModal() {
+            document.getElementById('specialityForm').reset();
+            document.getElementById('modalSpecialityId').value = '';
+            document.getElementById('specialityModalLabel').innerHTML = '<i class="bi bi-mortarboard me-2 text-primary"></i>Add Speciality';
+            document.getElementById('modalSpecialitySubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Speciality';
+            document.getElementById('modalSpecialitySubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('specialityModal'));
+            modal.show();
+        }
+
+        function populateEditSpecialityModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalSpecialityId').value = ds.id || '';
+            document.getElementById('modalSpecialityTitle').value = ds.title || '';
+
+            document.getElementById('specialityModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Speciality #${ds.id}`;
+            document.getElementById('modalSpecialitySubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Speciality';
+            document.getElementById('modalSpecialitySubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('specialityModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

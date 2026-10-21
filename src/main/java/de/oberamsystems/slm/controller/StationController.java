@@ -58,7 +58,8 @@ public class StationController {
 	}
 
 	@PostMapping("/stations/gas")
-	public String createGasStation(@RequestParam String name,
+	public String createGasStation(@RequestParam(required = false) UUID id,
+								   @RequestParam String name,
 								   @RequestParam(required = false) String brand,
 								   @RequestParam(required = false) String street,
 								   @RequestParam(required = false) String houseNumber,
@@ -72,7 +73,9 @@ public class StationController {
 								   @RequestParam(required = false) String note,
 								   RedirectAttributes redirectAttributes) {
 		try {
-			GasStation station = new GasStation();
+			GasStation station = (id != null) 
+					? gasStationRepository.findById(id).orElseGet(GasStation::new) 
+					: new GasStation();
 			station.setName(name);
 			station.setBrand(brand);
 			station.setStreet(street);
@@ -86,6 +89,8 @@ public class StationController {
 			station.setLongitude(longitude);
 			if (pointId != null) {
 				pointRepository.findById(pointId).ifPresent(station::setPoint);
+			} else {
+				station.setPoint(null);
 			}
 			if (tankentankenId != null && !tankentankenId.isBlank()) {
 				try {
@@ -96,16 +101,17 @@ public class StationController {
 			}
 			station.setNote(note);
 			gasStationRepository.save(station);
-			redirectAttributes.addFlashAttribute("successMessage", "Gas station created successfully.");
+			redirectAttributes.addFlashAttribute("successMessage", id != null ? "Gas station updated successfully." : "Gas station created successfully.");
 		} catch (Exception e) {
-			log.error("Error creating gas station", e);
-			redirectAttributes.addFlashAttribute("errorMessage", "Error creating gas station: " + e.getMessage());
+			log.error("Error creating/updating gas station", e);
+			redirectAttributes.addFlashAttribute("errorMessage", "Error saving gas station: " + e.getMessage());
 		}
 		return "redirect:/stations?tab=gas";
 	}
 
 	@PostMapping("/stations/charging")
-	public String createChargingStation(@RequestParam String name,
+	public String createChargingStation(@RequestParam(required = false) UUID id,
+										@RequestParam String name,
 										@RequestParam(required = false) String brand,
 										@RequestParam(required = false) String operator,
 										@RequestParam(required = false) String street,
@@ -122,7 +128,9 @@ public class StationController {
 										@RequestParam(required = false) List<Integer> pointCount,
 										RedirectAttributes redirectAttributes) {
 		try {
-			ChargingStation station = new ChargingStation();
+			ChargingStation station = (id != null)
+					? chargingStationRepository.findById(id).orElseGet(ChargingStation::new)
+					: new ChargingStation();
 			station.setName(name);
 			station.setBrand(brand);
 			station.setOperator(operator);
@@ -137,10 +145,13 @@ public class StationController {
 			station.setLongitude(longitude);
 			if (pointId != null) {
 				pointRepository.findById(pointId).ifPresent(station::setPoint);
+			} else {
+				station.setPoint(null);
 			}
 			station.setNote(note);
 
 			if (maxPowerKw != null && plugType != null) {
+				station.getChargingPoints().clear();
 				for (int i = 0; i < maxPowerKw.size() && i < plugType.size(); i++) {
 					BigDecimal power = maxPowerKw.get(i);
 					PlugType plug = plugType.get(i);
@@ -157,7 +168,7 @@ public class StationController {
 			}
 
 			chargingStationRepository.save(station);
-			redirectAttributes.addFlashAttribute("successMessage", "Charging station created successfully.");
+			redirectAttributes.addFlashAttribute("successMessage", id != null ? "Charging station updated successfully." : "Charging station created successfully.");
 		} catch (Exception e) {
 			log.error("Error creating charging station", e);
 			redirectAttributes.addFlashAttribute("errorMessage", "Error creating charging station: " + e.getMessage());

@@ -16,18 +16,25 @@
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-lg-7">
-                <div class="card slm-table-card shadow-sm h-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-signpost-2 me-2 text-primary"></i>Configured Rail Lines</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(lines)} + ' lines'">0 lines</span>
+            <!-- Full-Width Train Lines Table Card -->
+            <div class="col-12">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-signpost-2 me-2 text-primary"></i>Configured Rail Lines</h5>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(lines)} + ' lines'">0 lines</span>
+                        </div>
+                        <button type="button" class="btn btn-primary fw-semibold" onclick="openCreateTrainLineModal()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Train Line
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0">
                             <thead>
                                 <tr>
                                     <th class="ps-3" style="width: 140px;">Line Identifier</th>
-                                    <th class="pe-3">Description / Route</th>
+                                    <th>Description / Route</th>
+                                    <th class="text-end pe-3" style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -35,42 +42,90 @@
                                     <td class="ps-3">
                                         <span class="badge bg-primary-subtle text-primary fw-medium px-2 py-1" th:text="${e.name}"></span>
                                     </td>
-                                    <td class="pe-3 text-dark" th:text="${e.description}"></td>
+                                    <td class="text-dark" th:text="${e.description}"></td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Edit Train Line"
+                                                th:data-id="${e.id}"
+                                                th:data-name="${e.name}"
+                                                th:data-description="${e.description}"
+                                                onclick="populateEditTrainLineModal(this)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(lines)}">
-                                    <td colspan="2" class="text-center py-4 text-muted">No train lines configured yet.</td>
+                                    <td colspan="3" class="text-center py-4 text-muted">No train lines configured yet. Click "Add Train Line" above to configure a rail line.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-5">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Train Line</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/train-lines}" th:object="${trainline}" method="post">
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Line Name / Code <span class="text-danger">*</span></label>
-                                <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="e.g. ICE 28, S-Bahn S1" required>
-                            </div>
-                            <div class="mb-4">
-                                <label for="description" class="form-label">Description / Corridor</label>
-                                <input type="text" id="description" th:field="*{description}" class="form-control" placeholder="e.g. Berlin - Leipzig - München">
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="bi bi-plus-circle me-1"></i> Add Train Line
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
+    <!-- Dual-Purpose Modal for Adding and Editing Train Lines -->
+    <div class="modal fade" id="trainLineModal" tabindex="-1" aria-labelledby="trainLineModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="trainLineModalLabel">
+                        <i class="bi bi-signpost-split me-2 text-primary"></i>Add Train Line
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="trainLineForm" th:action="@{/train-lines}" method="post">
+                    <input type="hidden" id="modalTrainLineId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label for="modalTrainLineName" class="form-label fw-semibold">Line Name / Code <span class="text-danger">*</span></label>
+                            <input type="text" id="modalTrainLineName" name="name" class="form-control" placeholder="e.g. ICE 28, S-Bahn S1" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="modalTrainLineDescription" class="form-label fw-semibold">Description / Corridor</label>
+                            <input type="text" id="modalTrainLineDescription" name="description" class="form-control" placeholder="e.g. Berlin - Leipzig - München">
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalTrainLineSubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Train Line
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateTrainLineModal() {
+            document.getElementById('trainLineForm').reset();
+            document.getElementById('modalTrainLineId').value = '';
+            document.getElementById('trainLineModalLabel').innerHTML = '<i class="bi bi-signpost-split me-2 text-primary"></i>Add Train Line';
+            document.getElementById('modalTrainLineSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Train Line';
+            document.getElementById('modalTrainLineSubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('trainLineModal'));
+            modal.show();
+        }
+
+        function populateEditTrainLineModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalTrainLineId').value = ds.id || '';
+            document.getElementById('modalTrainLineName').value = ds.name || '';
+            document.getElementById('modalTrainLineDescription').value = ds.description || '';
+
+            document.getElementById('trainLineModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Train Line #${ds.id}`;
+            document.getElementById('modalTrainLineSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Train Line';
+            document.getElementById('modalTrainLineSubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('trainLineModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

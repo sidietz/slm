@@ -8,62 +8,118 @@
     <header th:replace="~{fragments/layout :: header('Sport Types', 'Configure categories and kinds of physical sport and workouts', 'bi bi-trophy', 'theme-activity', '/sports', 'Sports')}"></header>
 
     <main class="container mb-5">
-        <div class="row g-4">
-            <!-- Add Sport Type Card -->
-            <div class="col-md-5">
-                <section class="card slm-form-card">
-                    <h2 class="text-danger"><i class="bi bi-plus-circle me-2"></i>Add Sport Type</h2>
-                    <form th:action="@{/sport-types}" th:object="${sportType}" method="post">
-                        <div class="mb-3">
-                            <label class="form-label">Sport Name <span class="text-danger">*</span></label>
-                            <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Swimming, Running, Cycling, HIIT" required />
+        <!-- Existing Sport Types Table Card -->
+        <section class="card slm-table-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 class="h4 fw-bold mb-0 text-dark">
+                    <i class="bi bi-trophy me-2 text-danger"></i>Configured Sport Types
+                    <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${types != null ? types.size() : 0}">0</span>
+                </h2>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-danger btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#sportTypeModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Sport Type
+                    </button>
+                    <a th:href="@{/sports}" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-heart-pulse me-1"></i> Workouts
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table slm-table align-middle">
+                    <thead>
+                        <tr>
+                            <th style="width: 100px;">ID</th>
+                            <th>Sport Name</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:if="${types == null or types.empty}">
+                            <td colspan="3" class="text-center py-4 text-muted">
+                                No sport types defined yet.
+                            </td>
+                        </tr>
+                        <tr th:each="t : ${types}">
+                            <td class="text-muted small" th:text="${t.id}">1</td>
+                            <td>
+                                <strong th:text="${t.name}">Sport</strong>
+                            </td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#sportTypeModal"
+                                        th:data-id="${t.id}"
+                                        th:data-name="${t.name}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Sport Type Modal (Add / Edit) -->
+        <div class="modal fade" id="sportTypeModal" tabindex="-1" aria-labelledby="sportTypeModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/sport-types}" th:object="${type}" method="post" id="sportTypeForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="sportTypeModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-danger"></i>Add Sport Type
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-danger px-4 fw-semibold">
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="sportTypeId" />
+                            <div class="mb-3">
+                                <label class="form-label">Sport Name <span class="text-danger">*</span></label>
+                                <input type="text" th:field="*{name}" id="sportTypeName" class="form-control" placeholder="e.g. Swimming, Running, Cycling, HIIT" required />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-danger px-4 fw-semibold" id="sportTypeSubmitBtn">
                                 <i class="bi bi-save me-1"></i> Add Sport Type
                             </button>
                         </div>
                     </form>
-                </section>
-            </div>
-
-            <!-- Existing Sport Types Table Card -->
-            <div class="col-md-7">
-                <section class="card slm-table-card">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h2 class="h4 fw-bold mb-0 text-dark">
-                            <i class="bi bi-trophy me-2 text-danger"></i>Configured Sport Types
-                            <span class="badge bg-danger-subtle text-danger ms-2 fs-6" th:text="${types != null ? types.size() : 0}">0</span>
-                        </h2>
-                    </div>
-
-                    <div class="table-responsive">
-                        <table class="table slm-table align-middle">
-                            <thead>
-                                <tr>
-                                    <th style="width: 100px;">ID</th>
-                                    <th>Sport Name</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr th:if="${types == null or types.empty}">
-                                    <td colspan="2" class="text-center py-4 text-muted">
-                                        No sport types defined yet.
-                                    </td>
-                                </tr>
-                                <tr th:each="t : ${types}">
-                                    <td class="text-muted small" th:text="${t.id}">1</td>
-                                    <td>
-                                        <strong th:text="${t.name}">Sport</strong>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                </div>
             </div>
         </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sportTypeModal = document.getElementById('sportTypeModal');
+            if (sportTypeModal) {
+                sportTypeModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('sportTypeModalTitle');
+                    const submitBtn = document.getElementById('sportTypeSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-danger"></i>Edit Sport Type';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Sport Type';
+                        document.getElementById('sportTypeId').value = id;
+                        document.getElementById('sportTypeName').value = button.getAttribute('data-name') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-danger"></i>Add Sport Type';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Add Sport Type';
+                        document.getElementById('sportTypeForm').reset();
+                        document.getElementById('sportTypeId').value = '';
+                    }
+                });
+
+                sportTypeModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('sportTypeForm').reset();
+                    document.getElementById('sportTypeId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>

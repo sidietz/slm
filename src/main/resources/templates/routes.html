@@ -17,11 +17,17 @@
         </div>
 
         <div class="row g-4 mb-5">
-            <div class="col-lg-8">
-                <div class="card slm-table-card shadow-sm h-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-signpost me-2 text-primary"></i>Configured Routes</h5>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(routes)} + ' routes'">0 routes</span>
+            <!-- Full-Width Routes Table Card -->
+            <div class="col-12">
+                <div class="card slm-table-card shadow-sm">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-signpost me-2 text-primary"></i>Configured Routes</h5>
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(routes)} + ' routes'">0 routes</span>
+                        </div>
+                        <button type="button" class="btn btn-primary fw-semibold" onclick="openCreateRouteModal()">
+                            <i class="bi bi-plus-circle me-1"></i> Add Route
+                        </button>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0">
@@ -33,7 +39,8 @@
                                     <th>Start Point</th>
                                     <th>End Point</th>
                                     <th>Air Dist</th>
-                                    <th class="pe-3">Drive Dist</th>
+                                    <th>Drive Dist</th>
+                                    <th class="text-end pe-3" style="width: 100px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -48,65 +55,123 @@
                                         <span class="badge bg-light text-dark border px-2 py-1" th:text="${e.end != null ? e.end.name : '—'}"></span>
                                     </td>
                                     <td class="text-muted" th:text="${e.airDistance != null ? e.airDistance + ' km' : '—'}"></td>
-                                    <td class="pe-3 fw-semibold text-primary" th:text="${e.driveDistance != null ? e.driveDistance + ' km' : '—'}"></td>
+                                    <td class="fw-semibold text-primary" th:text="${e.driveDistance != null ? e.driveDistance + ' km' : '—'}"></td>
+                                    <td class="text-end pe-3">
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-primary" 
+                                                title="Edit Route"
+                                                th:data-id="${e.id}"
+                                                th:data-name="${e.name}"
+                                                th:data-description="${e.description}"
+                                                th:data-start-id="${e.start != null ? e.start.id : ''}"
+                                                th:data-end-id="${e.end != null ? e.end.id : ''}"
+                                                th:data-drive-distance="${e.driveDistance}"
+                                                onclick="populateEditRouteModal(this)">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(routes)}">
-                                    <td colspan="7" class="text-center py-4 text-muted">No routes recorded yet.</td>
+                                    <td colspan="8" class="text-center py-4 text-muted">No routes recorded yet. Click "Add Route" above to define a travel route.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-4">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Route</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/routes}" th:object="${route}" method="post">
-                            <div class="mb-3">
-                                <label for="startPoint" class="form-label">Start Point</label>
-                                <select id="startPoint" class="form-select" th:field="*{start}">
-                                    <option th:each="a : ${points}" th:value="${a.id}" th:text="${a.name}"></option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="endPoint" class="form-label">End Point</label>
-                                <select id="endPoint" class="form-select" th:field="*{end}">
-                                    <option th:each="a : ${points}" th:value="${a.id}" th:text="${a.name}"></option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="name" class="form-label">Route Name <span class="text-danger">*</span></label>
-                                <input type="text" id="name" th:field="*{name}" class="form-control" placeholder="e.g. Home to Office" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="description" class="form-label">Description</label>
-                                <input type="text" id="description" th:field="*{description}" class="form-control" placeholder="e.g. Via Highway A9">
-                            </div>
-                            <div class="mb-3">
-                                <label for="driveDistance" class="form-label">Drive Distance (km) <span class="text-danger">*</span></label>
-                                <input type="number" step="0.01" id="driveDistance" th:field="*{driveDistance}" class="form-control" placeholder="0.00" required>
-                            </div>
-                            <div class="p-3 bg-light rounded-3 border mb-4">
-                                <div class="d-flex align-items-center gap-2 text-primary fw-semibold small mb-1">
-                                    <i class="bi bi-geo-alt-fill"></i>
-                                    <span>PostGIS Air Distance</span>
-                                </div>
-                                <div class="text-muted small">Air distance is automatically calculated using PostGIS geodesic distance between the selected start and end points.</div>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="bi bi-plus-circle me-1"></i> Add Route
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
+    <!-- Dual-Purpose Modal for Adding and Editing Routes -->
+    <div class="modal fade" id="routeModal" tabindex="-1" aria-labelledby="routeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="routeModalLabel">
+                        <i class="bi bi-map me-2 text-primary"></i>Add Route
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="routeForm" th:action="@{/routes}" method="post">
+                    <input type="hidden" id="modalRouteId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="modalStartPoint" class="form-label fw-semibold">Start Point <span class="text-danger">*</span></label>
+                                <select id="modalStartPoint" name="start" class="form-select" required>
+                                    <option th:each="a : ${points}" th:value="${a.id}" th:text="${a.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalEndPoint" class="form-label fw-semibold">End Point <span class="text-danger">*</span></label>
+                                <select id="modalEndPoint" name="end" class="form-select" required>
+                                    <option th:each="a : ${points}" th:value="${a.id}" th:text="${a.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label for="modalRouteName" class="form-label fw-semibold">Route Name <span class="text-danger">*</span></label>
+                                <input type="text" id="modalRouteName" name="name" class="form-control" placeholder="e.g. Home to Office" required>
+                            </div>
+                            <div class="col-12">
+                                <label for="modalRouteDescription" class="form-label fw-semibold">Description</label>
+                                <input type="text" id="modalRouteDescription" name="description" class="form-control" placeholder="e.g. Via Highway A9">
+                            </div>
+                            <div class="col-12">
+                                <label for="modalDriveDistance" class="form-label fw-semibold">Drive Distance (km) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" id="modalDriveDistance" name="driveDistance" class="form-control" placeholder="0.00" required>
+                            </div>
+                            <div class="col-12">
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <div class="d-flex align-items-center gap-2 text-primary fw-semibold small mb-1">
+                                        <i class="bi bi-geo-alt-fill"></i>
+                                        <span>PostGIS Air Distance</span>
+                                    </div>
+                                    <div class="text-muted small">Air distance is automatically computed using PostGIS geodesic distance between the start and end points.</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalRouteSubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Route
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateRouteModal() {
+            document.getElementById('routeForm').reset();
+            document.getElementById('modalRouteId').value = '';
+            document.getElementById('routeModalLabel').innerHTML = '<i class="bi bi-map me-2 text-primary"></i>Add Route';
+            document.getElementById('modalRouteSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Route';
+            document.getElementById('modalRouteSubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('routeModal'));
+            modal.show();
+        }
+
+        function populateEditRouteModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalRouteId').value = ds.id || '';
+            document.getElementById('modalRouteName').value = ds.name || '';
+            document.getElementById('modalRouteDescription').value = ds.description || '';
+            document.getElementById('modalStartPoint').value = ds.startId || '';
+            document.getElementById('modalEndPoint').value = ds.endId || '';
+            document.getElementById('modalDriveDistance').value = ds.driveDistance || '';
+
+            document.getElementById('routeModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Route #${ds.id}`;
+            document.getElementById('modalRouteSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Route';
+            document.getElementById('modalRouteSubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('routeModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

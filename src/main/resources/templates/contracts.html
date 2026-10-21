@@ -9,14 +9,19 @@
 
     <main class="container my-5">
         <div class="row g-4 mb-5">
-            <div class="col-lg-8">
+            <div class="col-12">
                 <div class="card slm-table-card shadow-sm h-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-file-earmark-ruled me-2 text-primary"></i>Active & Past Contracts</h5>
                             <span class="text-muted small" th:if="${totalFee != null}" th:text="'Total active monthly commitments: €' + ${#numbers.formatDecimal(totalFee, 1, 2)}"></span>
                         </div>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1" th:text="${#lists.size(contracts)} + ' contracts'">0 contracts</span>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2" th:text="${#lists.size(contracts)} + ' contracts'">0 contracts</span>
+                            <button type="button" class="btn btn-primary btn-sm px-3 py-2 fw-semibold" onclick="openCreateContractModal()">
+                                <i class="bi bi-plus-circle me-1"></i> Add Contract
+                            </button>
+                        </div>
                     </div>
                     <div class="table-responsive">
                         <table class="table slm-table table-hover align-middle mb-0">
@@ -29,7 +34,8 @@
                                     <th>Start Date</th>
                                     <th>Initial End Date</th>
                                     <th>Remaining</th>
-                                    <th class="pe-3">Status</th>
+                                    <th>Status</th>
+                                    <th class="text-end pe-3" style="width: 150px;">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -63,7 +69,7 @@
                                         <span th:if="${e.calculatedStatus.name() == 'TERMINATED'}"
                                               class="badge bg-secondary-subtle text-secondary rounded-pill px-2 py-1">—</span>
                                     </td>
-                                    <td class="pe-3">
+                                    <td>
                                         <span th:if="${e.calculatedStatus.name() == 'ACTIVE_INITIAL_TERM'}"
                                               class="badge bg-success-subtle text-success rounded-pill px-2 py-1">
                                             <i class="bi bi-check-circle me-1"></i> Active
@@ -82,78 +88,177 @@
                                             <i class="bi bi-dash-circle me-1"></i> Ended
                                         </span>
                                     </td>
+                                    <td class="text-end pe-3">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- Edit Button -->
+                                            <button type="button" 
+                                                    class="btn btn-outline-primary" 
+                                                    title="Edit Contract"
+                                                    th:data-id="${e.id}"
+                                                    th:data-title="${e.title}"
+                                                    th:data-contractor-id="${e.contractor != null ? e.contractor.id : ''}"
+                                                    th:data-fee="${e.fee}"
+                                                    th:data-start-date="${e.startDate}"
+                                                    th:data-initial-end-date="${e.initialEndDate}"
+                                                    th:data-auto-extension="${e.autoExtension}"
+                                                    th:data-auto-extension-months="${e.autoExtensionMonths}"
+                                                    th:data-is-active="${e.active}"
+                                                    th:data-is-canceled="${e.canceled}"
+                                                    th:data-termination-date="${e.terminationDate}"
+                                                    onclick="populateEditContractModal(this)">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+
+                                            <!-- Terminate Button (Only active, uncanceled contracts) -->
+                                            <form th:if="${e.active and !e.canceled}" 
+                                                  th:action="@{'/contracts/' + ${e.id} + '/terminate'}" 
+                                                  method="post" 
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Terminate this contract effective today?');">
+                                                <button type="submit" 
+                                                        class="btn btn-outline-danger" 
+                                                        title="Terminate Contract">
+                                                    <i class="bi bi-x-circle me-1"></i> Terminate
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
                                 </tr>
                                 <tr th:if="${#lists.isEmpty(contracts)}">
-                                    <td colspan="8" class="text-center py-4 text-muted">No contracts logged yet.</td>
+                                    <td colspan="9" class="text-center py-4 text-muted">No contracts logged yet.</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <div class="col-lg-4">
-                <div class="card slm-form-card shadow-sm">
-                    <div class="card-header py-3 border-0">
-                        <h5 class="mb-0 fw-semibold text-dark"><i class="bi bi-plus-circle me-2 text-primary"></i>Add Contract</h5>
-                    </div>
-                    <div class="card-body">
-                        <form action="#" th:action="@{/contracts}" th:object="${contract}" method="post">
-                            <div class="mb-3">
-                                <label for="contractorSelect" class="form-label">Contractor</label>
-                                <select id="contractorSelect" class="form-select" th:field="*{contractor}">
-                                    <option th:each="s : ${contractors}" th:value="${s.id}" th:text="${s.name}"></option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="contractTitle" class="form-label">Title <span class="text-danger">*</span></label>
-                                <input type="text" id="contractTitle" th:field="*{title}" class="form-control" placeholder="e.g. Fiber Internet 1Gbps" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="fee" class="form-label">Fee (€/period) <span class="text-danger">*</span></label>
-                                <input type="number" id="fee" step="0.01" th:field="*{fee}" class="form-control" placeholder="0.00" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="startDate" class="form-label">Start Date <span class="text-danger">*</span></label>
-                                <input type="date" id="startDate" th:field="*{startDate}" class="form-control" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="initialEndDate" class="form-label">Initial End Date (Mindestlaufzeit) <span class="text-danger">*</span></label>
-                                <input type="date" id="initialEndDate" th:field="*{initialEndDate}" class="form-control" required>
-                                <div class="form-text">End of the minimum commitment term. Auto-extends if not canceled.</div>
-                            </div>
-                            <div class="mb-3 form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="autoExtension" th:field="*{autoExtension}">
-                                <label class="form-check-label" for="autoExtension">Auto-Extends after Initial End Date</label>
-                            </div>
-                            <div class="mb-3">
-                                <label for="autoExtensionMonths" class="form-label">Extension Period (Months)</label>
-                                <input type="number" id="autoExtensionMonths" th:field="*{autoExtensionMonths}" class="form-control" min="1" value="1">
-                            </div>
-                            <div class="mb-3 form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="isActive" th:field="*{isActive}">
-                                <label class="form-check-label" for="isActive">Currently Active</label>
-                            </div>
-                            <div class="border-top pt-3 mt-3">
-                                <div class="mb-3 form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="isCanceled" th:field="*{isCanceled}">
-                                    <label class="form-check-label text-warning-emphasis fw-semibold" for="isCanceled">Mark as Canceled</label>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="terminationDate" class="form-label">Effective Termination Date</label>
-                                    <input type="date" id="terminationDate" th:field="*{terminationDate}" class="form-control">
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2 mt-2">
-                                <i class="bi bi-plus-circle me-1"></i> Add Contract
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </div>
     </main>
 
+    <!-- Dual-Purpose Modal: Add & Edit Contract -->
+    <div class="modal fade" id="contractModal" tabindex="-1" aria-labelledby="contractModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-white py-3 border-bottom">
+                    <h5 class="modal-title fw-bold text-dark" id="contractModalLabel">
+                        <i class="bi bi-file-earmark-plus me-2 text-primary"></i>Add Contract
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form id="contractForm" th:action="@{/contracts}" method="post">
+                    <input type="hidden" id="modalContractId" name="id" value="">
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="modalContractor" class="form-label fw-semibold">Contractor</label>
+                                <select id="modalContractor" name="contractor" class="form-select">
+                                    <option th:each="s : ${contractors}" th:value="${s.id}" th:text="${s.name}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalTitle" class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+                                <input type="text" id="modalTitle" name="title" class="form-control" placeholder="e.g. Fiber Internet 1Gbps" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="modalFee" class="form-label fw-semibold">Fee (€/period) <span class="text-danger">*</span></label>
+                                <input type="number" step="0.01" id="modalFee" name="fee" class="form-control" placeholder="0.00" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="modalStartDate" class="form-label fw-semibold">Start Date <span class="text-danger">*</span></label>
+                                <input type="date" id="modalStartDate" name="startDate" class="form-control" required>
+                            </div>
+                            <div class="col-md-4">
+                                <label for="modalInitialEndDate" class="form-label fw-semibold">Initial End Date (Mindestlaufzeit) <span class="text-danger">*</span></label>
+                                <input type="date" id="modalInitialEndDate" name="initialEndDate" class="form-control" required>
+                                <div class="form-text">Minimum term; auto-extends if uncanceled.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch mt-2">
+                                    <input class="form-check-input" type="checkbox" id="modalAutoExtension" name="autoExtension" checked>
+                                    <label class="form-check-label fw-semibold" for="modalAutoExtension">Auto-Extends after Initial Term</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="modalAutoExtensionMonths" class="form-label fw-semibold">Extension Period (Months)</label>
+                                <input type="number" id="modalAutoExtensionMonths" name="autoExtensionMonths" class="form-control" min="1" value="1">
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="modalIsActive" name="isActive" checked>
+                                    <label class="form-check-label fw-semibold" for="modalIsActive">Currently Active</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="modalIsCanceled" name="isCanceled">
+                                    <label class="form-check-label fw-semibold text-warning-emphasis" for="modalIsCanceled">Mark as Canceled</label>
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                <label for="modalTerminationDate" class="form-label fw-semibold">Effective Termination Date</label>
+                                <input type="date" id="modalTerminationDate" name="terminationDate" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light border-top py-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" id="modalSubmitBtn" class="btn btn-primary fw-semibold px-4">
+                            <i class="bi bi-plus-circle me-1"></i> Save Contract
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <footer th:replace="~{fragments/layout :: footer}"></footer>
+
+    <script>
+        function openCreateContractModal() {
+            document.getElementById('contractForm').reset();
+            document.getElementById('modalContractId').value = '';
+            document.getElementById('contractModalLabel').innerHTML = '<i class="bi bi-file-earmark-plus me-2 text-primary"></i>Add Contract';
+            document.getElementById('modalSubmitBtn').innerHTML = '<i class="bi bi-plus-circle me-1"></i> Save Contract';
+            document.getElementById('modalSubmitBtn').className = 'btn btn-primary fw-semibold px-4';
+            document.getElementById('modalAutoExtension').checked = true;
+            document.getElementById('modalAutoExtensionMonths').value = '1';
+            document.getElementById('modalIsActive').checked = true;
+            document.getElementById('modalIsCanceled').checked = false;
+
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('modalStartDate').value = today;
+            const nextYear = new Date();
+            nextYear.setFullYear(nextYear.getFullYear() + 1);
+            document.getElementById('modalInitialEndDate').value = nextYear.toISOString().split('T')[0];
+            document.getElementById('modalTerminationDate').value = '';
+
+            const modal = new bootstrap.Modal(document.getElementById('contractModal'));
+            modal.show();
+        }
+
+        function populateEditContractModal(btn) {
+            const ds = btn.dataset;
+            document.getElementById('modalContractId').value = ds.id || '';
+            document.getElementById('modalTitle').value = ds.title || '';
+            if (ds.contractorId) {
+                document.getElementById('modalContractor').value = ds.contractorId;
+            }
+            document.getElementById('modalFee').value = ds.fee || '';
+            document.getElementById('modalStartDate').value = ds.startDate || '';
+            document.getElementById('modalInitialEndDate').value = ds.initialEndDate || '';
+            document.getElementById('modalAutoExtension').checked = ds.autoExtension === 'true';
+            document.getElementById('modalAutoExtensionMonths').value = ds.autoExtensionMonths || '1';
+            document.getElementById('modalIsActive').checked = ds.isActive === 'true';
+            document.getElementById('modalIsCanceled').checked = ds.isCanceled === 'true';
+            document.getElementById('modalTerminationDate').value = ds.terminationDate || '';
+
+            document.getElementById('contractModalLabel').innerHTML = `<i class="bi bi-pencil-square me-2 text-warning"></i>Edit Contract #${ds.id}`;
+            document.getElementById('modalSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Contract';
+            document.getElementById('modalSubmitBtn').className = 'btn btn-warning fw-semibold px-4';
+
+            const modal = new bootstrap.Modal(document.getElementById('contractModal'));
+            modal.show();
+        }
+    </script>
 </body>
 </html>

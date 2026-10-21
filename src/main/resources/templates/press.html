@@ -15,9 +15,14 @@
                     <i class="bi bi-printer me-2 text-info"></i>Book Presses
                     <span class="badge bg-info-subtle text-info ms-2 fs-6" th:text="${presses != null ? presses.size() : 0}">0</span>
                 </h2>
-                <a th:href="@{/books}" class="btn btn-outline-info btn-sm">
-                    <i class="bi bi-book me-1"></i> View Books
-                </a>
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-info text-white btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#pressModal">
+                        <i class="bi bi-plus-circle me-1"></i> Add Press
+                    </button>
+                    <a th:href="@{/books}" class="btn btn-outline-info btn-sm">
+                        <i class="bi bi-book me-1"></i> View Books
+                    </a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -28,11 +33,12 @@
                             <th>Press Name</th>
                             <th>Headquarters</th>
                             <th>Founding Date</th>
+                            <th class="text-end" style="width: 100px;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr th:if="${presses == null or presses.empty}">
-                            <td colspan="4" class="text-center py-4 text-muted">
+                            <td colspan="5" class="text-center py-4 text-muted">
                                 No presses registered yet.
                             </td>
                         </tr>
@@ -43,12 +49,93 @@
                             </td>
                             <td th:text="${e.hq != null and !e.hq.empty ? e.hq : '-'}">City, Country</td>
                             <td class="small text-muted" th:text="${e.foundingDate != null ? #temporals.format(e.foundingDate, 'dd.MM.yyyy') : '-'}">01.01.1920</td>
+                            <td class="text-end">
+                                <button type="button" class="btn btn-sm btn-outline-info"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#pressModal"
+                                        th:data-id="${e.id}"
+                                        th:data-name="${e.name}"
+                                        th:data-hq="${e.hq}"
+                                        th:data-founding-date="${e.foundingDate}">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </section>
+
+        <!-- Press Modal (Add / Edit) -->
+        <div class="modal fade" id="pressModal" tabindex="-1" aria-labelledby="pressModalTitle" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <form th:action="@{/press}" th:object="${press}" method="post" id="pressForm">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="pressModalTitle">
+                                <i class="bi bi-plus-circle me-2 text-info"></i>Add Press
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <input type="hidden" th:field="*{id}" id="pressId" />
+                            <div class="mb-3">
+                                <label class="form-label">Press Name <span class="text-danger">*</span></label>
+                                <input type="text" th:field="*{name}" id="pressName" class="form-control" placeholder="e.g. Penguin Random House, Springer" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Headquarters</label>
+                                <input type="text" th:field="*{hq}" id="pressHq" class="form-control" placeholder="e.g. New York, USA" />
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Founding Date</label>
+                                <input type="date" th:field="*{foundingDate}" id="pressFoundingDate" class="form-control" />
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-info text-white fw-semibold" id="pressSubmitBtn">
+                                <i class="bi bi-save me-1"></i> Add Press
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const pressModal = document.getElementById('pressModal');
+            if (pressModal) {
+                pressModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const id = button ? button.getAttribute('data-id') : null;
+                    const modalTitle = document.getElementById('pressModalTitle');
+                    const submitBtn = document.getElementById('pressSubmitBtn');
+
+                    if (id) {
+                        modalTitle.innerHTML = '<i class="bi bi-pencil me-2 text-info"></i>Edit Press';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Update Press';
+                        document.getElementById('pressId').value = id;
+                        document.getElementById('pressName').value = button.getAttribute('data-name') || '';
+                        document.getElementById('pressHq').value = button.getAttribute('data-hq') || '';
+                        document.getElementById('pressFoundingDate').value = button.getAttribute('data-founding-date') || '';
+                    } else {
+                        modalTitle.innerHTML = '<i class="bi bi-plus-circle me-2 text-info"></i>Add Press';
+                        submitBtn.innerHTML = '<i class="bi bi-save me-1"></i> Add Press';
+                        document.getElementById('pressForm').reset();
+                        document.getElementById('pressId').value = '';
+                    }
+                });
+
+                pressModal.addEventListener('hidden.bs.modal', function () {
+                    document.getElementById('pressForm').reset();
+                    document.getElementById('pressId').value = '';
+                });
+            }
+        });
+    </script>
 
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 </body>
