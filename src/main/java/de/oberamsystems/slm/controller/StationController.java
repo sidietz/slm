@@ -111,7 +111,7 @@ public class StationController {
 
 	@PostMapping("/stations/charging")
 	public String createChargingStation(@RequestParam(required = false) UUID id,
-										@RequestParam String name,
+										@RequestParam(required = false) String name,
 										@RequestParam(required = false) String brand,
 										@RequestParam(required = false) String operator,
 										@RequestParam(required = false) String street,
@@ -127,17 +127,21 @@ public class StationController {
 										@RequestParam(required = false) List<PlugType> plugType,
 										@RequestParam(required = false) List<Integer> pointCount,
 										RedirectAttributes redirectAttributes) {
+		if (name == null || name.isBlank()) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Station name is required.");
+			return "redirect:/stations?tab=charging";
+		}
 		try {
 			ChargingStation station = (id != null)
 					? chargingStationRepository.findById(id).orElseGet(ChargingStation::new)
 					: new ChargingStation();
-			station.setName(name);
-			station.setBrand(brand);
-			station.setOperator(operator);
-			station.setStreet(street);
-			station.setHouseNumber(houseNumber);
-			station.setPostalCode(postalCode);
-			station.setCity(city);
+			station.setName(name.trim());
+			station.setBrand(brand != null ? brand.trim() : null);
+			station.setOperator(operator != null ? operator.trim() : null);
+			station.setStreet(street != null ? street.trim() : null);
+			station.setHouseNumber(houseNumber != null ? houseNumber.trim() : null);
+			station.setPostalCode(postalCode != null ? postalCode.trim() : null);
+			station.setCity(city != null ? city.trim() : null);
 			if (country != null && !country.isBlank()) {
 				station.setCountry(country.trim().toUpperCase());
 			}
@@ -148,20 +152,24 @@ public class StationController {
 			} else {
 				station.setPoint(null);
 			}
-			station.setNote(note);
+			station.setNote(note != null ? note.trim() : null);
 
 			if (maxPowerKw != null && plugType != null) {
 				station.getChargingPoints().clear();
 				for (int i = 0; i < maxPowerKw.size() && i < plugType.size(); i++) {
 					BigDecimal power = maxPowerKw.get(i);
 					PlugType plug = plugType.get(i);
+					if (power == null || power.compareTo(BigDecimal.ZERO) <= 0 || plug == null) {
+						continue;
+					}
 					int count = (pointCount != null && i < pointCount.size() && pointCount.get(i) != null && pointCount.get(i) > 0)
-							? pointCount.get(i)
+							? Math.min(pointCount.get(i), 100)
 							: 1;
-					for (int c = 0; c < count; c++) {
+					for (int c = 1; c <= count; c++) {
 						ChargingPoint point = new ChargingPoint();
 						point.setMaxPowerKw(power);
 						point.setPlugType(plug);
+						point.setPointIdentifier("Stall " + plug.getDisplayName() + " #" + c);
 						station.addChargingPoint(point);
 					}
 				}
@@ -170,8 +178,8 @@ public class StationController {
 			chargingStationRepository.save(station);
 			redirectAttributes.addFlashAttribute("successMessage", id != null ? "Charging station updated successfully." : "Charging station created successfully.");
 		} catch (Exception e) {
-			log.error("Error creating charging station", e);
-			redirectAttributes.addFlashAttribute("errorMessage", "Error creating charging station: " + e.getMessage());
+			log.error("Error creating/updating charging station", e);
+			redirectAttributes.addFlashAttribute("errorMessage", "Error saving charging station: " + e.getMessage());
 		}
 		return "redirect:/stations?tab=charging";
 	}

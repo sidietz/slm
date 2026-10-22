@@ -9,9 +9,11 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import de.oberamsystems.slm.model.Device;
 import de.oberamsystems.slm.model.DeviceRepository;
+import de.oberamsystems.slm.model.DeviceType;
 import de.oberamsystems.slm.model.DeviceTypeRepository;
 import de.oberamsystems.slm.model.Game;
 import de.oberamsystems.slm.model.GameRepository;
@@ -23,6 +25,8 @@ import de.oberamsystems.slm.model.Publisher;
 import de.oberamsystems.slm.model.PublisherRepository;
 import de.oberamsystems.slm.model.Studio;
 import de.oberamsystems.slm.model.StudioRepository;
+import de.oberamsystems.slm.model.Vendor;
+import de.oberamsystems.slm.model.VendorRepository;
 import de.oberamsystems.slm.model.Vendor;
 import de.oberamsystems.slm.model.VendorRepository;
 
@@ -94,13 +98,24 @@ public class GameController {
 		return "games";
 	}
 	
+	public String submitGames(Game g, Model model) {
+		return submitGames(g, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/games")
-	public String submitGames(@ModelAttribute Game g, Model model) {
-		model.addAttribute("games", repo.findAll(Sort.by(Sort.Direction.ASC, "title")));
-		model.addAttribute("studios", studioRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		model.addAttribute("publishers", publisherRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+	public String submitGames(@ModelAttribute Game g, Model model, RedirectAttributes redirectAttributes) {
+		if (g.getPublisher() == null || g.getPublisher().getId() == null || !publisherRepo.existsById(g.getPublisher().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Publisher is required.");
+			return "redirect:/games";
+		}
+		if (g.getStudio() == null || g.getStudio().getId() == null || !studioRepo.existsById(g.getStudio().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Studio is required.");
+			return "redirect:/games";
+		}
+		if (g.getId() != null && (g.getId() <= 0 || !repo.existsById(g.getId()))) {
+			g.setId(null);
+		}
 		repo.save(g);
-		model.addAttribute("game", g);
 		return "redirect:/games";
 	}
 	
@@ -115,14 +130,28 @@ public class GameController {
 		return "devices";
 	}
 	
+	public String submitDevices(Device device, Model model) {
+		return submitDevices(device, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/devices")
-	public String submitDevices(@ModelAttribute Device device, Model model) {
-		model.addAttribute("devices", deviceRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		model.addAttribute("deviceTypes", deviceTypeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		model.addAttribute("manufacturers", manufacturerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+	public String submitDevices(@ModelAttribute Device device, Model model, RedirectAttributes redirectAttributes) {
+		if (device.getDeviceType() == null || device.getDeviceType().getId() == null || !deviceTypeRepo.existsById(device.getDeviceType().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Device type is required.");
+			return "redirect:/devices";
+		}
+		if (device.getVendor() == null || device.getVendor().getId() == null || !vendorRepo.existsById(device.getVendor().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Vendor is required.");
+			return "redirect:/devices";
+		}
+		if (device.getManufacturer() == null || device.getManufacturer().getId() == null || !manufacturerRepo.existsById(device.getManufacturer().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Manufacturer is required.");
+			return "redirect:/devices";
+		}
+		if (device.getId() != null && (device.getId() <= 0 || !deviceRepo.existsById(device.getId()))) {
+			device.setId(null);
+		}
 		deviceRepo.save(device);
-		model.addAttribute("device", device);
 		return "redirect:/devices";
 	}
 	
@@ -137,6 +166,9 @@ public class GameController {
 	@PostMapping("/publishers")
 	public String submitPublishers(@ModelAttribute Publisher p, Model model) {
 		model.addAttribute("publishers", publisherRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (p.getId() != null && (p.getId() <= 0 || !publisherRepo.existsById(p.getId()))) {
+			p.setId(null);
+		}
 		publisherRepo.save(p);
 		model.addAttribute("publisher", p);
 		return "redirect:/publishers";
@@ -153,6 +185,9 @@ public class GameController {
 	@PostMapping("/studios")
 	public String submitStudios(@ModelAttribute Studio s, Model model) {
 		model.addAttribute("studios", studioRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (s.getId() != null && (s.getId() <= 0 || !studioRepo.existsById(s.getId()))) {
+			s.setId(null);
+		}
 		studioRepo.save(s);
 		model.addAttribute("studio", s);
 		return "redirect:/studios";
@@ -169,6 +204,9 @@ public class GameController {
 	@PostMapping("/vendors")
 	public String submitVendors(@ModelAttribute Vendor v, Model model) {
 		model.addAttribute("vendors", vendorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (v.getId() != null && (v.getId() <= 0 || !vendorRepo.existsById(v.getId()))) {
+			v.setId(null);
+		}
 		vendorRepo.save(v);
 		model.addAttribute("vendor", v);
 		return "redirect:/vendors";
@@ -185,6 +223,9 @@ public class GameController {
 	@PostMapping("/manufacturers")
 	public String submitManufacturers(@ModelAttribute Manufacturer m, Model model) {
 		model.addAttribute("manufacturers", manufacturerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (m.getId() != null && (m.getId() <= 0 || !manufacturerRepo.existsById(m.getId()))) {
+			m.setId(null);
+		}
 		manufacturerRepo.save(m);
 		model.addAttribute("manufacturer", m);
 		return "redirect:/manufacturers";

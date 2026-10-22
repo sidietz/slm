@@ -71,6 +71,7 @@ public class HumanEventControllerTest {
 	@Test
 	void testSaveEvent() {
 		Human h = new Human(1L, "Max", "Mustermann", new java.util.Date(), HumanCategory.FAMILY);
+		when(humanRepo.existsById(1L)).thenReturn(true);
 		HumanEvent event = new HumanEvent(h, "25th Anniversary", EventType.WEDDING_ANNIVERSARY, LocalDate.of(2001, 6, 15));
 
 		String view = controller.saveEvent(event, null, null);

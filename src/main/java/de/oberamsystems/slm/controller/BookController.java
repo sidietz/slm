@@ -23,6 +23,8 @@ import de.oberamsystems.slm.model.BookGenreEnum;
 import de.oberamsystems.slm.model.Author;
 
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 @Controller
 public class BookController {
 
@@ -52,15 +54,28 @@ public class BookController {
 		return "books";
 	}
 	
+	public String submitBooks(Book tt, Model model) {
+		return submitBooks(tt, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/books")
-	public String submitBooks(@ModelAttribute Book tt, Model model) {
-		model.addAttribute("books", repo.findAll(Sort.by(Sort.Direction.ASC, "title")));
-		model.addAttribute("authors", authorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
-		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		model.addAttribute("types", BookTypeEnum.values());
-		model.addAttribute("genres", BookGenreEnum.values());
+	public String submitBooks(@ModelAttribute Book tt, Model model, RedirectAttributes redirectAttributes) {
+		if (tt.getAuthor() == null || tt.getAuthor().getId() == null || !authorRepo.existsById(tt.getAuthor().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Author is required.");
+			return "redirect:/books";
+		}
+		if (tt.getPress() == null || tt.getPress().getId() == null || !pressRepo.existsById(tt.getPress().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Press / Imprint is required.");
+			return "redirect:/books";
+		}
+		if (tt.getIsbn() == null || tt.getIsbn().isBlank()) {
+			redirectAttributes.addFlashAttribute("errorMessage", "ISBN is required.");
+			return "redirect:/books";
+		}
+		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
+			tt.setId(null);
+		}
 		repo.save(tt);
-		model.addAttribute("book", tt);
 		return "redirect:/books";
 	}
 	
@@ -74,6 +89,9 @@ public class BookController {
 	@PostMapping("/authors")
 	public String submitAuthors(@ModelAttribute Author a, Model model) {
 		model.addAttribute("authors", authorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+		if (a.getId() != null && (a.getId() <= 0 || !authorRepo.existsById(a.getId()))) {
+			a.setId(null);
+		}
 		authorRepo.save(a);
 		model.addAttribute("author", a);
 		return "redirect:/authors";
@@ -89,6 +107,9 @@ public class BookController {
 	@PostMapping("/press")
 	public String submitPresses(@ModelAttribute Press p, Model model) {
 		model.addAttribute("presses", pressRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (p.getId() != null && (p.getId() <= 0 || !pressRepo.existsById(p.getId()))) {
+			p.setId(null);
+		}
 		pressRepo.save(p);
 		model.addAttribute("press", p);
 		return "redirect:/press";

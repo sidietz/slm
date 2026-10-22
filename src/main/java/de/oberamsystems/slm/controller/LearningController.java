@@ -57,6 +57,9 @@ public class LearningController {
 		if (breakMinutes != null && breakMinutes > 0) {
 			rs.setBreakDuration(Duration.ofMinutes(breakMinutes));
 		}
+		if (rs.getId() != null && !learningSessionRepo.existsById(rs.getId())) {
+			rs.setId(null);
+		}
 		learningSessionRepo.save(rs);
 		model.addAttribute("learningsession", rs);
 		return "redirect:/learning-sessions";
@@ -78,6 +81,9 @@ public class LearningController {
 		model.addAttribute("items", repo.findAll(Sort.by(Sort.Direction.DESC, "lastUpdated")));
 		model.addAttribute("sources", SourceEnum.values());
 		model.addAttribute("statuss", StatusEnum.values());
+		if (i.getId() != null && (i.getId() <= 0 || !repo.existsById(i.getId()))) {
+			i.setId(null);
+		}
 		repo.save(i);
 		model.addAttribute("learningitem", i);
 		return "redirect:/learning-items";

@@ -16,6 +16,7 @@ import de.oberamsystems.slm.model.HabitRepository;
 import de.oberamsystems.slm.model.HabitEntryRepository;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 public class HabitController {
@@ -38,6 +39,9 @@ public class HabitController {
 	@PostMapping("/habits")
 	public String submitHabits(@ModelAttribute Habit ts, Model model) {
 		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (ts.getId() != null && (ts.getId() <= 0 || !repo.existsById(ts.getId()))) {
+			ts.setId(null);
+		}
 		repo.save(ts);
 		model.addAttribute("habit", ts);
 		return "redirect:/habits";
@@ -53,12 +57,20 @@ public class HabitController {
 		return "habit-entries";
 	}
 
+	public String submitHabitEntries(HabitEntry entry, Model model) {
+		return submitHabitEntries(entry, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/habit-entries")
-	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model) {
-		model.addAttribute("habitentries", entryRepo.findAll(Sort.by(Sort.Direction.DESC, "lastDone")));
-		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+	public String submitHabitEntries(@ModelAttribute HabitEntry entry, Model model, RedirectAttributes redirectAttributes) {
+		if (entry.getHabit() == null || entry.getHabit().getId() == null || !repo.existsById(entry.getHabit().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Habit is required.");
+			return "redirect:/habit-entries";
+		}
+		if (entry.getId() != null && (entry.getId() <= 0 || !entryRepo.existsById(entry.getId()))) {
+			entry.setId(null);
+		}
 		entryRepo.save(entry);
-		model.addAttribute("habitentry", entry);
 		return "redirect:/habit-entries";
 	}
 

@@ -218,4 +218,34 @@ public class SocialAndPeopleIT extends AbstractIntegrationTest {
         assertEquals("Nobel Prize Gala Ceremony", updated.getTitle());
         assertEquals(LocalDate.of(2026, 12, 11), updated.getEventDate());
     }
+
+    @Test
+    void testAddLecturerViaModalFormWithEmptyIdParam() throws Exception {
+        // Modal form on /humans sends <input type="hidden" id="modalHumanId" name="id" value="">
+        // Verify that id="" binds cleanly to null and persists a new Human with category LECTURER and syncs birthday event.
+        mockMvc.perform(post("/humans")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("category", "LECTURER")
+                        .param("firstname", "Andrew")
+                        .param("lastname", "Ng")
+                        .param("birthday", "1976-04-18"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("humans"))
+                .andExpect(content().string(containsString("Andrew")))
+                .andExpect(content().string(containsString("Ng")));
+
+        List<Human> humans = humanRepository.findAll();
+        Human savedLecturer = humans.stream()
+                .filter(h -> "Andrew".equals(h.getFirstname()) && "Ng".equals(h.getLastname()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Saved lecturer Andrew Ng not found"));
+        assertEquals(HumanCategory.LECTURER, savedLecturer.getCategory());
+        assertNotNull(savedLecturer.getId());
+        assertTrue(savedLecturer.getId() > 0);
+
+        List<HumanEvent> events = humanEventRepository.findByHumanIdOrderByDaysUntilNextAsc(savedLecturer.getId());
+        assertFalse(events.isEmpty(), "Birthday event must be automatically created for lecturer");
+        assertEquals(EventType.BIRTHDAY, events.getFirst().getEventType());
+    }
 }

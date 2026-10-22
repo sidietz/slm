@@ -265,4 +265,60 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
         assertEquals(LocalDateTime.of(2026, 10, 20, 7, 30), updatedSt.getGetup());
         assertNotNull(updatedSt.getSleeptime(), "Generated sleeptime interval must be auto-calculated on update");
     }
+
+    @Test
+    void testModalCreateWellnessAndHabitsWithEmptyIdParam() throws Exception {
+        // 1. Habit via modal with empty id
+        mockMvc.perform(post("/habits")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Hydration")
+                        .param("description", "Drink 2.5L water daily"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/habits"));
+        assertEquals(1, habitRepository.count());
+        Habit habit = habitRepository.findAll().getFirst();
+
+        // 2. HabitEntry via modal with empty id and explicit habit
+        mockMvc.perform(post("/habit-entries")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("habit", habit.getId().toString())
+                        .param("lastDone", "2026-10-21T09:00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/habit-entries"));
+        assertEquals(1, habitEntryRepository.count());
+
+        // 3. HabitEntry via modal with empty id and omitted habit (tests validation rejection)
+        mockMvc.perform(post("/habit-entries")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("lastDone", "2026-10-21T13:00"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/habit-entries"))
+                .andExpect(flash().attribute("errorMessage", "Habit is required."));
+        assertEquals(1, habitEntryRepository.count());
+
+        // 4. Mood via modal with empty id
+        mockMvc.perform(post("/moods")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("date", "2026-10-21")
+                        .param("happiness", "8")
+                        .param("impetus", "7")
+                        .param("stress", "3"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/moods"));
+        assertEquals(1, moodRepository.count());
+
+        // 5. SleepTime via modal with empty id
+        mockMvc.perform(post("/sleep-times")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("gotobed", "2026-10-20T23:30")
+                        .param("getup", "2026-10-21T07:15"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sleep-times"));
+        assertEquals(1, sleepTimeRepository.count());
+    }
 }

@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import de.oberamsystems.slm.model.Appointment;
 import de.oberamsystems.slm.model.AppointmentRepository;
@@ -53,12 +54,20 @@ public class DoctorController {
 		return "appointments";
 	}
 	
+	public String submitAppointment(Appointment app, Model model) {
+		return submitAppointment(app, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/appointments")
-	public String submitAppointment(@ModelAttribute Appointment app, Model model) {
-		model.addAttribute("appointments", repo.findAll(Sort.by(Sort.Direction.DESC, "departure")));
-		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
+	public String submitAppointment(@ModelAttribute Appointment app, Model model, RedirectAttributes redirectAttributes) {
+		if (app.getDoctor() == null || app.getDoctor().getId() == null || !doctorRepo.existsById(app.getDoctor().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Doctor is required for appointment.");
+			return "redirect:/appointments";
+		}
+		if (app.getId() != null && (app.getId() <= 0 || !repo.existsById(app.getId()))) {
+			app.setId(null);
+		}
 		repo.save(app);
-		model.addAttribute("appointment", app);
 		return "redirect:/appointments";
 	}
 	
@@ -73,11 +82,16 @@ public class DoctorController {
 		return "doctors";
 	}
 	
+	public String submitDoctors(Doctor doc, Model model) {
+		return submitDoctors(doc, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/doctors")
-	public String submitDoctors(@ModelAttribute Doctor doc, Model model) {
-		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
-		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
-		model.addAttribute("points", pointRepo.findAll(Sort.by(Sort.Direction.DESC, "isHome").and(Sort.by(Sort.Direction.ASC, "name"))));
+	public String submitDoctors(@ModelAttribute Doctor doc, Model model, RedirectAttributes redirectAttributes) {
+		if (doc.getSpeciality() == null || doc.getSpeciality().getId() == null || !specRepo.existsById(doc.getSpeciality().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Doctor speciality is required.");
+			return "redirect:/doctors";
+		}
 		if (doc.getBasePoint() == null || doc.getBasePoint().getId() == null) {
 			pointRepo.findFirstByIsHomeTrue().ifPresent(doc::setBasePoint);
 		}
@@ -91,8 +105,10 @@ public class DoctorController {
 				log.warn("Could not calculate doctor air distance via PostGIS: {}", e.getMessage());
 			}
 		}
+		if (doc.getId() != null && (doc.getId() <= 0 || !doctorRepo.existsById(doc.getId()))) {
+			doc.setId(null);
+		}
 		doctorRepo.save(doc);
-		model.addAttribute("doctor", doc);
 		return "redirect:/doctors";
 	}
 
@@ -105,6 +121,9 @@ public class DoctorController {
 
 	@PostMapping("/specialities")
 	public String submitSpecialities(@ModelAttribute Speciality spec, Model model) {
+		if (spec.getId() != null && (spec.getId() <= 0 || !specRepo.existsById(spec.getId()))) {
+			spec.setId(null);
+		}
 		specRepo.save(spec);
 		model.addAttribute("speciality", spec);
 		model.addAttribute("specialities", specRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));

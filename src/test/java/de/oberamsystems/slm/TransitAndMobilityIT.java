@@ -402,4 +402,158 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         assertEquals(LocalDateTime.of(2026, 10, 21, 10, 5), updatedTrip.getStart());
         assertEquals(LocalDateTime.of(2026, 10, 21, 10, 22), updatedTrip.getEnd());
     }
+
+    @Test
+    void testAddTrainTripViaModalForm() throws Exception {
+        TrainLine line = new TrainLine();
+        line.setName("RE1");
+        line.setDescription("Nürnberg Express");
+        line = trainLineRepository.saveAndFlush(line);
+
+        TrainStation2 origin = new TrainStation2("MH", "München Hbf");
+        origin = trainStation2Repository.saveAndFlush(origin);
+
+        TrainStation2 dest = new TrainStation2("NN", "Nürnberg Hbf");
+        dest = trainStation2Repository.saveAndFlush(dest);
+
+        // 1. Create train trip via modal POST with empty id and lineId
+        mockMvc.perform(post("/train-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("lineId", line.getId().toString())
+                        .param("origin", origin.getId().toString())
+                        .param("destination", dest.getId().toString())
+                        .param("start", "2026-10-21T07:19")
+                        .param("end", "2026-10-21T07:55"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("train-trips"))
+                .andExpect(model().attributeExists("traintrips2", "lineId", "lines", "stations"));
+
+        assertEquals(1, trainTrip2Repository.count());
+        TrainTrip2 savedTrip = trainTrip2Repository.findAll().getFirst();
+        assertNotNull(savedTrip.getId());
+        assertEquals(line.getId(), savedTrip.getLine().getId());
+        assertEquals(origin.getId(), savedTrip.getOrigin().getId());
+        assertEquals(dest.getId(), savedTrip.getDestination().getId());
+        assertEquals(LocalDateTime.of(2026, 10, 21, 7, 19), savedTrip.getStart());
+        assertEquals(LocalDateTime.of(2026, 10, 21, 7, 55), savedTrip.getEnd());
+
+        // 2. Also verify submitting with omitted lineId is REJECTED via validation
+        mockMvc.perform(post("/train-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("origin", origin.getId().toString())
+                        .param("destination", dest.getId().toString())
+                        .param("start", "2026-10-21T08:00")
+                        .param("end", "2026-10-21T08:45"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("errorMessage", "Train line is required."));
+
+        assertEquals(1, trainTrip2Repository.count(), "Train trip without line must be rejected");
+    }
+
+    @Test
+    void testModalCreateTransitAndMobilityWithEmptyIdParam() throws Exception {
+        // 1. Point via modal with empty id
+        mockMvc.perform(post("/points")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Odeonsplatz")
+                        .param("latitude", "48.1428")
+                        .param("longitude", "11.5775")
+                        .param("isHome", "false"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/points"));
+        assertEquals(1, pointRepository.count());
+        Point p1 = pointRepository.findAll().getFirst();
+
+        Point p2 = pointRepository.saveAndFlush(new Point(null, "Marienplatz", "City Center", 48.137154, 11.576124, true));
+
+        // 2. Route via modal with empty id and explicit start/end
+        mockMvc.perform(post("/routes")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "City Center Stroll")
+                        .param("start", p1.getId().toString())
+                        .param("end", p2.getId().toString())
+                        .param("driveDistance", "1.2"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/routes"));
+        assertEquals(1, routeRepository.count());
+
+        // 3. Route via modal with empty id and omitted start/end (must be REJECTED via validation)
+        mockMvc.perform(post("/routes")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "City Center Loop")
+                        .param("driveDistance", "2.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/routes"))
+                .andExpect(flash().attribute("errorMessage", "Start and end points are required."));
+        assertEquals(1, routeRepository.count(), "Route without points must be rejected");
+        Route route = routeRepository.findAll().getFirst();
+
+        // 4. Car via modal with empty id
+        Manufacturer m = manufacturerRepository.saveAndFlush(new Manufacturer(null, "BMW AG", "Munich", null));
+        Vendor v = vendorRepository.saveAndFlush(new Vendor(null, "BMW Niederlassung"));
+
+        mockMvc.perform(post("/cars")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "BMW 330e")
+                        .param("modelName", "330e Touring")
+                        .param("manufacturer", m.getId().toString())
+                        .param("vendor", v.getId().toString())
+                        .param("purchasePrice", "52000.0"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cars"));
+        assertEquals(1, carRepository.count());
+        Car car = carRepository.findAll().getFirst();
+
+        // 5. CarTrip via modal with empty id and explicit car/route
+        mockMvc.perform(post("/car-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("car", car.getId().toString())
+                        .param("route", route.getId().toString())
+                        .param("start", "2026-10-21T08:00")
+                        .param("end", "2026-10-21T08:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/car-trips"));
+        assertEquals(1, carTripRepository.count());
+
+        // 6. CarTrip via modal with empty id and omitted car/route (must be REJECTED via validation)
+        mockMvc.perform(post("/car-trips")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("start", "2026-10-21T18:00")
+                        .param("end", "2026-10-21T18:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/car-trips"))
+                .andExpect(flash().attribute("errorMessage", "Car is required."));
+        assertEquals(1, carTripRepository.count(), "Car trip without car must be rejected");
+
+        // 7. TrainLine via modal with empty id
+        mockMvc.perform(post("/train-lines")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "U3")
+                        .param("description", "Moosach - Fürstenried West"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train-lines"));
+        assertEquals(1, trainLineRepository.count());
+        TrainLine line = trainLineRepository.findAll().getFirst();
+
+        // 8. TrainStation2 via modal with empty id
+        mockMvc.perform(post("/train-stations")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("ds100", "MMOP")
+                        .param("name", "München Moosach")
+                        .param("lineId", line.getId().toString()))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/train-stations"));
+        assertEquals(1, trainStation2Repository.count());
+    }
 }
+

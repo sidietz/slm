@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import de.oberamsystems.slm.model.TrainLine;
 import de.oberamsystems.slm.model.TrainLineRepository;
@@ -45,45 +46,88 @@ public class TrainTripController2 {
 	@GetMapping("/train-trips")
 	public String addTrainTrips(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("traintrips2", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
+		List<TrainLine> lines = getSortedLines();
+		model.addAttribute("lines", lines);
+
 		TrainTrip2 tt = new TrainTrip2();
-		id = id == null ? 0 : id;
-		TrainLine l = lineRepo.getReferenceById(id);
-		tt.setLine(l);
-		model.addAttribute("lineId", id);
+		Long lineId = (id != null && id > 0) ? id : (!lines.isEmpty() ? lines.getFirst().getId() : null);
+		if (lineId != null) {
+			try {
+				tt.setLine(lineRepo.getReferenceById(lineId));
+			} catch (Exception ignored) {
+			}
+		}
+		model.addAttribute("lineId", lineId);
 		tt.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		tt.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("traintrip", tt);
-		model.addAttribute("traintrips", stationRepo.findByLines_Id(l.getId()));
-		model.addAttribute("lines", getSortedLines());
+
+		List<TrainStation2> allStations = stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));
+		List<TrainStation2> lineStations = (lineId != null) ? stationRepo.findByLines_Id(lineId) : List.of();
+		model.addAttribute("traintrips", lineStations.isEmpty() ? allStations : lineStations);
+		model.addAttribute("stations", allStations);
 		return "train-trips";
 	}
 	
 	@PostMapping("/train-trips")
 	public String submitTrainTrips(@RequestParam(required = false) Long id,
 								   @RequestParam(required = false) Long lineId,
+								   @RequestParam(required = false) Long line,
 								   @ModelAttribute TrainTrip2 tt,
-								   Model model) {
-		Long effectiveLineId = (lineId != null && lineId > 0) ? lineId : ((tt.getLine() != null && tt.getLine().getId() != null) ? tt.getLine().getId() : id);
-		effectiveLineId = (effectiveLineId == null) ? 0L : effectiveLineId;
-		if (effectiveLineId > 0) {
+								   Model model,
+								   RedirectAttributes redirectAttributes) {
+		Long effectiveLineId = null;
+		if (lineId != null && lineId > 0) {
+			effectiveLineId = lineId;
+		} else if (line != null && line > 0) {
+			effectiveLineId = line;
+		} else if (tt.getLine() != null && tt.getLine().getId() != null && tt.getLine().getId() > 0) {
+			effectiveLineId = tt.getLine().getId();
+		}
+
+		if (effectiveLineId != null && effectiveLineId > 0 && lineRepo.existsById(effectiveLineId)) {
 			tt.setLine(lineRepo.getReferenceById(effectiveLineId));
 		}
+
+		if (tt.getLine() == null || tt.getLine().getId() == null || !lineRepo.existsById(tt.getLine().getId())) {
+			if (redirectAttributes != null) {
+				redirectAttributes.addFlashAttribute("errorMessage", "Train line is required.");
+			}
+			model.addAttribute("errorMessage", "Train line is required.");
+			populateModel(model, effectiveLineId, tt);
+			return "train-trips";
+		}
+
+		if (tt.getOrigin() == null || tt.getOrigin().getId() == null || !stationRepo.existsById(tt.getOrigin().getId())
+				|| tt.getDestination() == null || tt.getDestination().getId() == null || !stationRepo.existsById(tt.getDestination().getId())) {
+			if (redirectAttributes != null) {
+				redirectAttributes.addFlashAttribute("errorMessage", "Origin and destination stations are required.");
+			}
+			model.addAttribute("errorMessage", "Origin and destination stations are required.");
+			populateModel(model, effectiveLineId, tt);
+			return "train-trips";
+		}
+
 		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
 			tt.setId(null);
 		}
+
+		repo.save(tt);
+		populateModel(model, effectiveLineId, tt);
+		return "train-trips";
+	}
+
+	public String submitTrainTrips(Long id, TrainTrip2 tt, Model model) {
+		return submitTrainTrips(id, null, null, tt, model, null);
+	}
+
+	private void populateModel(Model model, Long effectiveLineId, TrainTrip2 tt) {
 		model.addAttribute("traintrips2", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		model.addAttribute("lineId", effectiveLineId);
 		model.addAttribute("traintrip", tt);
 		model.addAttribute("traintrips", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lines", getSortedLines());
 		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
-		repo.save(tt);
-		model.addAttribute("traintrip", tt);
-		return "train-trips";
-	}
-
-	public String submitTrainTrips(Long id, TrainTrip2 tt, Model model) {
-		return submitTrainTrips(id, null, tt, model);
 	}
 	
 	@GetMapping("/train-stations")
@@ -100,7 +144,7 @@ public class TrainTripController2 {
 		model.addAttribute("stations", stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("lines", getSortedLines());
 		log.warn(String.format("lineId: %d", tsdto.getLineId()));
-		TrainStation2 ts = (tsdto.getId() != null)
+		TrainStation2 ts = (tsdto.getId() != null && tsdto.getId() > 0 && stationRepo.existsById(tsdto.getId()))
 				? stationRepo.findById(tsdto.getId()).orElseGet(() -> new TrainStation2(tsdto.getDs100(), tsdto.getName()))
 				: new TrainStation2(tsdto.getDs100(), tsdto.getName());
 		ts.setDs100(tsdto.getDs100());
@@ -123,6 +167,9 @@ public class TrainTripController2 {
 	@PostMapping("/train-lines")
 	public String submitTrainLines(@ModelAttribute TrainLine line, Model model) {
 		model.addAttribute("lines", getSortedLines());
+		if (line.getId() != null && (line.getId() <= 0 || !lineRepo.existsById(line.getId()))) {
+			line.setId(null);
+		}
 		lineRepo.save(line);
 		model.addAttribute("trainline", new TrainLine());
 		return "redirect:/train-lines";

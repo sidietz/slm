@@ -36,6 +36,9 @@ public class MoodController {
 	@PostMapping("/moods")
 	public String submitMoods(@ModelAttribute Mood m, Model model) {
 		model.addAttribute("moods", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
+		if (m.getId() != null && (m.getId() <= 0 || !repo.existsById(m.getId()))) {
+			m.setId(null);
+		}
 		repo.save(m);
 		model.addAttribute("mood", m);
 		return "redirect:/moods";

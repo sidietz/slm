@@ -14,7 +14,7 @@ public class SleepTime {
 	
 	@Id
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 	
 	@Column(name = "gotobed", columnDefinition = "TIMESTAMP")
 	private LocalDateTime gotobed;
@@ -31,7 +31,7 @@ public class SleepTime {
 	public SleepTime() {
 	}
 	
-	public SleepTime(long id, LocalDateTime gotobed, LocalDateTime getup, Duration sleeptime) {
+	public SleepTime(Long id, LocalDateTime gotobed, LocalDateTime getup, Duration sleeptime) {
 		this.id = id;
 		this.gotobed = gotobed;
 		this.getup = getup;
@@ -58,11 +58,11 @@ public class SleepTime {
 		return sleeptime;
 	}
 
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 	

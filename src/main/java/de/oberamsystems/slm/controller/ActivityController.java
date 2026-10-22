@@ -17,6 +17,8 @@ import de.oberamsystems.slm.model.ActivityRepository;
 import de.oberamsystems.slm.model.ActivityType;
 import de.oberamsystems.slm.model.ActivityTypeRepository;
 
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
 @Controller
 public class ActivityController {
 
@@ -39,12 +41,20 @@ public class ActivityController {
 		return "activities";
 	}
 	
+	public String submitActivity(Activity activity, Model model) {
+		return submitActivity(activity, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
+	}
+
 	@PostMapping("/activities")
-	public String submitActivity(@ModelAttribute Activity activity, Model model) {
-		model.addAttribute("activities", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
-		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+	public String submitActivity(@ModelAttribute Activity activity, Model model, RedirectAttributes redirectAttributes) {
+		if (activity.getType() == null || activity.getType().getId() == null || !typeRepo.existsById(activity.getType().getId())) {
+			redirectAttributes.addFlashAttribute("errorMessage", "Activity type is required.");
+			return "redirect:/activities";
+		}
+		if (activity.getId() != null && (activity.getId() <= 0 || !repo.existsById(activity.getId()))) {
+			activity.setId(null);
+		}
 		repo.save(activity);
-		model.addAttribute("activity", activity);
 		return "redirect:/activities";
 	}
 	
@@ -59,6 +69,9 @@ public class ActivityController {
 	@PostMapping("/activity-types")
 	public String submitActivityType(@ModelAttribute ActivityType type, Model model) {
 		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (type.getId() != null && (type.getId() <= 0 || !typeRepo.existsById(type.getId()))) {
+			type.setId(null);
+		}
 		typeRepo.save(type);
 		model.addAttribute("type", type);
 		return "redirect:/activity-types";

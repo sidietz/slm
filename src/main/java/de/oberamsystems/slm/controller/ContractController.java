@@ -61,6 +61,9 @@ public class ContractController {
 		if (tt.isCanceled() && tt.getTerminationDate() != null && !tt.getTerminationDate().isAfter(LocalDate.now())) {
 			tt.setActive(false);
 		}
+		if (tt.getId() != null && (tt.getId() <= 0 || !repo.existsById(tt.getId()))) {
+			tt.setId(null);
+		}
 		repo.save(tt);
 		return "redirect:/contracts";
 	}
@@ -88,6 +91,9 @@ public class ContractController {
 	@PostMapping("/contractors")
 	public String submitContractors(@ModelAttribute Contractor ts, Model model) {
 		model.addAttribute("contractors", contractorRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
+		if (ts.getId() != null && (ts.getId() <= 0 || !contractorRepo.existsById(ts.getId()))) {
+			ts.setId(null);
+		}
 		contractorRepo.save(ts);
 		model.addAttribute("contractor", ts);
 		return "redirect:/contractors";

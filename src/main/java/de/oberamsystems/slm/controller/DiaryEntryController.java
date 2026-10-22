@@ -34,6 +34,9 @@ public class DiaryEntryController {
 	@PostMapping("/diary")
 	public String submitDiaryEntry(@ModelAttribute DiaryEntry DiaryEntry, Model model) {
 		model.addAttribute("diaryentries", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
+		if (DiaryEntry.getId() != null && (DiaryEntry.getId() <= 0 || !repo.existsById(DiaryEntry.getId()))) {
+			DiaryEntry.setId(null);
+		}
 		repo.save(DiaryEntry);
 		model.addAttribute("diaryentries", DiaryEntry);
 		return "redirect:/diary";

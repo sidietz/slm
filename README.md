@@ -1,5 +1,6 @@
 # Simon's Life Manager (SLM)
 
+[![Version](https://img.shields.io/badge/version-0.0.3--rc8-informational?logo=git&logoColor=white)](CHANGELOG.md)
 [![Java Version](https://img.shields.io/badge/Java-27-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.2.0--M2-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18_%7C_PostGIS_3.6-336791?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
@@ -22,6 +23,7 @@
   - [6. Library & Media Catalog](#6-library--media-catalog)
   - [7. Academic Management & Studies](#7-academic-management--studies)
   - [8. Model Context Protocol (MCP) Server](#8-model-context-protocol-mcp-server)
+  - [9. Universal Modal-First UI Architecture & In-Place Editing](#9-universal-modal-first-ui-architecture--in-place-editing)
 - [Architecture & Tech Stack](#architecture--tech-stack)
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
@@ -134,6 +136,12 @@ The server exposes 27 domain tools organized across 6 specialized controllers:
 - **`getStations(stationType, country)`**: List gas stations (with TankenTanken UUID) and EV charging stations (with power in kW and plug types).
 - **`createStation(...)`**: Provision a new gas or EV charging station.
 
+### 9. Universal Modal-First UI Architecture & In-Place Editing
+Comprehensive UX modernization and in-place editing across all 30+ entity domains (ADR 024):
+- **Universal Modal-First Inputs**: Full-width (`col-12`) data tables paired with Bootstrap 5 dual-purpose modals serving both creation and editing without page reloads.
+- **Client-Side Field Prefilling**: Row-level `[ Edit ]` actions instantly populate modal input fields via HTML5 `data-*` attributes and Vanilla JavaScript.
+- **Binding Safeguards & Safety**: Global string trimming via `StringTrimmerEditor(true)` converts empty form inputs to `null`, ensuring error-free entity creation with boxed `Long` primary keys while protecting non-destructive in-place updates.
+
 ---
 
 ## Architecture & Tech Stack
@@ -145,7 +153,7 @@ The server exposes 27 domain tools organized across 6 specialized controllers:
 | **Database** | PostgreSQL 18 with PostGIS 3.6 spatial extension |
 | **Object-Relational Mapping** | Hibernate 7.3 with `io.hypersistence:hypersistence-utils-hibernate-73` |
 | **Polymorphic Hierarchy** | `InheritanceType.JOINED` (`Session` base entity with concrete sub-tables) |
-| **Frontend UI** | Thymeleaf 3, Bootstrap 5.3.8, Bootstrap Icons, Billboard.js / D3 |
+| **Frontend UI** | Thymeleaf 3, Bootstrap 5.3.8, Bootstrap Icons, Billboard.js / D3, Modal-First In-Place Editing (ADR 024) |
 | **Testing** | JUnit 6 (`6.1.3`), Spring Boot Test, Testcontainers (`postgis/postgis:18-3.6`) |
 | **AI & Agent Integration** | Spring AI 2.0.1 (Model Context Protocol / MCP Server) |
 
@@ -230,6 +238,7 @@ To execute the test suite:
 ```
 slm/
 ├── src/main/java/de/oberamsystems/slm/
+│   ├── config/              # Global web data binding & conversion configuration
 │   ├── controller/          # Spring MVC controllers (SessionController, AcademicController, etc.)
 │   ├── model/               # JPA entities, polymorphic Session hierarchy, and repositories
 │   ├── mcp/                 # Spring AI Model Context Protocol (MCP) tool endpoints

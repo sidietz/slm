@@ -11,7 +11,7 @@ public class Purchase {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 	private String title;
 	@ManyToOne
 	@JoinColumn(name = "vendor", referencedColumnName = "id")
@@ -25,7 +25,7 @@ public class Purchase {
 	public Purchase() {
 	}
 	
-	public Purchase(long id, String title, Vendor vendor, float price, LocalDate purchaseDate) {
+	public Purchase(Long id, String title, Vendor vendor, float price, LocalDate purchaseDate) {
 		super();
 		this.id = id;
 		this.title = title;
@@ -34,11 +34,11 @@ public class Purchase {
 		this.purchaseDate = purchaseDate;
 	}
 
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

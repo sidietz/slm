@@ -585,4 +585,26 @@ public class AcademicIT extends AbstractIntegrationTest {
                 assertFalse(mcpSearchNotes.isEmpty());
                 assertEquals(noteId.toString(), mcpSearchNotes.get(0).get("id"));
         }
+
+        @Test
+        void testModalCreateCourseWithEmptyIdParam() throws Exception {
+                MockMvc mockMvc = webAppContextSetup(context)
+                                .apply(springSecurity())
+                                .build();
+
+                mockMvc.perform(post("/courses")
+                                .with(csrf())
+                                .param("id", "")
+                                .param("title", "Quantum Computing")
+                                .param("code", "IN2400")
+                                .param("semester", "WS26/27")
+                                .param("ectsCredits", "6.0"))
+                        .andExpect(status().is3xxRedirection())
+                        .andExpect(redirectedUrl("/courses"));
+
+                assertEquals(1, courseRepository.count());
+                Course course = courseRepository.findAll().getFirst();
+                assertEquals("Quantum Computing", course.getTitle());
+                assertNotNull(course.getId());
+        }
 }

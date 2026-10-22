@@ -34,6 +34,9 @@ public class GratitudeController {
 	@PostMapping("/gratitudes")
 	public String submitGratitude(@ModelAttribute Gratitude gratitude, Model model) {
 		model.addAttribute("gratitudes", repo.findAll(Sort.by(Sort.Direction.DESC, "date")));
+		if (gratitude.getId() != null && (gratitude.getId() <= 0 || !repo.existsById(gratitude.getId()))) {
+			gratitude.setId(null);
+		}
 		repo.save(gratitude);
 		model.addAttribute("gratitude", gratitude);
 		return "redirect:/gratitudes";

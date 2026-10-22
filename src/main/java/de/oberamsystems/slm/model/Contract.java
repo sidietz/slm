@@ -19,7 +19,7 @@ public class Contract {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private long id;
+	private Long id;
 	private String title;
 	@ManyToOne
 	@JoinColumn(name = "contractor_id", referencedColumnName = "id")
@@ -65,7 +65,7 @@ public class Contract {
 	public Contract() {
 	}
 
-	public Contract(long id, String title, Contractor contractor, float fee, LocalDate startDate, LocalDate initialEndDate,
+	public Contract(Long id, String title, Contractor contractor, float fee, LocalDate startDate, LocalDate initialEndDate,
 			Integer daysRemaining, boolean isActive) {
 		super();
 		this.id = id;
@@ -98,11 +98,11 @@ public class Contract {
 		return ContractStatus.ACTIVE_AUTO_EXTENDED;
 	}
 
-	public long getId() {
+	public Long getId() {
 		return id;
 	}
 
-	public void setId(long id) {
+	public void setId(Long id) {
 		this.id = id;
 	}
 

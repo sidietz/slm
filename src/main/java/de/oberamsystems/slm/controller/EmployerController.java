@@ -28,6 +28,9 @@ public class EmployerController {
 
 	@PostMapping("/employers")
 	public String submitEmployers(@ModelAttribute Employer employer, Model model) {
+		if (employer.getId() != null && (employer.getId() <= 0 || !employerRepo.existsById(employer.getId()))) {
+			employer.setId(null);
+		}
 		employerRepo.save(employer);
 		return "redirect:/employers";
 	}

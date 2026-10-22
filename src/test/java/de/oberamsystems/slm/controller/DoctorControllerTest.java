@@ -63,6 +63,9 @@ public class DoctorControllerTest {
         Point home = new Point(1L, "Home", "Home base", 49.28, 10.68, true);
         Point practice = new Point(4L, "Practice", "Clinic", 49.30, 10.58, false);
         Doctor docWithPoints = new Doctor();
+        Speciality docSpec = new Speciality(1L, "Allgemeinmedizin");
+        when(specRepo.existsById(1L)).thenReturn(true);
+        docWithPoints.setSpeciality(docSpec);
         docWithPoints.setPoint(practice);
         docWithPoints.setBasePoint(home);
         when(doctorRepo.calculateAirDistance(1L, 4L)).thenReturn(7.53);

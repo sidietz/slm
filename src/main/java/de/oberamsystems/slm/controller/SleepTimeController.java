@@ -43,6 +43,9 @@ public class SleepTimeController {
 	@PostMapping("/sleep-times")
 	public String submitSleepTimes(@ModelAttribute SleepTime sleepTime, Model model) {
 		model.addAttribute("sleeptimes", repo.findAll(Sort.by(Sort.Direction.DESC, "gotobed")));
+		if (sleepTime.getId() != null && (sleepTime.getId() <= 0 || !repo.existsById(sleepTime.getId()))) {
+			sleepTime.setId(null);
+		}
 		repo.save(sleepTime);
 		model.addAttribute("sleeptime", sleepTime);
 		return "redirect:/sleep-times";

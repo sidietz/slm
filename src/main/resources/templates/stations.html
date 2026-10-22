@@ -49,10 +49,10 @@
             </ul>
 
             <div>
-                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGasStationModal">
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addGasStationModal" onclick="openCreateGasStationModal()">
                     <i class="bi bi-plus-lg me-1"></i> Add Gas Station
                 </button>
-                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#addChargingStationModal">
+                <button type="button" class="btn btn-outline-primary ms-2" data-bs-toggle="modal" data-bs-target="#addChargingStationModal" onclick="openCreateChargingStationModal()">
                     <i class="bi bi-lightning-charge me-1"></i> Add Charging Station
                 </button>
             </div>
@@ -180,16 +180,16 @@
                                         <span th:unless="${cs.country != null}" class="text-muted small">—</span>
                                     </td>
                                     <td>
-                                        <div class="d-flex flex-wrap gap-1" th:if="${!#lists.isEmpty(cs.chargingPoints)}">
-                                            <span th:each="cp : ${cs.chargingPoints}" class="badge bg-primary-subtle text-primary font-monospace small">
-                                                <i class="bi bi-plug-fill me-1"></i><span th:text="${cp.plugType}">CCS_TYPE2</span>
-                                                <span th:if="${cp.maxPowerKw != null}" th:text="' (' + ${cp.maxPowerKw} + ' kW)'"></span>
+                                        <div class="d-flex flex-wrap gap-1" th:if="${!#lists.isEmpty(cs.chargingPointGroups)}">
+                                            <span th:each="cpg : ${cs.chargingPointGroups}" class="badge bg-primary-subtle text-primary border border-primary-subtle font-monospace small px-2 py-1">
+                                                <i class="bi bi-plug-fill me-1"></i><span th:text="${cpg.displayName}">2x CCS Combo 2 (400.0 kW)</span>
                                             </span>
                                         </div>
-                                        <span th:if="${#lists.isEmpty(cs.chargingPoints)}" class="text-muted small">—</span>
+                                        <span th:if="${#lists.isEmpty(cs.chargingPointGroups)}" class="text-muted small">—</span>
                                     </td>
                                     <td>
                                         <span class="badge bg-success-subtle text-success font-monospace" th:text="${cs.maxPowerKw} + ' kW'">0 kW</span>
+                                        <span class="badge bg-light text-secondary border small ms-1" th:text="${cs.numberOfChargingPoints} + ' stalls'">0 stalls</span>
                                     </td>
                                     <td class="text-muted small" th:text="${cs.note != null ? cs.note : '—'}">Note</td>
                                     <td class="text-end pe-3">
@@ -207,6 +207,7 @@
                                                     th:data-city="${cs.city}"
                                                     th:data-country="${cs.country}"
                                                     th:data-note="${cs.note}"
+                                                    th:data-points="${cs.chargingPointGroupsJson}"
                                                     onclick="populateEditChargingStationModal(this)">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
@@ -342,35 +343,14 @@
 
                             <!-- Charging Points Configuration -->
                             <div class="col-12 mt-4">
-                                <h6 class="fw-bold border-bottom pb-2 text-dark"><i class="bi bi-plug me-2 text-primary"></i>Charging Points / Plugs</h6>
+                                <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                                    <h6 class="fw-bold mb-0 text-dark"><i class="bi bi-plug me-2 text-primary"></i>Charging Plugs & Stalls Configuration</h6>
+                                    <button type="button" class="btn btn-outline-primary btn-sm rounded-pill" onclick="addChargingPointRow()">
+                                        <i class="bi bi-plus-circle me-1"></i> Add Stalls / Plug Type
+                                    </button>
+                                </div>
                                 <div id="chargingPointsContainer">
-                                    <div class="row g-2 align-items-end mb-2 charging-point-row">
-                                        <div class="col-md-5">
-                                            <label class="form-label small">Plug Type</label>
-                                            <select name="plugType" class="form-select">
-                                                <optgroup label="European Standard / Common">
-                                                    <option value="CCS_TYPE2" selected>CCS Combo 2 (Combined Charging System)</option>
-                                                    <option value="TYPE_2">Type 2 (Mennekes, AC)</option>
-                                                    <option value="CHADEMO">CHAdeMO (DC Fast)</option>
-                                                    <option value="TESLA">Tesla Supercharger</option>
-                                                </optgroup>
-                                                <optgroup label="Rare / Regional / Legacy">
-                                                    <option value="TYPE_1">Type 1 (J1772)</option>
-                                                    <option value="GBT">GB/T (Chinese Standard)</option>
-                                                    <option value="OTHER">Other</option>
-                                                    <option value="UNKNOWN">Unknown</option>
-                                                </optgroup>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <label class="form-label small">Max Power (kW)</label>
-                                            <input type="number" step="0.1" name="maxPowerKw" class="form-control" value="350.0" placeholder="350.0" />
-                                        </div>
-                                        <div class="col-md-3">
-                                            <label class="form-label small">Stalls Count</label>
-                                            <input type="number" name="pointCount" class="form-control" value="4" min="1" />
-                                        </div>
-                                    </div>
+                                    <!-- Dynamic rows generated via JavaScript -->
                                 </div>
                             </div>
 
@@ -392,6 +372,16 @@
     <footer th:replace="~{fragments/layout :: footer}"></footer>
 
     <script>
+        function openCreateGasStationModal() {
+            document.getElementById('modalGasStationId').value = '';
+            document.getElementById('gasStationForm').reset();
+            document.getElementById('country').value = 'DE';
+
+            document.getElementById('addGasStationModalLabel').innerHTML = '<i class="bi bi-fuel-pump me-2 text-primary"></i>Add Gas Station';
+            document.getElementById('modalGasStationSubmitBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i> Save Gas Station';
+            document.getElementById('modalGasStationSubmitBtn').className = 'btn btn-primary';
+        }
+
         function populateEditGasStationModal(btn) {
             const ds = btn.dataset;
             document.getElementById('modalGasStationId').value = ds.id || '';
@@ -413,6 +403,78 @@
             modal.show();
         }
 
+        function createChargingPointRow(plugType = 'CCS_TYPE2', maxPowerKw = 400.0, pointCount = 2) {
+            const div = document.createElement('div');
+            div.className = 'row g-2 align-items-end mb-2 charging-point-row p-2 rounded bg-light border';
+            div.innerHTML = `
+                <div class="col-md-5">
+                    <label class="form-label small fw-semibold text-muted mb-1">Plug Type</label>
+                    <select name="plugType" class="form-select form-select-sm" required>
+                        <optgroup label="European Standard / Common">
+                            <option value="CCS_TYPE2" ${plugType === 'CCS_TYPE2' ? 'selected' : ''}>CCS Combo 2 (Combined Charging System)</option>
+                            <option value="TYPE_2" ${plugType === 'TYPE_2' ? 'selected' : ''}>Type 2 (Mennekes, AC)</option>
+                            <option value="CHADEMO" ${plugType === 'CHADEMO' ? 'selected' : ''}>CHAdeMO (DC Fast)</option>
+                            <option value="TESLA" ${plugType === 'TESLA' ? 'selected' : ''}>Tesla Supercharger</option>
+                        </optgroup>
+                        <optgroup label="Rare / Regional / Legacy">
+                            <option value="TYPE_1" ${plugType === 'TYPE_1' ? 'selected' : ''}>Type 1 (J1772)</option>
+                            <option value="GBT" ${plugType === 'GBT' ? 'selected' : ''}>GB/T (Chinese Standard)</option>
+                            <option value="OTHER" ${plugType === 'OTHER' ? 'selected' : ''}>Other</option>
+                            <option value="UNKNOWN" ${plugType === 'UNKNOWN' ? 'selected' : ''}>Unknown</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted mb-1">Max Power (kW)</label>
+                    <input type="number" step="0.1" min="1" name="maxPowerKw" class="form-control form-control-sm" required value="${maxPowerKw !== null && maxPowerKw !== undefined ? maxPowerKw : ''}" placeholder="e.g. 400.0" />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-semibold text-muted mb-1">Stalls Count</label>
+                    <input type="number" min="1" max="100" name="pointCount" class="form-control form-control-sm" required value="${pointCount || 1}" />
+                </div>
+                <div class="col-md-1 text-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm w-100" title="Remove Plug Configuration" onclick="removeChargingPointRow(this)">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            return div;
+        }
+
+        function addChargingPointRow(plugType, maxPowerKw, pointCount) {
+            const container = document.getElementById('chargingPointsContainer');
+            if (container) {
+                container.appendChild(createChargingPointRow(plugType, maxPowerKw, pointCount));
+            }
+        }
+
+        function removeChargingPointRow(btn) {
+            const container = document.getElementById('chargingPointsContainer');
+            const row = btn.closest('.charging-point-row');
+            if (row) {
+                row.remove();
+            }
+            if (container && container.children.length === 0) {
+                addChargingPointRow('CCS_TYPE2', 400.0, 2);
+            }
+        }
+
+        function openCreateChargingStationModal() {
+            document.getElementById('modalChargingStationId').value = '';
+            document.getElementById('chargingStationForm').reset();
+            document.getElementById('csCountry').value = 'DE';
+
+            document.getElementById('addChargingStationModalLabel').innerHTML = '<i class="bi bi-lightning-charge me-2 text-primary"></i>Add EV Charging Station';
+            document.getElementById('modalChargingStationSubmitBtn').innerHTML = '<i class="bi bi-check-lg me-1"></i> Save Charging Station';
+            document.getElementById('modalChargingStationSubmitBtn').className = 'btn btn-primary';
+
+            const container = document.getElementById('chargingPointsContainer');
+            if (container) {
+                container.innerHTML = '';
+                addChargingPointRow('CCS_TYPE2', 400.0, 2);
+            }
+        }
+
         function populateEditChargingStationModal(btn) {
             const ds = btn.dataset;
             document.getElementById('modalChargingStationId').value = ds.id || '';
@@ -430,9 +492,38 @@
             document.getElementById('modalChargingStationSubmitBtn').innerHTML = '<i class="bi bi-check2-circle me-1"></i> Update Charging Station';
             document.getElementById('modalChargingStationSubmitBtn').className = 'btn btn-warning';
 
+            const container = document.getElementById('chargingPointsContainer');
+            if (container) {
+                container.innerHTML = '';
+                if (ds.points) {
+                    try {
+                        const groups = JSON.parse(ds.points);
+                        if (Array.isArray(groups) && groups.length > 0) {
+                            groups.forEach(g => {
+                                addChargingPointRow(g.plugType, g.maxPowerKw, g.count);
+                            });
+                        } else {
+                            addChargingPointRow('CCS_TYPE2', 300.0, 2);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing data-points JSON', e);
+                        addChargingPointRow('CCS_TYPE2', 300.0, 2);
+                    }
+                } else {
+                    addChargingPointRow('CCS_TYPE2', 300.0, 2);
+                }
+            }
+
             const modal = new bootstrap.Modal(document.getElementById('addChargingStationModal'));
             modal.show();
         }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('chargingPointsContainer');
+            if (container && container.children.length === 0) {
+                addChargingPointRow('CCS_TYPE2', 400.0, 2);
+            }
+        });
     </script>
 </body>
 </html>
