@@ -12,6 +12,7 @@ import static org.springframework.security.test.web.servlet.setup.SecurityMockMv
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -139,7 +140,7 @@ public class RefuelingIT extends AbstractIntegrationTest {
 		assertNotNull(gasStation.getId());
 		assertEquals(tankenTankenId, gasStation.getTankentankenId());
 
-		// 3. Create EV Charging Station with Charging Points
+		// 3. Create EV Charging Station with Multiple Charging Points & Plug Types
 		mockMvc.perform(post("/stations/charging")
 						.with(csrf())
 						.param("name", "Ionity Hub")
@@ -147,9 +148,9 @@ public class RefuelingIT extends AbstractIntegrationTest {
 						.param("operator", "Ionity GmbH")
 						.param("city", "Holzkirchen")
 						.param("country", "DE")
-						.param("maxPowerKw", "350.0")
-						.param("plugType", "CCS_TYPE2")
-						.param("pointCount", "4"))
+						.param("maxPowerKw", "400.0", "100.0", "100.0")
+						.param("plugType", "CCS_TYPE2", "CCS_TYPE2", "CHADEMO")
+						.param("pointCount", "2", "4", "1"))
 				.andExpect(status().is3xxRedirection())
 				.andExpect(redirectedUrl("/stations?tab=charging"));
 
@@ -159,9 +160,11 @@ public class RefuelingIT extends AbstractIntegrationTest {
 				.filter(c -> "Ionity Hub".equals(c.getName()))
 				.findFirst()
 				.orElseThrow();
-		assertEquals(4, chargingStation.getChargingPoints().size());
-		assertEquals(new BigDecimal("350.0"), chargingStation.getMaxPowerKw());
-		assertEquals(PlugType.CCS_TYPE2, chargingStation.getChargingPoints().get(0).getPlugType());
+		assertEquals(7, chargingStation.getChargingPoints().size());
+		assertEquals(new BigDecimal("400.0"), chargingStation.getMaxPowerKw());
+		assertEquals(3, chargingStation.getChargingPointGroups().size());
+		assertTrue(chargingStation.getChargingPointGroupsJson().contains("400.0"));
+		assertTrue(chargingStation.getChargingPointGroupsJson().contains("CHADEMO"));
 
 		// 4. Log a manual Refueling linked to vehicle and gas station
 		mockMvc.perform(post("/refuelings")
@@ -305,5 +308,72 @@ public class RefuelingIT extends AbstractIntegrationTest {
 		assertEquals(new BigDecimal("820.00"), updated.getTripDistance());
 		assertEquals("Updated note", updated.getNote());
 		assertEquals(new BigDecimal("1.700"), updated.getCostPerLiter());
+	}
+
+	@Test
+	void testCreateAndUpdateMultiPlugChargingStationFlow() throws Exception {
+		// 1. Create multi-plug charging station: 2x CCS 400kW, 4x CCS 100kW, 1x CHAdeMO 100kW
+		mockMvc.perform(post("/stations/charging")
+						.with(csrf())
+						.param("name", "Fastned Charging Hub")
+						.param("brand", "Fastned")
+						.param("operator", "Fastned B.V.")
+						.param("street", "Autobahn A8")
+						.param("city", "Holzkirchen")
+						.param("country", "DE")
+						.param("maxPowerKw", "400.0", "100.0", "100.0")
+						.param("plugType", "CCS_TYPE2", "CCS_TYPE2", "CHADEMO")
+						.param("pointCount", "2", "4", "1"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/stations?tab=charging"));
+
+		assertEquals(1, chargingStationRepository.count());
+		ChargingStation created = chargingStationRepository.findAll().getFirst();
+		assertEquals("Fastned Charging Hub", created.getName());
+		assertEquals(7, created.getChargingPoints().size());
+		assertEquals(new BigDecimal("400.0"), created.getMaxPowerKw());
+		assertEquals(3, created.getChargingPointGroups().size());
+
+		// 2. Verify GET /stations?tab=charging displays grouped badges and data-points
+		mockMvc.perform(get("/stations").param("tab", "charging"))
+				.andExpect(status().isOk())
+				.andExpect(view().name("stations"))
+				.andExpect(content().string(containsString("Fastned Charging Hub")))
+				.andExpect(content().string(containsString("2x CCS Type 2 (400.0 kW)")))
+				.andExpect(content().string(containsString("4x CCS Type 2 (100.0 kW)")))
+				.andExpect(content().string(containsString("1x CHAdeMO (100.0 kW)")))
+				.andExpect(content().string(containsString("data-points=")));
+
+		// 3. Update charging station to new configuration: 6x CCS 350kW + 2x Type 2 22kW
+		mockMvc.perform(post("/stations/charging")
+						.with(csrf())
+						.param("id", created.getId().toString())
+						.param("name", "Fastned Hyper Hub")
+						.param("brand", "Fastned")
+						.param("operator", "Fastned B.V.")
+						.param("city", "Holzkirchen")
+						.param("country", "DE")
+						.param("maxPowerKw", "350.0", "22.0")
+						.param("plugType", "CCS_TYPE2", "TYPE_2")
+						.param("pointCount", "6", "2"))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/stations?tab=charging"));
+
+		assertEquals(1, chargingStationRepository.count());
+		entityManager.clear();
+		ChargingStation updated = chargingStationRepository.findById(created.getId()).orElseThrow();
+		assertEquals("Fastned Hyper Hub", updated.getName());
+		assertEquals(8, updated.getChargingPoints().size());
+		assertEquals(new BigDecimal("350.0"), updated.getMaxPowerKw());
+		assertEquals(2, updated.getChargingPointGroups().size());
+
+		// 4. Verify validation rejection when station name is empty
+		mockMvc.perform(post("/stations/charging")
+						.with(csrf())
+						.param("name", ""))
+				.andExpect(status().is3xxRedirection())
+				.andExpect(redirectedUrl("/stations?tab=charging"))
+				.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.flash().attribute("errorMessage", "Station name is required."));
+		assertEquals(1, chargingStationRepository.count());
 	}
 }

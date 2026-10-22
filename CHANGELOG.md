@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.3-rc8] - 2026-10-21
 
+### Added
+- Implemented **Multi-Plug & Multi-Stall EV Charging Station Configuration** in [`stations.html`](src/main/resources/templates/stations.html), [`StationController.java`](src/main/java/de/oberamsystems/slm/controller/StationController.java), and [`ChargingStation.java`](src/main/java/de/oberamsystems/slm/model/ChargingStation.java):
+  - Upgraded the EV charging station modal with a dynamic charging points builder allowing users to configure multiple distinct plug types, power tiers, and stall counts (e.g. 2x CCS Combo 2 @ 400 kW, 4x CCS Combo 2 @ 100 kW, 1x CHAdeMO @ 100 kW) in a single station.
+  - Implemented dynamic client-side row generation with "+ Add Stalls / Plug Type" and per-row delete controls, full edit prefilling via Jackson/JSON `data-points` serialization, and pristine create modal resetting.
+  - Added `ChargingPointGroup` aggregation in [`ChargingStation.java`](src/main/java/de/oberamsystems/slm/model/ChargingStation.java) providing formatted display badges and JSON serialization for roundtrip fidelity.
+  - Modernized EV charging station table display with grouped badges (e.g., `2x CCS Type 2 (400.0 kW)`) and total stall count badges.
+  - Hardened [`StationController.java`](src/main/java/de/oberamsystems/slm/controller/StationController.java) `@PostMapping("/stations/charging")` with station name validation, stall count capping, safe filtering, and orphan removal.
+  - Expanded [`RefuelingIT.java`](src/test/java/de/oberamsystems/slm/RefuelingIT.java) (`testCreateAndUpdateMultiPlugChargingStationFlow` and `testRefuelingAndStationsCompleteLifecycle`) verifying end-to-end multi-plug provisioning, editing, and table rendering.
+
 ### Fixed
 - Fixed `MethodArgumentNotValidException` when creating new contacts (e.g. lecturers) via modal forms submitting `id=""` (`Failed to convert property value of type 'java.lang.String' to required type 'long' for property 'id'`):
   - Boxed primary key `id` from primitive `long` to `Long` in [`Human.java`](src/main/java/de/oberamsystems/slm/model/Human.java), [`Purchase.java`](src/main/java/de/oberamsystems/slm/model/Purchase.java), [`Contract.java`](src/main/java/de/oberamsystems/slm/model/Contract.java), [`Contractor.java`](src/main/java/de/oberamsystems/slm/model/Contractor.java), [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SportType.java`](src/main/java/de/oberamsystems/slm/model/SportType.java), [`Address.java`](src/main/java/de/oberamsystems/slm/model/Address.java), and [`LastDoneHabitEntry.java`](src/main/java/de/oberamsystems/slm/model/LastDoneHabitEntry.java).
