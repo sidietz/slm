@@ -30,6 +30,9 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 022: Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import](#adr-022-vehicle-refuelings-station-polymorphism-and-spritmonitor-csv-import)
 - [ADR 023: Contract Lifecycle Semantics, Auto-Extension Modeling, and Non-Negative Days Remaining](#adr-023-contract-lifecycle-semantics-auto-extension-modeling-and-non-negative-days-remaining)
 - [ADR 024: Universal Modal-First Input Architecture and In-Place Entity Editing](#adr-024-universal-modal-first-input-architecture-and-in-place-entity-editing)
+- [ADR 025: Two-Phase Deprecation of Legacy SleepTime UI in Preparation for Schema Removal](#adr-025-two-phase-deprecation-of-legacy-sleeptime-ui-in-preparation-for-schema-removal)
+- [ADR 026: Consistent Session Start Time Initialization & Auto-Populated Stop End Time](#adr-026-consistent-session-start-time-initialization--auto-populated-stop-end-time)
+- [ADR 027: Academic Activity Classification, STEM Lab Support & Clean Domain Separation](#adr-027-academic-activity-classification-stem-lab-support--clean-domain-separation)
 
 ---
 
@@ -970,6 +973,121 @@ We established a project-wide **Modal-First Input Architecture** that unifies al
   - Eliminates duplicate edit templates and ad-hoc controllers.
 - **Constraints**:
   - Complex entity models with relational dropdowns require passing referenced entity IDs (e.g., `author.id`, `press.id`, `category.id`) through `data-*` attributes to ensure `<select>` elements select the correct option on modal opening.
+
+---
+
+## ADR 025: Deprecation and Disabling of Legacy SleepTime UI Prior to Schema Removal
+
+### Status
+Accepted (v0.0.3-rc9)
+
+### Context
+With the introduction of the polymorphic session hierarchy ([ADR 011](DECISIONS.md#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model), [ADR 018](DECISIONS.md#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)), sleep tracking was unified under `SleepSession extends Session` (`sleep_session` table) featuring sleep stages (Deep, REM, Light sleep), disruptions, quality ratings, and sleep efficiency metrics.
+
+However, the legacy `SleepTime` UI (`/sleep-times`, `sleep-times.html`) remained active and linked from `activity-management.html`. This created dual-writing risks where new entries could be inserted into the legacy `sleeptime` table without modern session attributes, and prevented dropping the legacy table.
+
+### Decision
+In preparation for removing the `sleeptime` table and model in a future major release:
+1. **Activity Management Navigation**: Re-routed the primary sleep card in [`activity-management.html`](src/main/resources/templates/activity-management.html) from `/sleep-times` to `/sessions?type=SLEEP`.
+2. **Read-Only Archive View with Disabled Controls**:
+   - Converted [`sleep-times.html`](src/main/resources/templates/sleep-times.html) to a read-only archive view.
+   - Retained the creation form card with inputs and submit button explicitly `disabled`.
+   - Added a high-visibility deprecation alert banner with a call-to-action button to the Sleep Sessions Hub.
+3. **Controller Interception**:
+   - In [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), intercepted `POST /sleep-times`, blocking database persistence and redirecting with flash error message to guide users to `/sessions?type=SLEEP`.
+4. **Deprecation Lifecycle Annotations**:
+   - Annotated [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SleepTimeRepository.java`](src/main/java/de/oberamsystems/slm/model/SleepTimeRepository.java), [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), and [`SleepTimeRestController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeRestController.java) with `@Deprecated(since = "0.0.3-rc9", forRemoval = true)`.
+5. **Schema Preservation**: Kept database table `sleeptime` and JPA entities completely intact for zero data loss until the future major release cleanup.
+
+### Consequences & Trade-offs
+- **Benefits**: Eliminates data fragmentation and ensures all new sleep logs leverage sleep stages and Four Pillars balance metrics, while preserving historical records in read-only mode.
+- **Constraints**: Legacy `sleeptime` table and Java classes remain in the repository until Phase 2 removal in a future major version.
+
+---
+
+## ADR 026: Consistent Session Start Time Initialization & Auto-Populated Stop End Time
+
+### Status
+Accepted (v0.0.3-rc9)
+
+### Context
+In SLM, users log cognitive, sport, wellness, and leisure activities through the polymorphic `Session` hierarchy either directly upon completion or by starting an active session (`IN_PROGRESS`, `end == null`) to stop later ([ADR 011](DECISIONS.md#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model), [ADR 018](DECISIONS.md#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)).
+
+Previously, start and stop time initialization suffered from discrepancies:
+1. Blank session models (`new CodingSession()`, etc.) had `start == null`, leaving the `<input type="datetime-local" name="start">` empty when opening "+ Log Session" in the Unified Sessions Hub ([`sessions.html`](src/main/resources/templates/sessions.html)).
+2. Standalone sub-hub endpoints hardcoded arbitrary past offsets (e.g. `viewCodingSessions` defaulted to `now().minusHours(1)`, `viewWorkingSessions` defaulted to `now().minusHours(2)`).
+3. When stopping an ongoing session via the finish modal (`#stopSessionModal`), the end time input was left blank with a hint "Leave blank to stamp with current time", requiring users to either leave it empty or manually enter the current time.
+
+### Decision
+1. **Entity-Level Default Initialization**:
+   - Initialized `private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);` in [`Session.java`](src/main/java/de/oberamsystems/slm/model/Session.java). All instantiated subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `GamingSession`, `ReadingSession`, `MeditationSession`, `SportSession`, `SleepSession`, `LectureSession`) consistently inherit current-time initialization for form bindings and programmatic creation.
+2. **Controller Alignment**:
+   - In [`SessionController.java`](src/main/java/de/oberamsystems/slm/controller/SessionController.java), replaced past hour offsets in `viewCodingSessions` and `viewWorkingSessions` with `LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)` and `end = null`.
+   - Reinforced defensive fallback in `initializeSessionStatus`: `if (session.getStart() == null) session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));`.
+3. **Frontend Client-Side Pre-Filling**:
+   - In [`sessions.html`](src/main/resources/templates/sessions.html), added a standard ISO datetime helper `formatLocalDateTime(date)` (`YYYY-MM-DDTHH:mm`).
+   - On `#newSessionModal` `show.bs.modal`, when in create mode (`!id`), dynamically populated `input[name="start"]` with the fresh local client time across all 9 session forms and cleared `input[name="end"]`.
+   - On `#stopSessionModal` `show.bs.modal` and in `setStopModalTarget(btn)`, auto-populated `#stopModalEndTime` with `formatLocalDateTime(new Date())`, updating the helper hint to clarify that the current time is pre-filled and can be fine-tuned if stopping retroactively.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Consistent user experience: opening any session creation form or stopping an active session immediately shows the current time truncated to minutes.
+  - Zero cognitive friction: stopping an active session visually confirms the exact stop timestamp before submission while still allowing adjustments.
+  - Full backward compatibility: Quick Stop forms submitting with null/empty `end` continue to default to `now().truncatedTo(ChronoUnit.MINUTES)`.
+- **Constraints**:
+  - Hibernate entity hydration immediately overwrites the field default with database column values, so persisted records are never altered.
+
+---
+
+## ADR 027: Academic Activity Classification, STEM Lab Support & Clean Domain Separation
+
+### Status
+Accepted (v0.0.3-rc9)
+
+### Context
+In university modules and structured educational courses, academic workloads encompass far more than passive lecture attendance. Students prepare via flipped classroom readings, complete laboratory practicals (critical in STEM disciplines like chemistry and computer engineering), solve homework problem sets, work on group term projects, and deliver oral presentations. Furthermore, lifelong learners enroll in structured adult education (massive open online courses / MOOCs on Coursera/edX or German Volkshochschule / VHS courses).
+
+Previously:
+1. `LectureSession` was strictly modeled around passive lecture listening with sequential `lectureNumber`, without categorizing whether time was spent in a lecture, lab, homework, or preparation.
+2. We evaluated two architectural directions for unifying course activities with the existing `LearningItem` / `LearningSession` domain:
+   - **Approach A (Intertwined Foreign Keys)**: Adding `course_id` to `learning_item` and connecting `learning_session` directly to courses.
+   - **Approach B (Clean Domain Separation)**: Preserving `LearningItem` + `LearningSession` purely for self-paced, casual, or gamified skill learning (e.g. Duolingo, LeetCode, standalone vocabulary drill), while extending `Course` + `LectureSession` to model all structured, multi-session course curricula across academic universities and lifelong learning (using dedicated semester designations like `"OTHER"`, `"MOOC"`, `"VHS"`).
+
+### Decision
+We adopted **Approach B: Clean Domain Separation**:
+1. **Academic Activity Type Enum (`academic_activity_type`)**:
+   - Created PostgreSQL enum `academic_activity_type` with 7 values:
+     - `LECTURE`: Traditional synchronous or recorded lecture.
+     - `PREPARATION`: Pre-lecture reading, flipped classroom preparation, reviewing syllabus material.
+     - `LEARNING`: Self-directed study, post-lecture recap, exam revision for course topics.
+     - `HOMEWORK`: Problem sets, tutorial assignments, exercise sheets.
+     - `LAB`: Hands-on laboratory experiments, chemistry lab practicals, hardware/software lab benches.
+     - `PROJECT`: Group or individual term project work, coding milestones.
+     - `PRESENTATION`: Delivering talks, seminar defenses, poster presentations.
+   - Mapped in Java via [`LectureActivityType.java`](src/main/java/de/oberamsystems/slm/model/LectureActivityType.java) with human-readable labels, Bootstrap Icons, and contextual badge styles.
+2. **Entity Enhancement & Backward Compatibility**:
+   - Extended [`LectureSession.java`](src/main/java/de/oberamsystems/slm/model/LectureSession.java) with `activityType = LectureActivityType.LECTURE`.
+   - Added column `activity_type academic_activity_type NOT NULL DEFAULT 'LECTURE'` with index `idx_lecture_session_activity_type` in [`migration_2026-10-23_1.sql`](src/main/resources/migration_2026-10-23_1.sql) and synchronized baseline schemas ([`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql)).
+3. **ECTS Workload Progress Analytics**:
+   - In [`Course.java`](src/main/java/de/oberamsystems/slm/model/Course.java), added `getTargetWorkloadHours()` ($ECTS \times 30\text{h}$) and `isNonAcademicCourse()`.
+   - In [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java), computed total net duration, progress percentage against target workload, and breakdown of time and counts per activity type.
+4. **Direct Course Activity Logging & UI Filtering**:
+   - Added `POST /courses/{courseId}/sessions` endpoint to log any activity directly from the course detail view.
+   - In [`course-detail.html`](src/main/resources/templates/course-detail.html), integrated an ECTS Workload Progress card, activity breakdown badges, instant client-side activity filter pills, and `#logSessionModal`.
+   - In [`sessions.html`](src/main/resources/templates/sessions.html), added activity type selection to `#form-lecture` and activity badges with icons to the table row rendering.
+5. **Lifelong & Non-Academic Course Support**:
+   - Supported courses without fixed academic semesters or ECTS (e.g. MOOCs on Coursera/edX or Volkshochschulkurse) using semester tags `"OTHER"`, `"MOOC"`, `"VHS"`, gracefully categorized at the bottom of descending semester views via [`SemesterComparator.java`](src/main/java/de/oberamsystems/slm/util/SemesterComparator.java).
+6. **MCP Tooling**:
+   - Extended `McpAcademicTools.logLectureSession` with optional `activityType` parameter.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - High fidelity tracking for university degrees, flipped classroom models, and laboratory STEM disciplines.
+  - Zero schema pollution: `learning_item` and `lecture_session` maintain clean domain invariants without sparse nullable foreign keys.
+  - Complete ECTS progress tracking gives students immediate visibility into remaining semester effort.
+- **Constraints**:
+  - Unstructured/self-paced apps (e.g. Duolingo) remain logged under `LearningItem` / `LearningSession` and do not appear in course workload totals.
+
 
 
 

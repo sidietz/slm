@@ -131,11 +131,13 @@ public class CourseDetailIT extends AbstractIntegrationTest {
                 .andExpect(content().string(containsString("PBFT, View Change, Byzantine, Quorums")))
                 .andExpect(content().string(containsString("Homework")))
                 // Lecture Sessions timeline assertions
-                .andExpect(content().string(containsString("Attended Lectures (")))
+                .andExpect(content().string(containsString("Course Activities &amp; Sessions (")))
                 .andExpect(content().string(containsString("Byzantine Fault Tolerance &amp; PBFT")))
                 .andExpect(content().string(containsString("01:15"))) // Net duration formatted
                 // Form & modal assertions
                 .andExpect(content().string(containsString("id=\"editCourseModal\"")))
+                .andExpect(content().string(containsString("id=\"logSessionModal\"")))
+                .andExpect(content().string(containsString("action=\"/courses/" + course.getId() + "/sessions\"")))
                 .andExpect(content().string(containsString("action=\"/courses/" + course.getId() + "/edit\"")))
                 .andExpect(content().string(containsString("action=\"/courses/" + course.getId() + "/delete\"")))
                 .andExpect(content().string(containsString("name=\"_csrf\"")));
@@ -154,7 +156,7 @@ public class CourseDetailIT extends AbstractIntegrationTest {
                 .andExpect(model().attributeExists("course", "sessions", "notes"))
                 .andExpect(content().string(containsString("Quantum Information Theory")))
                 .andExpect(content().string(containsString("No lecture notes saved for this course yet.")))
-                .andExpect(content().string(containsString("No lecture attendance sessions logged for this course yet.")))
+                .andExpect(content().string(containsString("No activities logged for this course yet.")))
                 .andExpect(content().string(containsString("Write First Note")));
     }
 
@@ -426,5 +428,104 @@ public class CourseDetailIT extends AbstractIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("course-detail"))
                 .andExpect(content().string(containsString("No lecture notes saved for this course yet.")));
+    }
+
+    @Test
+    void testDirectCourseSessionLoggingAndActivityTypes() throws Exception {
+        Course course = new Course();
+        course.setTitle("Organic Chemistry I");
+        course.setCode("CHEM-101");
+        course.setSemester("WS 2026/27");
+        course.setEctsCredits(BigDecimal.valueOf(6.0));
+        course.setDefaultRoom("Lab 3.01");
+        course = courseRepository.saveAndFlush(course);
+
+        // 1. Log a LAB session directly via POST /courses/{courseId}/sessions
+        mockMvc.perform(post("/courses/" + course.getId() + "/sessions")
+                        .with(csrf())
+                        .param("activityType", "LAB")
+                        .param("lectureNumber", "1")
+                        .param("topic", "Esterification Experiment")
+                        .param("room", "Lab 3.01")
+                        .param("start", "2026-10-23T14:00")
+                        .param("end", "2026-10-23T17:00")
+                        .param("breakMinutes", "30")
+                        .param("focusRating", "5")
+                        .param("comment", "Completed synthesis with 87% yield"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/courses/" + course.getId()));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        var sessions = lectureSessionRepository.findByCourseIdOrderByLectureNumberAsc(course.getId());
+        assertEquals(1, sessions.size());
+        LectureSession labSession = sessions.get(0);
+        assertEquals(LectureActivityType.LAB, labSession.getActivityType());
+        assertEquals("Esterification Experiment", labSession.getTopic());
+        assertEquals(5, labSession.getFocusRating());
+        assertEquals(Duration.ofMinutes(150), labSession.getNetDuration());
+
+        // 2. Also log a HOMEWORK session and a PREPARATION session
+        mockMvc.perform(post("/courses/" + course.getId() + "/sessions")
+                        .with(csrf())
+                        .param("activityType", "HOMEWORK")
+                        .param("lectureNumber", "2")
+                        .param("topic", "Reaction Mechanism Exercises")
+                        .param("start", "2026-10-24T10:00")
+                        .param("end", "2026-10-24T11:30")
+                        .param("breakMinutes", "0"))
+                .andExpect(status().is3xxRedirection());
+
+        mockMvc.perform(post("/courses/" + course.getId() + "/sessions")
+                        .with(csrf())
+                        .param("activityType", "PREPARATION")
+                        .param("lectureNumber", "3")
+                        .param("topic", "Flipped Classroom Reading Ch. 5")
+                        .param("start", "2026-10-24T14:00")
+                        .param("end", "2026-10-24T15:00")
+                        .param("breakMinutes", "0"))
+                .andExpect(status().is3xxRedirection());
+
+        // 3. GET /courses/{courseId} renders workload metrics, badges, and breakdown
+        mockMvc.perform(get("/courses/" + course.getId()))
+                .andExpect(status().isOk())
+                .andExpect(view().name("course-detail"))
+                .andExpect(model().attributeExists("totalNetDuration", "targetWorkloadHours", "workloadProgressPercent", "activityDurations", "activityCounts", "hasEcts"))
+                .andExpect(content().string(containsString("Lab")))
+                .andExpect(content().string(containsString("Homework")))
+                .andExpect(content().string(containsString("Preparation")))
+                .andExpect(content().string(containsString("Esterification Experiment")))
+                .andExpect(content().string(containsString("Reaction Mechanism Exercises")))
+                .andExpect(content().string(containsString("Target:")))
+                .andExpect(content().string(containsString("180h"))); // 6 ECTS * 30h
+    }
+
+    @Test
+    void testNonAcademicCourseSupport() throws Exception {
+        // Course without ECTS (e.g. MOOC or Volkshochschule course)
+        Course course = new Course();
+        course.setTitle("Modern Rust Programming (Coursera MOOC)");
+        course.setCode("MOOC-RUST");
+        course.setSemester("OTHER");
+        course.setEctsCredits(null);
+        course = courseRepository.saveAndFlush(course);
+
+        // Log a LEARNING session
+        mockMvc.perform(post("/courses/" + course.getId() + "/sessions")
+                        .with(csrf())
+                        .param("activityType", "LEARNING")
+                        .param("lectureNumber", "1")
+                        .param("topic", "Ownership & Borrowing Basics")
+                        .param("start", "2026-10-23T19:00")
+                        .param("end", "2026-10-23T20:30"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/courses/" + course.getId()));
+
+        mockMvc.perform(get("/courses/" + course.getId()))
+                .andExpect(status().isOk())
+                .andExpect(content().string(containsString("Modern Rust Programming (Coursera MOOC)")))
+                .andExpect(content().string(containsString("Self-paced / Non-ECTS course")))
+                .andExpect(content().string(containsString("Learning")));
     }
 }

@@ -235,8 +235,8 @@ public class SessionController {
 		list.sort(Comparator.comparing(CodingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
 		CodingSession cs = new CodingSession();
-		cs.setStart(LocalDateTime.now().minusHours(1).truncatedTo(ChronoUnit.MINUTES));
-		cs.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		cs.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		cs.setEnd(null);
 		model.addAttribute("codingSession", cs);
 		return "coding-sessions";
 	}
@@ -268,8 +268,8 @@ public class SessionController {
 		model.addAttribute("sessions", list);
 		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		WorkingSession ws = new WorkingSession();
-		ws.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
-		ws.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		ws.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		ws.setEnd(null);
 		ws.setBillable(true);
 		model.addAttribute("workingSession", ws);
 		return "working-sessions";
@@ -465,8 +465,14 @@ public class SessionController {
 	@PostMapping("/sessions/lecture")
 	public String submitLectureSession(@ModelAttribute LectureSession session,
 			@RequestParam(required = false) Long courseId,
-			@RequestParam(required = false, defaultValue = "0") Long breakMinutes) {
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			@RequestParam(required = false) LectureActivityType activityType) {
 		initializeSessionStatus(session, breakMinutes);
+		if (activityType != null) {
+			session.setActivityType(activityType);
+		} else if (session.getActivityType() == null) {
+			session.setActivityType(LectureActivityType.LECTURE);
+		}
 		Long cid = courseId != null ? courseId : (session.getCourse() != null ? session.getCourse().getId() : null);
 		if (cid != null) {
 			courseRepo.findById(cid).ifPresent(session::setCourse);
@@ -526,5 +532,6 @@ public class SessionController {
 		model.addAttribute("sportTypes", sportTypeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		model.addAttribute("courses", courseRepo.findAll(Sort.by(Sort.Direction.ASC, "title")));
+		model.addAttribute("lectureActivityTypes", LectureActivityType.values());
 	}
 }

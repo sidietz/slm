@@ -2,10 +2,13 @@ package de.oberamsystems.slm.controller;
 
 import de.oberamsystems.slm.model.*;
 import de.oberamsystems.slm.util.CourseComparator;
+import de.oberamsystems.slm.util.DurationFormatter;
 import de.oberamsystems.slm.util.SemesterComparator;
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,13 +72,83 @@ public class AcademicController {
 		List<LectureSession> sessions = lectureSessionRepo.findByCourseIdOrderByStartDesc(id);
 		List<LectureNote> notes = lectureNoteRepo.findByCourseIdOrderByLectureNumberAsc(id);
 
+		Duration totalNetDuration = Duration.ZERO;
+		Map<LectureActivityType, Duration> activityDurations = new EnumMap<>(LectureActivityType.class);
+		Map<LectureActivityType, Long> activityCounts = new EnumMap<>(LectureActivityType.class);
+		for (LectureActivityType type : LectureActivityType.values()) {
+			activityDurations.put(type, Duration.ZERO);
+			activityCounts.put(type, 0L);
+		}
+
+		for (LectureSession s : sessions) {
+			Duration d = Duration.ZERO;
+			if (s.getNetDuration() != null) {
+				d = s.getNetDuration();
+			} else if (s.getStart() != null && s.getEnd() != null) {
+				Duration gross = Duration.between(s.getStart(), s.getEnd());
+				Duration brk = s.getBreakDuration() != null ? s.getBreakDuration() : Duration.ZERO;
+				d = gross.minus(brk);
+				if (d.isNegative()) d = Duration.ZERO;
+			}
+			totalNetDuration = totalNetDuration.plus(d);
+
+			LectureActivityType type = s.getActivityType() != null ? s.getActivityType() : LectureActivityType.LECTURE;
+			activityDurations.put(type, activityDurations.get(type).plus(d));
+			activityCounts.put(type, activityCounts.get(type) + 1);
+		}
+
 		model.addAttribute("course", course);
 		model.addAttribute("sessions", sessions);
 		model.addAttribute("notes", notes);
 		model.addAttribute("lecturers", humanRepo.findByCategory(HumanCategory.LECTURER));
-		model.addAttribute("newSession", new LectureSession(course, sessions.size() + 1, "", course.getDefaultRoom()));
+		model.addAttribute("totalDuration", DurationFormatter.format(totalNetDuration));
+		model.addAttribute("totalNetDuration", totalNetDuration);
+		model.addAttribute("activityDurations", activityDurations);
+		model.addAttribute("activityCounts", activityCounts);
+		model.addAttribute("activityTypes", LectureActivityType.values());
+
+		if (course.getEctsCredits() != null && course.getEctsCredits().compareTo(BigDecimal.ZERO) > 0) {
+			BigDecimal targetHours = course.getTargetWorkloadHours();
+			long targetMinutes = targetHours.multiply(BigDecimal.valueOf(60)).longValue();
+			double progressPercent = targetMinutes > 0
+					? Math.min(100.0, (double) totalNetDuration.toMinutes() / targetMinutes * 100.0)
+					: 0.0;
+			model.addAttribute("targetWorkloadHours", String.format(Locale.US, "%.0f", targetHours.doubleValue()));
+			model.addAttribute("workloadProgressPercent", String.format(Locale.US, "%.1f", progressPercent));
+			model.addAttribute("hasEcts", true);
+		} else {
+			model.addAttribute("hasEcts", false);
+		}
+
+		LectureSession newSession = new LectureSession(course, sessions.size() + 1, "", course.getDefaultRoom(), LectureActivityType.LECTURE);
+		newSession.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		newSession.setEnd(null);
+		model.addAttribute("newSession", newSession);
 
 		return "course-detail";
+	}
+
+	@PostMapping("/courses/{courseId}/sessions")
+	public String saveCourseSession(
+			@PathVariable Long courseId,
+			@ModelAttribute LectureSession session,
+			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
+			@RequestParam(required = false, defaultValue = "LECTURE") LectureActivityType activityType) {
+		Course course = courseRepo.findById(courseId)
+				.orElseThrow(() -> new IllegalArgumentException("Course not found: " + courseId));
+		session.setCourse(course);
+		session.setActivityType(activityType != null ? activityType : LectureActivityType.LECTURE);
+		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
+		if (session.getStart() == null) {
+			session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		}
+		if (session.getEnd() == null) {
+			session.setStatus("IN_PROGRESS");
+		} else {
+			session.setStatus("COMPLETED");
+		}
+		lectureSessionRepo.save(session);
+		return "redirect:/courses/" + courseId;
 	}
 
 	@PostMapping("/courses")

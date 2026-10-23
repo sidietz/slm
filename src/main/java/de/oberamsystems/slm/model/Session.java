@@ -30,7 +30,7 @@ public abstract class Session {
 	private String status = "COMPLETED";
 
 	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
-	private LocalDateTime start;
+	private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
 
 	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
 	private LocalDateTime end;

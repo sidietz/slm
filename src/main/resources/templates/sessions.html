@@ -103,6 +103,7 @@
                         <div class="d-flex align-items-center gap-2 mb-1">
                             <span class="badge bg-warning text-dark fw-bold text-uppercase">Active Session</span>
                             <span class="badge bg-white text-primary fw-bold text-uppercase" th:text="${#strings.replace(activeSessions[0].getClass().getSimpleName(), 'Session', '')}">WORKING</span>
+                            <span th:if="${activeSessions[0].getClass().getSimpleName() == 'LectureSession' and activeSessions[0].activityType != null}" class="badge bg-light text-dark fw-bold text-uppercase" th:text="${activeSessions[0].activityType.displayName}">LECTURE</span>
                         </div>
                         <h4 class="fw-bold mb-0 text-white" th:text="${activeSessions[0].getClass().getSimpleName() == 'WorkingSession' ? activeSessions[0].project : (activeSessions[0].getClass().getSimpleName() == 'CodingSession' ? activeSessions[0].project : (activeSessions[0].getClass().getSimpleName() == 'ReadingSession' and activeSessions[0].book != null ? activeSessions[0].book.title : (activeSessions[0].getClass().getSimpleName() == 'GamingSession' and activeSessions[0].game != null ? activeSessions[0].game.title : (activeSessions[0].getClass().getSimpleName() == 'SportSession' and activeSessions[0].type != null ? activeSessions[0].type.name : (activeSessions[0].getClass().getSimpleName() == 'LectureSession' and activeSessions[0].course != null ? activeSessions[0].course.title : 'Ongoing Activity')))))}">Ongoing Session</h4>
                         <small class="text-white-50">
@@ -426,8 +427,13 @@
                                 </div>
                                 <!-- Lecture Details -->
                                 <div th:if="${#strings.contains(s.getClass().getSimpleName(), 'Lecture')}">
-                                    <strong th:text="${s.course != null ? (s.course.code != null ? s.course.code + ' - ' : '') + s.course.title : 'University Lecture'}">Course</strong>
-                                    <span th:if="${s.lectureNumber != null}" class="badge bg-info-subtle text-info ms-1" th:text="'Lecture ' + ${s.lectureNumber}">Lecture 1</span>
+                                    <div class="d-flex align-items-center gap-1 flex-wrap">
+                                        <strong th:text="${s.course != null ? (s.course.code != null ? s.course.code + ' - ' : '') + s.course.title : 'University Course'}">Course</strong>
+                                        <span class="badge ms-1" th:classappend="${s.activityType != null ? s.activityType.badgeCssClass : 'bg-primary-subtle text-primary'}">
+                                            <i th:if="${s.activityType != null}" th:class="${'bi ' + s.activityType.bootstrapIcon + ' me-1'}"></i>
+                                            <span th:text="${(s.activityType != null ? s.activityType.displayName : 'Lecture') + (s.lectureNumber != null ? ' #' + s.lectureNumber : '')}">Lecture #1</span>
+                                        </span>
+                                    </div>
                                     <div class="small text-muted" th:if="${s.topic != null and !s.topic.empty}" th:text="${s.topic}">Topic</div>
                                     <div class="small text-muted" th:if="${s.room != null and !s.room.empty}"><i class="bi bi-geo-alt me-1"></i><span th:text="${s.room}">Room</span></div>
                                 </div>
@@ -529,7 +535,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">End Time</label>
                             <input type="datetime-local" class="form-control" name="end" id="stopModalEndTime">
-                            <div class="form-text text-muted">Leave blank to stamp with the current time.</div>
+                            <div class="form-text text-muted">Pre-filled with the current time. Adjust if stopping retroactively.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Break Duration (Minutes)</label>
@@ -1025,20 +1031,26 @@
                     <form id="form-lecture" th:action="@{/sessions/lecture}" th:object="${lectureSession}" method="post" style="display: none;">
                         <input type="hidden" th:field="*{id}" id="lectureId" />
                         <div class="row g-3">
-                            <div class="col-md-8">
+                            <div class="col-md-5">
                                 <label class="form-label fw-semibold">Course / Module</label>
                                 <select name="courseId" class="form-select" required>
-                                    <option value="">-- Select University Course --</option>
+                                    <option value="">-- Select Course / Module --</option>
                                     <option th:each="c : ${courses}" th:value="${c.id}" th:text="${(c.code != null ? c.code + ' - ' : '') + c.title + ' (' + c.semester + ')'}"></option>
                                 </select>
                             </div>
                             <div class="col-md-4">
-                                <label class="form-label fw-semibold">Lecture Number</label>
+                                <label class="form-label fw-semibold">Activity Type</label>
+                                <select name="activityType" class="form-select">
+                                    <option th:each="type : ${lectureActivityTypes}" th:value="${type.name()}" th:text="${type.displayName}" th:selected="${type == T(de.oberamsystems.slm.model.LectureActivityType).LECTURE}"></option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label fw-semibold">Session Number</label>
                                 <input type="number" th:field="*{lectureNumber}" class="form-control" placeholder="e.g. 1, 2, 3..." min="1">
                             </div>
                             <div class="col-md-8">
-                                <label class="form-label fw-semibold">Lecture Topic</label>
-                                <input type="text" th:field="*{topic}" class="form-control" placeholder="e.g. Relational Calculus &amp; Optimization">
+                                <label class="form-label fw-semibold">Topic / Description</label>
+                                <input type="text" th:field="*{topic}" class="form-control" placeholder="e.g. Relational Calculus &amp; Optimization / Lab Assignment 1">
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label fw-semibold">Room / Location</label>
@@ -1197,11 +1209,20 @@
             }
         }
 
+        function formatLocalDateTime(d) {
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
         function setStopModalTarget(btn) {
             const id = btn.getAttribute('data-session-id');
             const form = document.getElementById('stopSessionForm');
             if (form && id) {
                 form.action = '/sessions/' + id + '/stop';
+            }
+            const endTimeInput = document.getElementById('stopModalEndTime');
+            if (endTimeInput) {
+                endTimeInput.value = formatLocalDateTime(new Date());
             }
         }
 
@@ -1275,12 +1296,20 @@
                         }
                     } else {
                         modalLabel.innerHTML = '<i class="bi bi-stopwatch-fill me-2"></i> Log New Session';
+                        const nowStr = formatLocalDateTime(new Date());
                         ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep', 'lecture'].forEach(t => {
                             const f = document.getElementById('form-' + t);
-                            if (f) f.reset();
+                            if (f) {
+                                f.reset();
+                                const startInput = f.querySelector('input[name="start"]');
+                                if (startInput) startInput.value = nowStr;
+                                const endInput = f.querySelector('input[name="end"]');
+                                if (endInput) endInput.value = '';
+                            }
                             const idIn = document.getElementById(t + 'Id');
                             if (idIn) idIn.value = '';
                         });
+                        updateSleepStagesCalculation();
                     }
                 });
 
@@ -1291,6 +1320,16 @@
                         const idIn = document.getElementById(t + 'Id');
                         if (idIn) idIn.value = '';
                     });
+                });
+            }
+
+            const stopSessionModal = document.getElementById('stopSessionModal');
+            if (stopSessionModal) {
+                stopSessionModal.addEventListener('show.bs.modal', () => {
+                    const endTimeInput = document.getElementById('stopModalEndTime');
+                    if (endTimeInput) {
+                        endTimeInput.value = formatLocalDateTime(new Date());
+                    }
                 });
             }
         });

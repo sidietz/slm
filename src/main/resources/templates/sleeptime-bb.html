@@ -22,9 +22,19 @@
 
 <body>
     <!-- Header Hero Banner -->
-    <header th:replace="~{fragments/layout :: header('Sleep Analytics', 'Visual trend charts and historical sleep durations', 'bi bi-graph-up', 'theme-wellness', '/sleep-times', 'Sleep Times')}"></header>
+    <header th:replace="~{fragments/layout :: header('Sleep Analytics', 'Visual trend charts and historical sleep durations', 'bi bi-graph-up', 'theme-wellness', '/sessions?type=SLEEP', 'Sleep Sessions')}"></header>
 
     <main class="container mb-5">
+        <!-- Notice Banner -->
+        <div class="alert alert-info border-0 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div>
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <span>This chart visualizes historical legacy sleep logs. Ongoing sleep tracking is managed in the <strong>Unified Sessions Hub</strong>.</span>
+            </div>
+            <a th:href="@{/sessions(type='SLEEP')}" class="btn btn-sm btn-outline-primary fw-semibold">
+                <i class="bi bi-moon-stars me-1"></i> Open Sessions Hub
+            </a>
+        </div>
         <!-- Chart Card -->
         <section class="card slm-card mb-4 p-4">
             <h2 class="h5 fw-bold text-dark mb-3"><i class="bi bi-bar-chart-line me-2 text-success"></i>Sleep Duration History (Hours)</h2>

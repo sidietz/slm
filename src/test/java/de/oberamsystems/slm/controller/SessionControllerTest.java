@@ -8,6 +8,7 @@ import org.springframework.ui.ConcurrentModel;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -335,5 +336,67 @@ public class SessionControllerTest {
         String redirect = controller.deleteSession(id, "CODING");
         assertEquals("redirect:/sessions?type=CODING", redirect);
         verify(sessionRepo).deleteById(id);
+    }
+
+    @Test
+    public void testViewSessionsBlankModelsHaveDefaultStartTime() {
+        when(sessionRepo.findAll()).thenReturn(new ArrayList<>());
+        ConcurrentModel model = new ConcurrentModel();
+        controller.viewSessions("ALL", model);
+
+        CodingSession cs = (CodingSession) model.getAttribute("codingSession");
+        assertNotNull(cs);
+        assertNotNull(cs.getStart());
+        assertNull(cs.getEnd());
+        assertEquals(0, cs.getStart().getSecond());
+
+        WorkingSession ws = (WorkingSession) model.getAttribute("workingSession");
+        assertNotNull(ws);
+        assertNotNull(ws.getStart());
+        assertNull(ws.getEnd());
+    }
+
+    @Test
+    public void testStopSessionWithExplicitEndTime() {
+        UUID id = UUID.fromString("0192e200-0000-7000-8000-000000000005");
+        CodingSession session = new CodingSession();
+        session.setId(id);
+        session.setStatus("IN_PROGRESS");
+        session.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
+        session.setEnd(null);
+
+        when(sessionRepo.findById(id)).thenReturn(Optional.of(session));
+
+        LocalDateTime stopTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        String redirect = controller.stopSession(id, stopTime, 10L, 5, "Completed feature", "Great focus", "CODING");
+
+        assertEquals("redirect:/sessions?type=CODING", redirect);
+        assertEquals("COMPLETED", session.getStatus());
+        assertEquals(stopTime, session.getEnd());
+        assertEquals(Duration.ofMinutes(10), session.getBreakDuration());
+        assertEquals(5, session.getFocusRating());
+        assertEquals("Completed feature", session.getOutcomeSummary());
+        assertEquals("Great focus", session.getComment());
+        verify(sessionRepo).save(session);
+    }
+
+    @Test
+    public void testStopSessionWithNullEndTimeDefaultsToNow() {
+        UUID id = UUID.fromString("0192e200-0000-7000-8000-000000000006");
+        CodingSession session = new CodingSession();
+        session.setId(id);
+        session.setStatus("IN_PROGRESS");
+        session.setStart(LocalDateTime.now().minusMinutes(45).truncatedTo(ChronoUnit.MINUTES));
+        session.setEnd(null);
+
+        when(sessionRepo.findById(id)).thenReturn(Optional.of(session));
+
+        String redirect = controller.stopSession(id, null, 0L, null, null, null, "ALL");
+
+        assertEquals("redirect:/sessions?type=ALL", redirect);
+        assertEquals("COMPLETED", session.getStatus());
+        assertNotNull(session.getEnd());
+        assertEquals(0, session.getEnd().getSecond());
+        verify(sessionRepo).save(session);
     }
 }

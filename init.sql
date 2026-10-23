@@ -69,6 +69,7 @@ CREATE TYPE book_genre AS ENUM ('ACTION', 'BIOGRAPHY', 'CHILDREN', 'CRIME', 'ESS
 CREATE TYPE book_type AS ENUM ('FICTION', 'NONFICTION');
 CREATE TYPE source_type AS ENUM ('BOOK', 'COURSE', 'LECTURE', 'TUTORIAL', 'YOUTUBE');
 CREATE TYPE status_type AS ENUM('PLANNED', 'IN_PROGRESS', 'COMPLETED');
+CREATE TYPE academic_activity_type AS ENUM ('LECTURE', 'PREPARATION', 'LEARNING', 'HOMEWORK', 'LAB', 'PROJECT', 'PRESENTATION');
 CREATE TYPE human_category AS ENUM ('FAMILY', 'CLASSMATE', 'FRIEND', 'FRIEND_OF_FRIEND', 'TEACHER', 'LECTURER', 'CELEBRITY', 'POLITICIAN', 'SPD', 'OTHER');
 CREATE TYPE event_type AS ENUM ('BIRTHDAY', 'MEMORIAL', 'WEDDING_ANNIVERSARY', 'RELATIONSHIP_ANNIVERSARY', 'WORK_ANNIVERSARY', 'CUSTOM');
 
@@ -231,11 +232,12 @@ CREATE TABLE employer(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE working_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
 CREATE TABLE sleep_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, light_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
 CREATE TABLE course (id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, code TEXT, semester TEXT, ects_credits NUMERIC(3, 1), lecturer_id BIGINT REFERENCES human(id) ON DELETE SET NULL, default_room TEXT, meeting_link TEXT, syllabus TEXT, exam_date TIMESTAMP, exam_location TEXT, grade NUMERIC(3, 2), exam_passed BOOLEAN, status status_type DEFAULT 'IN_PROGRESS', created_at TIMESTAMP, last_updated TIMESTAMP);
-CREATE TABLE lecture_session (id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, course_id BIGINT REFERENCES course(id) ON DELETE SET NULL, lecture_number INTEGER, topic TEXT, room TEXT, recording_url TEXT, slides_url TEXT);
+CREATE TABLE lecture_session (id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, course_id BIGINT REFERENCES course(id) ON DELETE SET NULL, lecture_number INTEGER, topic TEXT, room TEXT, recording_url TEXT, slides_url TEXT, activity_type academic_activity_type NOT NULL DEFAULT 'LECTURE');
 CREATE TABLE lecture_note (id UUID PRIMARY KEY DEFAULT uuidv7(), course_id BIGINT REFERENCES course(id) ON DELETE CASCADE, lecture_session_id UUID REFERENCES lecture_session(id) ON DELETE SET NULL, title TEXT NOT NULL, lecture_number INTEGER, lecture_date DATE, content_markdown TEXT, key_concepts TEXT, summary TEXT, has_homework BOOLEAN DEFAULT FALSE, homework_todo TEXT, exam_relevance_rating INTEGER, created_at TIMESTAMP, last_updated TIMESTAMP);
 CREATE INDEX IF NOT EXISTS idx_course_lecturer ON course(lecturer_id);
 CREATE INDEX IF NOT EXISTS idx_course_semester ON course(semester);
 CREATE INDEX IF NOT EXISTS idx_lecture_session_course ON lecture_session(course_id);
+CREATE INDEX IF NOT EXISTS idx_lecture_session_activity_type ON lecture_session(activity_type);
 CREATE INDEX IF NOT EXISTS idx_lecture_note_course ON lecture_note(course_id);
 CREATE INDEX IF NOT EXISTS idx_lecture_note_session ON lecture_note(lecture_session_id);
 

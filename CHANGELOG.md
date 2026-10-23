@@ -5,6 +5,49 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc9] - 2026-10-23
+
+### Added
+- Implemented **Academic Activity Classification, STEM Lab Support & Clean Domain Separation (Approach B)** (ADR 027):
+  - Database & Schema Synchronization:
+    - Added PostgreSQL enum `academic_activity_type` with 7 values (`LECTURE`, `PREPARATION`, `LEARNING`, `HOMEWORK`, `LAB`, `PROJECT`, `PRESENTATION`) in transactional migration [`src/main/resources/migration_2026-10-23_1.sql`](src/main/resources/migration_2026-10-23_1.sql).
+    - Added column `activity_type academic_activity_type NOT NULL DEFAULT 'LECTURE'` and index `idx_lecture_session_activity_type` to `lecture_session`.
+    - Synchronized authoritative baseline schemas in [`tables.sql`](src/main/resources/tables.sql), [`enums.sql`](src/main/resources/enums.sql), [`init.sql`](init.sql), and [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql).
+  - Domain Model & Entity Extensions:
+    - Created Java enum [`LectureActivityType.java`](src/main/java/de/oberamsystems/slm/model/LectureActivityType.java) with human-readable display names, Bootstrap Icons, and Bootstrap 5.3 contextual badges (`bg-*-subtle text-*`).
+    - Extended [`LectureSession.java`](src/main/java/de/oberamsystems/slm/model/LectureSession.java) with `activityType = LectureActivityType.LECTURE`, constructors, accessors, and `toString`.
+    - Added ECTS workload helpers in [`Course.java`](src/main/java/de/oberamsystems/slm/model/Course.java): `getTargetWorkloadHours()` (ECTS x 30h) and `isNonAcademicCourse()`.
+  - Controller & Analytics:
+    - In [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java), computed total net duration, target workload hours, workload progress percentage, and activity breakdown maps (`activityDurations`, `activityCounts`).
+    - Added `@PostMapping("/courses/{courseId}/sessions")` endpoint allowing direct session and activity logging from the course detail view.
+    - Updated [`SessionController.java`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) to bind `activityType` with `LectureActivityType.LECTURE` fallback and exposed `lectureActivityTypes` to view templates.
+  - User Interface:
+    - In [`course-detail.html`](src/main/resources/templates/course-detail.html), added ECTS Workload Progress card with target hours vs. logged time, activity breakdown badges, instant client-side activity filter pills (`All Activities`, `Lecture`, `Preparation`, `Learning`, `Homework`, `Lab`, `Project`, `Presentation`), and `#logSessionModal`.
+    - In [`sessions.html`](src/main/resources/templates/sessions.html), added Activity Type select dropdown to `#form-lecture`, activity badges with icons to table rows, and activity indicators to the active session hero banner.
+    - Enhanced semester placeholders in [`courses.html`](src/main/resources/templates/courses.html) clarifying non-academic lifelong learning support (`"OTHER"`, `"MOOC"`, `"VHS"`).
+  - MCP Server & Tools:
+    - Extended `logLectureSession` in [`McpAcademicTools.java`](src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java) to accept an optional `activityType` parameter.
+  - Testing & Verification:
+    - Added unit test `testLectureSessionActivityTypeDefaults` in [`SessionModelTest.java`](src/test/java/de/oberamsystems/slm/model/SessionModelTest.java).
+    - Expanded [`CourseDetailIT.java`](src/test/java/de/oberamsystems/slm/CourseDetailIT.java) with `testDirectCourseSessionLoggingAndActivityTypes` and `testNonAcademicCourseSupport` verifying all 7 activity types, direct logging, and non-ECTS courses.
+
+### Deprecated
+- Deprecated legacy `SleepTime` subsystem in preparation for database table and model removal at a future major release (ADR 025):
+  - Marked [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SleepTimeRepository.java`](src/main/java/de/oberamsystems/slm/model/SleepTimeRepository.java), [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), and [`SleepTimeRestController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeRestController.java) with `@Deprecated(since = "0.0.3-rc9", forRemoval = true)`.
+  - Converted [`sleep-times.html`](src/main/resources/templates/sleep-times.html) into a read-only archive view: added a prominent deprecation alert banner linking to the Unified Sessions Hub, retained the create form card with disabled inputs and disabled submit button.
+  - Intercepted and disabled `POST /sleep-times` in [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), blocking legacy persistence and redirecting with flash error message advising users to log sleep sessions via `/sessions?type=SLEEP`.
+  - Re-routed primary sleep navigation in [`activity-management.html`](src/main/resources/templates/activity-management.html) to [`/sessions?type=SLEEP`](src/main/resources/templates/sessions.html) and updated header back-link in [`sleeptime-bb.html`](src/main/resources/templates/sleeptime-bb.html).
+  - Updated [`WellnessAndHabitsIT.java`](src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java) and [`SleepTimeControllerTest.java`](src/test/java/de/oberamsystems/slm/controller/SleepTimeControllerTest.java) verifying read-only presentation and write rejection.
+
+### Changed
+- Standardized session start time initialization and stop session end time auto-population across the polymorphic `Session` hierarchy and UI modals (ADR 026):
+  - Initialized `private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);` in [`Session.java`](src/main/java/de/oberamsystems/slm/model/Session.java) so all blank session models (`CodingSession`, `WorkingSession`, `LearningSession`, `GamingSession`, `ReadingSession`, `MeditationSession`, `SportSession`, `SleepSession`, `LectureSession`) consistently default to the current minute upon creation.
+  - Replaced arbitrary legacy past offsets in [`SessionController.java`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) (`viewCodingSessions` previously `now().minusHours(1)`, `viewWorkingSessions` previously `now().minusHours(2)`) with `now().truncatedTo(ChronoUnit.MINUTES)` and `end = null`.
+  - Upgraded [`sessions.html`](src/main/resources/templates/sessions.html) modal handlers:
+    - Log Session Modal: Auto-populates `input[name="start"]` with fresh local client time (`YYYY-MM-DDTHH:mm`) across all 9 session forms upon opening, ensuring accurate timestamps even after long page idle times.
+    - Finish / Stop Session Modal: Auto-populates `#stopModalEndTime` with current local client time upon clicking "Stop Session", updated hint text to reflect pre-filled current time, while preserving retroactive adjustment capabilities.
+  - Added unit test coverage in [`SessionModelTest.java`](src/test/java/de/oberamsystems/slm/model/SessionModelTest.java) (`testDefaultStartTimeInitializedToNow`) and [`SessionControllerTest.java`](src/test/java/de/oberamsystems/slm/controller/SessionControllerTest.java) (`testViewSessionsBlankModelsHaveDefaultStartTime`, `testStopSessionWithExplicitEndTime`, and `testStopSessionWithNullEndTimeDefaultsToNow`).
+
 ## [0.0.3-rc8] - 2026-10-21
 
 ### Added
@@ -449,7 +492,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc3...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc9...HEAD
+[0.0.3-rc9]: https://github.com/sidietz/slm/compare/v0.0.3-rc8...v0.0.3-rc9
+[0.0.3-rc8]: https://github.com/sidietz/slm/compare/v0.0.3-rc7...v0.0.3-rc8
+[0.0.3-rc7]: https://github.com/sidietz/slm/compare/v0.0.3-rc6...v0.0.3-rc7
+[0.0.3-rc6]: https://github.com/sidietz/slm/compare/v0.0.3-rc5...v0.0.3-rc6
+[0.0.3-rc5]: https://github.com/sidietz/slm/compare/v0.0.3-rc4...v0.0.3-rc5
+[0.0.3-rc4]: https://github.com/sidietz/slm/compare/v0.0.3-rc3...v0.0.3-rc4
 [0.0.3-rc3]: https://github.com/sidietz/slm/compare/v0.0.3-rc2...v0.0.3-rc3
 [0.0.3-rc2]: https://github.com/sidietz/slm/compare/v0.0.3-rc1...v0.0.3-rc2
 [0.0.3-rc1]: https://github.com/sidietz/slm/compare/v0.0.2i...v0.0.3-rc1

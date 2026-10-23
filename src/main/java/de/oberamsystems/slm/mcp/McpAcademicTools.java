@@ -108,8 +108,9 @@ public class McpAcademicTools {
 	@Tool(description = "Log attendance at a university lecture session contributing to Net Focused Time")
 	public Map<String, Object> logLectureSession(
 			@ToolParam(description = "Course ID", required = true) Long courseId,
+			@ToolParam(description = "Academic activity type: LECTURE, PREPARATION, LEARNING, HOMEWORK, LAB, PROJECT, PRESENTATION (default: LECTURE)", required = false) String activityType,
 			@ToolParam(description = "Lecture sequential number (e.g. 1, 2, 3)", required = false) Integer lectureNumber,
-			@ToolParam(description = "Lecture topic title (e.g. 'Indexing and B-Trees')", required = true) String topic,
+			@ToolParam(description = "Lecture / activity topic title (e.g. 'Indexing and B-Trees', 'Lab 2')", required = true) String topic,
 			@ToolParam(description = "Room or online meeting URL", required = false) String room,
 			@ToolParam(description = "Start timestamp in ISO-8601 (e.g. '2026-10-19T10:15:00')", required = true) String startTime,
 			@ToolParam(description = "End timestamp in ISO-8601 (e.g. '2026-10-19T11:45:00')", required = true) String endTime,
@@ -126,6 +127,15 @@ public class McpAcademicTools {
 
 		LectureSession ls = new LectureSession();
 		ls.setCourse(course);
+		if (activityType != null && !activityType.isBlank()) {
+			try {
+				ls.setActivityType(LectureActivityType.valueOf(activityType.toUpperCase().trim()));
+			} catch (IllegalArgumentException e) {
+				ls.setActivityType(LectureActivityType.LECTURE);
+			}
+		} else {
+			ls.setActivityType(LectureActivityType.LECTURE);
+		}
 		ls.setLectureNumber(lectureNumber != null ? lectureNumber : 1);
 		ls.setTopic(topic);
 		ls.setRoom(room != null && !room.isBlank() ? room : course.getDefaultRoom());
@@ -140,6 +150,7 @@ public class McpAcademicTools {
 		Map<String, Object> res = new HashMap<>();
 		res.put("id", ls.getId());
 		res.put("course", course.getTitle());
+		res.put("activityType", ls.getActivityType().name());
 		res.put("topic", ls.getTopic());
 		res.put("start", ls.getStart().toString());
 		res.put("end", ls.getEnd().toString());
