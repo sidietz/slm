@@ -1,5 +1,7 @@
 package de.oberamsystems.slm.model;
 
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 import jakarta.persistence.*;
 
 @Entity
@@ -26,16 +28,26 @@ public class LectureSession extends Session {
 	@Column(name = "slides_url", columnDefinition = "TEXT")
 	private String slidesUrl;
 
+	@Enumerated(EnumType.STRING)
+	@JdbcType(value = PostgreSQLEnumJdbcType.class)
+	@Column(name = "activity_type", nullable = false)
+	private LectureActivityType activityType = LectureActivityType.LECTURE;
+
 	public LectureSession() {
 		super();
 	}
 
 	public LectureSession(Course course, Integer lectureNumber, String topic, String room) {
+		this(course, lectureNumber, topic, room, LectureActivityType.LECTURE);
+	}
+
+	public LectureSession(Course course, Integer lectureNumber, String topic, String room, LectureActivityType activityType) {
 		super();
 		this.course = course;
 		this.lectureNumber = lectureNumber;
 		this.topic = topic;
 		this.room = room;
+		this.activityType = activityType != null ? activityType : LectureActivityType.LECTURE;
 	}
 
 	public Course getCourse() {
@@ -86,9 +98,17 @@ public class LectureSession extends Session {
 		this.slidesUrl = slidesUrl;
 	}
 
+	public LectureActivityType getActivityType() {
+		return activityType;
+	}
+
+	public void setActivityType(LectureActivityType activityType) {
+		this.activityType = activityType != null ? activityType : LectureActivityType.LECTURE;
+	}
+
 	@Override
 	public String toString() {
-		return String.format("LectureSession [id=%s, course=%s, lectureNumber=%s, topic=%s, session=%s]",
-				getId(), course, lectureNumber, topic, super.toString());
+		return String.format("LectureSession [id=%s, course=%s, lectureNumber=%s, topic=%s, activityType=%s, session=%s]",
+				getId(), course, lectureNumber, topic, activityType, super.toString());
 	}
 }

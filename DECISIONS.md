@@ -30,6 +30,9 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 022: Vehicle Refuelings, Station Polymorphism, and Spritmonitor CSV Import](#adr-022-vehicle-refuelings-station-polymorphism-and-spritmonitor-csv-import)
 - [ADR 023: Contract Lifecycle Semantics, Auto-Extension Modeling, and Non-Negative Days Remaining](#adr-023-contract-lifecycle-semantics-auto-extension-modeling-and-non-negative-days-remaining)
 - [ADR 024: Universal Modal-First Input Architecture and In-Place Entity Editing](#adr-024-universal-modal-first-input-architecture-and-in-place-entity-editing)
+- [ADR 025: Two-Phase Deprecation of Legacy SleepTime UI in Preparation for Schema Removal](#adr-025-two-phase-deprecation-of-legacy-sleeptime-ui-in-preparation-for-schema-removal)
+- [ADR 026: Consistent Session Start Time Initialization & Auto-Populated Stop End Time](#adr-026-consistent-session-start-time-initialization--auto-populated-stop-end-time)
+- [ADR 027: Academic Activity Classification, STEM Lab Support & Clean Domain Separation](#adr-027-academic-activity-classification-stem-lab-support--clean-domain-separation)
 
 ---
 
@@ -1033,6 +1036,58 @@ Previously, start and stop time initialization suffered from discrepancies:
   - Full backward compatibility: Quick Stop forms submitting with null/empty `end` continue to default to `now().truncatedTo(ChronoUnit.MINUTES)`.
 - **Constraints**:
   - Hibernate entity hydration immediately overwrites the field default with database column values, so persisted records are never altered.
+
+---
+
+## ADR 027: Academic Activity Classification, STEM Lab Support & Clean Domain Separation
+
+### Status
+Accepted (v0.0.3-rc9)
+
+### Context
+In university modules and structured educational courses, academic workloads encompass far more than passive lecture attendance. Students prepare via flipped classroom readings, complete laboratory practicals (critical in STEM disciplines like chemistry and computer engineering), solve homework problem sets, work on group term projects, and deliver oral presentations. Furthermore, lifelong learners enroll in structured adult education (massive open online courses / MOOCs on Coursera/edX or German Volkshochschule / VHS courses).
+
+Previously:
+1. `LectureSession` was strictly modeled around passive lecture listening with sequential `lectureNumber`, without categorizing whether time was spent in a lecture, lab, homework, or preparation.
+2. We evaluated two architectural directions for unifying course activities with the existing `LearningItem` / `LearningSession` domain:
+   - **Approach A (Intertwined Foreign Keys)**: Adding `course_id` to `learning_item` and connecting `learning_session` directly to courses.
+   - **Approach B (Clean Domain Separation)**: Preserving `LearningItem` + `LearningSession` purely for self-paced, casual, or gamified skill learning (e.g. Duolingo, LeetCode, standalone vocabulary drill), while extending `Course` + `LectureSession` to model all structured, multi-session course curricula across academic universities and lifelong learning (using dedicated semester designations like `"OTHER"`, `"MOOC"`, `"VHS"`).
+
+### Decision
+We adopted **Approach B: Clean Domain Separation**:
+1. **Academic Activity Type Enum (`academic_activity_type`)**:
+   - Created PostgreSQL enum `academic_activity_type` with 7 values:
+     - `LECTURE`: Traditional synchronous or recorded lecture.
+     - `PREPARATION`: Pre-lecture reading, flipped classroom preparation, reviewing syllabus material.
+     - `LEARNING`: Self-directed study, post-lecture recap, exam revision for course topics.
+     - `HOMEWORK`: Problem sets, tutorial assignments, exercise sheets.
+     - `LAB`: Hands-on laboratory experiments, chemistry lab practicals, hardware/software lab benches.
+     - `PROJECT`: Group or individual term project work, coding milestones.
+     - `PRESENTATION`: Delivering talks, seminar defenses, poster presentations.
+   - Mapped in Java via [`LectureActivityType.java`](src/main/java/de/oberamsystems/slm/model/LectureActivityType.java) with human-readable labels, Bootstrap Icons, and contextual badge styles.
+2. **Entity Enhancement & Backward Compatibility**:
+   - Extended [`LectureSession.java`](src/main/java/de/oberamsystems/slm/model/LectureSession.java) with `activityType = LectureActivityType.LECTURE`.
+   - Added column `activity_type academic_activity_type NOT NULL DEFAULT 'LECTURE'` with index `idx_lecture_session_activity_type` in [`migration_2026-10-23_1.sql`](src/main/resources/migration_2026-10-23_1.sql) and synchronized baseline schemas ([`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql)).
+3. **ECTS Workload Progress Analytics**:
+   - In [`Course.java`](src/main/java/de/oberamsystems/slm/model/Course.java), added `getTargetWorkloadHours()` ($ECTS \times 30\text{h}$) and `isNonAcademicCourse()`.
+   - In [`AcademicController.java`](src/main/java/de/oberamsystems/slm/controller/AcademicController.java), computed total net duration, progress percentage against target workload, and breakdown of time and counts per activity type.
+4. **Direct Course Activity Logging & UI Filtering**:
+   - Added `POST /courses/{courseId}/sessions` endpoint to log any activity directly from the course detail view.
+   - In [`course-detail.html`](src/main/resources/templates/course-detail.html), integrated an ECTS Workload Progress card, activity breakdown badges, instant client-side activity filter pills, and `#logSessionModal`.
+   - In [`sessions.html`](src/main/resources/templates/sessions.html), added activity type selection to `#form-lecture` and activity badges with icons to the table row rendering.
+5. **Lifelong & Non-Academic Course Support**:
+   - Supported courses without fixed academic semesters or ECTS (e.g. MOOCs on Coursera/edX or Volkshochschulkurse) using semester tags `"OTHER"`, `"MOOC"`, `"VHS"`, gracefully categorized at the bottom of descending semester views via [`SemesterComparator.java`](src/main/java/de/oberamsystems/slm/util/SemesterComparator.java).
+6. **MCP Tooling**:
+   - Extended `McpAcademicTools.logLectureSession` with optional `activityType` parameter.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - High fidelity tracking for university degrees, flipped classroom models, and laboratory STEM disciplines.
+  - Zero schema pollution: `learning_item` and `lecture_session` maintain clean domain invariants without sparse nullable foreign keys.
+  - Complete ECTS progress tracking gives students immediate visibility into remaining semester effort.
+- **Constraints**:
+  - Unstructured/self-paced apps (e.g. Duolingo) remain logged under `LearningItem` / `LearningSession` and do not appear in course workload totals.
+
 
 
 

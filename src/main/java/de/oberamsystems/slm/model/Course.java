@@ -218,6 +218,16 @@ public class Course {
 		this.lastUpdated = lastUpdated;
 	}
 
+	public BigDecimal getTargetWorkloadHours() {
+		return ectsCredits != null ? ectsCredits.multiply(BigDecimal.valueOf(30)) : null;
+	}
+
+	public boolean isNonAcademicCourse() {
+		if (semester == null) return false;
+		String upper = semester.trim().toUpperCase();
+		return upper.equals("OTHER") || upper.equals("MOOC") || upper.equals("VHS") || upper.startsWith("COURSERA") || upper.startsWith("EDX");
+	}
+
 	@Override
 	public String toString() {
 		return String.format("Course [id=%s, title=%s, code=%s, semester=%s, ectsCredits=%s]",

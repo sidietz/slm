@@ -80,4 +80,20 @@ public class SessionModelTest {
 		assertEquals(0, session.getStart().getNano());
 		assertTrue(Duration.between(session.getStart(), now).abs().toMinutes() <= 1);
 	}
+
+	@Test
+	public void testLectureSessionActivityTypeDefaults() {
+		LectureSession ls = new LectureSession();
+		assertEquals(LectureActivityType.LECTURE, ls.getActivityType());
+
+		for (LectureActivityType type : LectureActivityType.values()) {
+			ls.setActivityType(type);
+			assertEquals(type, ls.getActivityType());
+			assertNotNull(type.getDisplayName());
+			assertNotNull(type.getBootstrapIcon());
+			assertNotNull(type.getBadgeCssClass());
+		}
+
+		assertEquals(7, LectureActivityType.values().length);
+	}
 }
