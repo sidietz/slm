@@ -68,4 +68,16 @@ public class SessionModelTest {
 		assertEquals("Implemented feature X", session.getOutcomeSummary());
 		assertTrue(session.toString().contains(testUuid.toString()));
 	}
+
+	@Test
+	public void testDefaultStartTimeInitializedToNow() {
+		Session session = new Session() {
+		};
+		assertNotNull(session.getStart(), "Start time must be initialized when created");
+		assertNull(session.getEnd(), "End time must be null for ongoing sessions by default");
+		LocalDateTime now = LocalDateTime.now();
+		assertEquals(0, session.getStart().getSecond());
+		assertEquals(0, session.getStart().getNano());
+		assertTrue(Duration.between(session.getStart(), now).abs().toMinutes() <= 1);
+	}
 }

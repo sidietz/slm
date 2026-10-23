@@ -235,8 +235,8 @@ public class SessionController {
 		list.sort(Comparator.comparing(CodingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
 		CodingSession cs = new CodingSession();
-		cs.setStart(LocalDateTime.now().minusHours(1).truncatedTo(ChronoUnit.MINUTES));
-		cs.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		cs.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		cs.setEnd(null);
 		model.addAttribute("codingSession", cs);
 		return "coding-sessions";
 	}
@@ -268,8 +268,8 @@ public class SessionController {
 		model.addAttribute("sessions", list);
 		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		WorkingSession ws = new WorkingSession();
-		ws.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
-		ws.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		ws.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		ws.setEnd(null);
 		ws.setBillable(true);
 		model.addAttribute("workingSession", ws);
 		return "working-sessions";

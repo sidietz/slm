@@ -529,7 +529,7 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold">End Time</label>
                             <input type="datetime-local" class="form-control" name="end" id="stopModalEndTime">
-                            <div class="form-text text-muted">Leave blank to stamp with the current time.</div>
+                            <div class="form-text text-muted">Pre-filled with the current time. Adjust if stopping retroactively.</div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Break Duration (Minutes)</label>
@@ -1197,11 +1197,20 @@
             }
         }
 
+        function formatLocalDateTime(d) {
+            const pad = (n) => String(n).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+
         function setStopModalTarget(btn) {
             const id = btn.getAttribute('data-session-id');
             const form = document.getElementById('stopSessionForm');
             if (form && id) {
                 form.action = '/sessions/' + id + '/stop';
+            }
+            const endTimeInput = document.getElementById('stopModalEndTime');
+            if (endTimeInput) {
+                endTimeInput.value = formatLocalDateTime(new Date());
             }
         }
 
@@ -1275,12 +1284,20 @@
                         }
                     } else {
                         modalLabel.innerHTML = '<i class="bi bi-stopwatch-fill me-2"></i> Log New Session';
+                        const nowStr = formatLocalDateTime(new Date());
                         ['coding', 'working', 'learning', 'gaming', 'reading', 'meditation', 'sport', 'sleep', 'lecture'].forEach(t => {
                             const f = document.getElementById('form-' + t);
-                            if (f) f.reset();
+                            if (f) {
+                                f.reset();
+                                const startInput = f.querySelector('input[name="start"]');
+                                if (startInput) startInput.value = nowStr;
+                                const endInput = f.querySelector('input[name="end"]');
+                                if (endInput) endInput.value = '';
+                            }
                             const idIn = document.getElementById(t + 'Id');
                             if (idIn) idIn.value = '';
                         });
+                        updateSleepStagesCalculation();
                     }
                 });
 
@@ -1291,6 +1308,16 @@
                         const idIn = document.getElementById(t + 'Id');
                         if (idIn) idIn.value = '';
                     });
+                });
+            }
+
+            const stopSessionModal = document.getElementById('stopSessionModal');
+            if (stopSessionModal) {
+                stopSessionModal.addEventListener('show.bs.modal', () => {
+                    const endTimeInput = document.getElementById('stopModalEndTime');
+                    if (endTimeInput) {
+                        endTimeInput.value = formatLocalDateTime(new Date());
+                    }
                 });
             }
         });

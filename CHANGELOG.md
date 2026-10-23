@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Re-routed primary sleep navigation in [`activity-management.html`](src/main/resources/templates/activity-management.html) to [`/sessions?type=SLEEP`](src/main/resources/templates/sessions.html) and updated header back-link in [`sleeptime-bb.html`](src/main/resources/templates/sleeptime-bb.html).
   - Updated [`WellnessAndHabitsIT.java`](src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java) and [`SleepTimeControllerTest.java`](src/test/java/de/oberamsystems/slm/controller/SleepTimeControllerTest.java) verifying read-only presentation and write rejection.
 
+### Changed
+- Standardized session start time initialization and stop session end time auto-population across the polymorphic `Session` hierarchy and UI modals (ADR 026):
+  - Initialized `private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);` in [`Session.java`](src/main/java/de/oberamsystems/slm/model/Session.java) so all blank session models (`CodingSession`, `WorkingSession`, `LearningSession`, `GamingSession`, `ReadingSession`, `MeditationSession`, `SportSession`, `SleepSession`, `LectureSession`) consistently default to the current minute upon creation.
+  - Replaced arbitrary legacy past offsets in [`SessionController.java`](src/main/java/de/oberamsystems/slm/controller/SessionController.java) (`viewCodingSessions` previously `now().minusHours(1)`, `viewWorkingSessions` previously `now().minusHours(2)`) with `now().truncatedTo(ChronoUnit.MINUTES)` and `end = null`.
+  - Upgraded [`sessions.html`](src/main/resources/templates/sessions.html) modal handlers:
+    - Log Session Modal: Auto-populates `input[name="start"]` with fresh local client time (`YYYY-MM-DDTHH:mm`) across all 9 session forms upon opening, ensuring accurate timestamps even after long page idle times.
+    - Finish / Stop Session Modal: Auto-populates `#stopModalEndTime` with current local client time upon clicking "Stop Session", updated hint text to reflect pre-filled current time, while preserving retroactive adjustment capabilities.
+  - Added unit test coverage in [`SessionModelTest.java`](src/test/java/de/oberamsystems/slm/model/SessionModelTest.java) (`testDefaultStartTimeInitializedToNow`) and [`SessionControllerTest.java`](src/test/java/de/oberamsystems/slm/controller/SessionControllerTest.java) (`testViewSessionsBlankModelsHaveDefaultStartTime`, `testStopSessionWithExplicitEndTime`, and `testStopSessionWithNullEndTimeDefaultsToNow`).
+
 ## [0.0.3-rc8] - 2026-10-21
 
 ### Added

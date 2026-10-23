@@ -1000,5 +1000,39 @@ In preparation for removing the `sleeptime` table and model in a future major re
 - **Benefits**: Eliminates data fragmentation and ensures all new sleep logs leverage sleep stages and Four Pillars balance metrics, while preserving historical records in read-only mode.
 - **Constraints**: Legacy `sleeptime` table and Java classes remain in the repository until Phase 2 removal in a future major version.
 
+---
+
+## ADR 026: Consistent Session Start Time Initialization & Auto-Populated Stop End Time
+
+### Status
+Accepted (v0.0.3-rc9)
+
+### Context
+In SLM, users log cognitive, sport, wellness, and leisure activities through the polymorphic `Session` hierarchy either directly upon completion or by starting an active session (`IN_PROGRESS`, `end == null`) to stop later ([ADR 011](DECISIONS.md#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model), [ADR 018](DECISIONS.md#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)).
+
+Previously, start and stop time initialization suffered from discrepancies:
+1. Blank session models (`new CodingSession()`, etc.) had `start == null`, leaving the `<input type="datetime-local" name="start">` empty when opening "+ Log Session" in the Unified Sessions Hub ([`sessions.html`](src/main/resources/templates/sessions.html)).
+2. Standalone sub-hub endpoints hardcoded arbitrary past offsets (e.g. `viewCodingSessions` defaulted to `now().minusHours(1)`, `viewWorkingSessions` defaulted to `now().minusHours(2)`).
+3. When stopping an ongoing session via the finish modal (`#stopSessionModal`), the end time input was left blank with a hint "Leave blank to stamp with current time", requiring users to either leave it empty or manually enter the current time.
+
+### Decision
+1. **Entity-Level Default Initialization**:
+   - Initialized `private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);` in [`Session.java`](src/main/java/de/oberamsystems/slm/model/Session.java). All instantiated subclasses (`CodingSession`, `WorkingSession`, `LearningSession`, `GamingSession`, `ReadingSession`, `MeditationSession`, `SportSession`, `SleepSession`, `LectureSession`) consistently inherit current-time initialization for form bindings and programmatic creation.
+2. **Controller Alignment**:
+   - In [`SessionController.java`](src/main/java/de/oberamsystems/slm/controller/SessionController.java), replaced past hour offsets in `viewCodingSessions` and `viewWorkingSessions` with `LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES)` and `end = null`.
+   - Reinforced defensive fallback in `initializeSessionStatus`: `if (session.getStart() == null) session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));`.
+3. **Frontend Client-Side Pre-Filling**:
+   - In [`sessions.html`](src/main/resources/templates/sessions.html), added a standard ISO datetime helper `formatLocalDateTime(date)` (`YYYY-MM-DDTHH:mm`).
+   - On `#newSessionModal` `show.bs.modal`, when in create mode (`!id`), dynamically populated `input[name="start"]` with the fresh local client time across all 9 session forms and cleared `input[name="end"]`.
+   - On `#stopSessionModal` `show.bs.modal` and in `setStopModalTarget(btn)`, auto-populated `#stopModalEndTime` with `formatLocalDateTime(new Date())`, updating the helper hint to clarify that the current time is pre-filled and can be fine-tuned if stopping retroactively.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Consistent user experience: opening any session creation form or stopping an active session immediately shows the current time truncated to minutes.
+  - Zero cognitive friction: stopping an active session visually confirms the exact stop timestamp before submission while still allowing adjustments.
+  - Full backward compatibility: Quick Stop forms submitting with null/empty `end` continue to default to `now().truncatedTo(ChronoUnit.MINUTES)`.
+- **Constraints**:
+  - Hibernate entity hydration immediately overwrites the field default with database column values, so persisted records are never altered.
+
 
 
