@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc9] - 2026-10-23
+
+### Deprecated
+- Deprecated legacy `SleepTime` subsystem in preparation for database table and model removal at a future major release (ADR 025):
+  - Marked [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SleepTimeRepository.java`](src/main/java/de/oberamsystems/slm/model/SleepTimeRepository.java), [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), and [`SleepTimeRestController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeRestController.java) with `@Deprecated(since = "0.0.3-rc9", forRemoval = true)`.
+  - Converted [`sleep-times.html`](src/main/resources/templates/sleep-times.html) into a read-only archive view: added a prominent deprecation alert banner linking to the Unified Sessions Hub, retained the create form card with disabled inputs and disabled submit button.
+  - Intercepted and disabled `POST /sleep-times` in [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), blocking legacy persistence and redirecting with flash error message advising users to log sleep sessions via `/sessions?type=SLEEP`.
+  - Re-routed primary sleep navigation in [`activity-management.html`](src/main/resources/templates/activity-management.html) to [`/sessions?type=SLEEP`](src/main/resources/templates/sessions.html) and updated header back-link in [`sleeptime-bb.html`](src/main/resources/templates/sleeptime-bb.html).
+  - Updated [`WellnessAndHabitsIT.java`](src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java) and [`SleepTimeControllerTest.java`](src/test/java/de/oberamsystems/slm/controller/SleepTimeControllerTest.java) verifying read-only presentation and write rejection.
+
 ## [0.0.3-rc8] - 2026-10-21
 
 ### Added
@@ -449,7 +459,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Thymeleaf web interface with Bootstrap components.
 - PostgreSQL database schema and Spring Data JPA repositories.
 
-[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc3...HEAD
+[Unreleased]: https://github.com/sidietz/slm/compare/v0.0.3-rc9...HEAD
+[0.0.3-rc9]: https://github.com/sidietz/slm/compare/v0.0.3-rc8...v0.0.3-rc9
+[0.0.3-rc8]: https://github.com/sidietz/slm/compare/v0.0.3-rc7...v0.0.3-rc8
+[0.0.3-rc7]: https://github.com/sidietz/slm/compare/v0.0.3-rc6...v0.0.3-rc7
+[0.0.3-rc6]: https://github.com/sidietz/slm/compare/v0.0.3-rc5...v0.0.3-rc6
+[0.0.3-rc5]: https://github.com/sidietz/slm/compare/v0.0.3-rc4...v0.0.3-rc5
+[0.0.3-rc4]: https://github.com/sidietz/slm/compare/v0.0.3-rc3...v0.0.3-rc4
 [0.0.3-rc3]: https://github.com/sidietz/slm/compare/v0.0.3-rc2...v0.0.3-rc3
 [0.0.3-rc2]: https://github.com/sidietz/slm/compare/v0.0.3-rc1...v0.0.3-rc2
 [0.0.3-rc1]: https://github.com/sidietz/slm/compare/v0.0.2i...v0.0.3-rc1

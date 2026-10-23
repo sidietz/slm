@@ -8,23 +8,51 @@
     <header th:replace="~{fragments/layout :: header('Sleep Times', 'Track sleep schedules, circadian rhythms, and rest duration', 'bi bi-moon-stars', 'theme-wellness', '/activity-management', 'Dashboard')}"></header>
 
     <main class="container mb-5">
-        <!-- Add Sleep Time Form Card -->
-        <section class="card slm-form-card mb-4">
-            <h2 class="text-success"><i class="bi bi-plus-circle me-2"></i>Log Sleep Period</h2>
+        <!-- Deprecation Warning Banner -->
+        <div class="alert alert-warning border-0 shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-exclamation-triangle-fill fs-3 text-warning me-3"></i>
+                <div>
+                    <h5 class="alert-heading fw-bold mb-1">SleepTime UI is Deprecated &amp; Read-Only</h5>
+                    <p class="mb-0 small text-dark">
+                        Direct sleep logging via legacy SleepTime is disabled in preparation for future database removal.
+                        All ongoing sleep logs, sleep stages (Deep, REM, Light), and recovery metrics are managed in the <strong>Unified Sessions Hub</strong>.
+                    </p>
+                </div>
+            </div>
+            <a th:href="@{/sessions(type='SLEEP')}" class="btn btn-primary fw-semibold text-nowrap">
+                <i class="bi bi-moon-stars me-1"></i> Open Sleep Sessions Hub
+            </a>
+        </div>
+
+        <!-- Flash Messages -->
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i>
+            <span th:text="${errorMessage}">Error message</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Add Sleep Time Form Card (Read-Only / Disabled) -->
+        <section class="card slm-form-card mb-4 opacity-75">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h2 class="text-secondary mb-0"><i class="bi bi-slash-circle me-2"></i>Log Sleep Period (Disabled)</h2>
+                <span class="badge bg-secondary-subtle text-secondary">Read-Only</span>
+            </div>
+            <p class="text-muted small mb-3">Form inputs and creation are disabled. Please use the Sessions Hub to log new sleep periods.</p>
             <form th:action="@{/sleep-times}" th:object="${sleeptime}" method="post">
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label">Bedtime (Go to bed) <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{gotobed}" class="form-control" required />
+                        <label class="form-label text-muted">Bedtime (Go to bed)</label>
+                        <input type="datetime-local" th:field="*{gotobed}" class="form-control" disabled readonly />
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Wake Up (Get up) <span class="text-danger">*</span></label>
-                        <input type="datetime-local" th:field="*{getup}" class="form-control" required />
+                        <label class="form-label text-muted">Wake Up (Get up)</label>
+                        <input type="datetime-local" th:field="*{getup}" class="form-control" disabled readonly />
                     </div>
 
                     <div class="col-12 text-end mt-3">
-                        <button type="submit" class="btn btn-success px-4 fw-semibold">
-                            <i class="bi bi-save me-1"></i> Save Sleep Time
+                        <button type="button" class="btn btn-secondary px-4 fw-semibold" disabled title="SleepTime creation is disabled. Please use the Sessions Hub.">
+                            <i class="bi bi-slash-circle me-1"></i> Creation Disabled
                         </button>
                     </div>
                 </div>

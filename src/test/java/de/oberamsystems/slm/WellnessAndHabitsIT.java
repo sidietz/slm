@@ -140,20 +140,27 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
 
     @Test
     void testSleepTimeWebAndRestFlow() throws Exception {
-        // 1. GET /sleep-times
+        // 1. GET /sleep-times (read-only view with deprecation banner and disabled form)
         mockMvc.perform(get("/sleep-times"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("sleep-times"))
                 .andExpect(model().attributeExists("sleeptimes", "sleeptime"));
 
-        // 2. POST /sleep-times
+        // 2. POST /sleep-times (blocked write attempt)
         mockMvc.perform(post("/sleep-times")
                         .with(csrf())
                         .param("gotobed", "2026-10-18T23:00")
                         .param("getup", "2026-10-19T07:15"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/sleep-times"));
-        assertEquals(1, sleepTimeRepository.count());
+                .andExpect(redirectedUrl("/sleep-times"))
+                .andExpect(flash().attribute("errorMessage", "Logging legacy sleep times is disabled. Please log sleep sessions via the Sessions Hub."));
+        assertEquals(0, sleepTimeRepository.count(), "Legacy writes must be rejected without inserting new records");
+
+        // Seed historical record directly to verify read-only chart and REST query
+        SleepTime historicalSt = new SleepTime();
+        historicalSt.setGotobed(LocalDateTime.of(2026, 10, 18, 23, 0));
+        historicalSt.setGetup(LocalDateTime.of(2026, 10, 19, 7, 15));
+        sleepTimeRepository.saveAndFlush(historicalSt);
 
         // 3. GET /sleeptime-bb
         mockMvc.perform(get("/sleeptime-bb"))
@@ -256,14 +263,14 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
                         .param("gotobed", "2026-10-19T23:00")
                         .param("getup", "2026-10-20T07:30"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/sleep-times"));
+                .andExpect(redirectedUrl("/sleep-times"))
+                .andExpect(flash().attribute("errorMessage", "Logging legacy sleep times is disabled. Please log sleep sessions via the Sessions Hub."));
 
         assertEquals(1, sleepTimeRepository.count());
         entityManager.clear();
-        SleepTime updatedSt = sleepTimeRepository.findById(stId).orElseThrow();
-        assertEquals(LocalDateTime.of(2026, 10, 19, 23, 0), updatedSt.getGotobed());
-        assertEquals(LocalDateTime.of(2026, 10, 20, 7, 30), updatedSt.getGetup());
-        assertNotNull(updatedSt.getSleeptime(), "Generated sleeptime interval must be auto-calculated on update");
+        SleepTime unchangedSt = sleepTimeRepository.findById(stId).orElseThrow();
+        assertEquals(LocalDateTime.of(2026, 10, 19, 22, 30), unchangedSt.getGotobed(),
+                "Legacy sleep time must remain unchanged when write operations are disabled");
     }
 
     @Test
@@ -311,14 +318,15 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/moods"));
         assertEquals(1, moodRepository.count());
 
-        // 5. SleepTime via modal with empty id
+        // 5. SleepTime via modal with empty id (confirms write rejection)
         mockMvc.perform(post("/sleep-times")
                         .with(csrf())
                         .param("id", "")
                         .param("gotobed", "2026-10-20T23:30")
                         .param("getup", "2026-10-21T07:15"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/sleep-times"));
-        assertEquals(1, sleepTimeRepository.count());
+                .andExpect(redirectedUrl("/sleep-times"))
+                .andExpect(flash().attribute("errorMessage", "Logging legacy sleep times is disabled. Please log sleep sessions via the Sessions Hub."));
+        assertEquals(0, sleepTimeRepository.count(), "No SleepTime record should be created");
     }
 }

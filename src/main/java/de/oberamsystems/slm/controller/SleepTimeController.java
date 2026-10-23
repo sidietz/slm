@@ -15,7 +15,16 @@ import de.oberamsystems.slm.model.SleepTime;
 import de.oberamsystems.slm.model.SleepTimeRepository;
 
 import org.springframework.data.domain.Sort;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+/**
+ * Controller for legacy SleepTime tracking.
+ *
+ * @deprecated since 0.0.3-rc9, scheduled for removal in future major release.
+ *             All ongoing sleep tracking is consolidated into {@link de.oberamsystems.slm.model.SleepSession}
+ *             and {@link SessionController} at {@code /sessions?type=SLEEP}.
+ */
+@Deprecated(since = "0.0.3-rc9", forRemoval = true)
 @Controller
 public class SleepTimeController {
 	
@@ -41,13 +50,9 @@ public class SleepTimeController {
 	}
 	
 	@PostMapping("/sleep-times")
-	public String submitSleepTimes(@ModelAttribute SleepTime sleepTime, Model model) {
-		model.addAttribute("sleeptimes", repo.findAll(Sort.by(Sort.Direction.DESC, "gotobed")));
-		if (sleepTime.getId() != null && (sleepTime.getId() <= 0 || !repo.existsById(sleepTime.getId()))) {
-			sleepTime.setId(null);
-		}
-		repo.save(sleepTime);
-		model.addAttribute("sleeptime", sleepTime);
+	public String submitSleepTimes(@ModelAttribute SleepTime sleepTime, RedirectAttributes redirectAttributes) {
+		redirectAttributes.addFlashAttribute("errorMessage",
+				"Logging legacy sleep times is disabled. Please log sleep sessions via the Sessions Hub.");
 		return "redirect:/sleep-times";
 	}
 }

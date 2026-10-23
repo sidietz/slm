@@ -971,5 +971,34 @@ We established a project-wide **Modal-First Input Architecture** that unifies al
 - **Constraints**:
   - Complex entity models with relational dropdowns require passing referenced entity IDs (e.g., `author.id`, `press.id`, `category.id`) through `data-*` attributes to ensure `<select>` elements select the correct option on modal opening.
 
+---
+
+## ADR 025: Deprecation and Disabling of Legacy SleepTime UI Prior to Schema Removal
+
+### Status
+Accepted (v0.0.3-rc9)
+
+### Context
+With the introduction of the polymorphic session hierarchy ([ADR 011](DECISIONS.md#adr-011-sleep-tracking-unification-into-session-architecture--four-pillars-life-balance-model), [ADR 018](DECISIONS.md#adr-018-migration-of-polymorphic-session-hierarchy-to-native-postgresql-18-uuidv7)), sleep tracking was unified under `SleepSession extends Session` (`sleep_session` table) featuring sleep stages (Deep, REM, Light sleep), disruptions, quality ratings, and sleep efficiency metrics.
+
+However, the legacy `SleepTime` UI (`/sleep-times`, `sleep-times.html`) remained active and linked from `activity-management.html`. This created dual-writing risks where new entries could be inserted into the legacy `sleeptime` table without modern session attributes, and prevented dropping the legacy table.
+
+### Decision
+In preparation for removing the `sleeptime` table and model in a future major release:
+1. **Activity Management Navigation**: Re-routed the primary sleep card in [`activity-management.html`](src/main/resources/templates/activity-management.html) from `/sleep-times` to `/sessions?type=SLEEP`.
+2. **Read-Only Archive View with Disabled Controls**:
+   - Converted [`sleep-times.html`](src/main/resources/templates/sleep-times.html) to a read-only archive view.
+   - Retained the creation form card with inputs and submit button explicitly `disabled`.
+   - Added a high-visibility deprecation alert banner with a call-to-action button to the Sleep Sessions Hub.
+3. **Controller Interception**:
+   - In [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), intercepted `POST /sleep-times`, blocking database persistence and redirecting with flash error message to guide users to `/sessions?type=SLEEP`.
+4. **Deprecation Lifecycle Annotations**:
+   - Annotated [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SleepTimeRepository.java`](src/main/java/de/oberamsystems/slm/model/SleepTimeRepository.java), [`SleepTimeController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeController.java), and [`SleepTimeRestController.java`](src/main/java/de/oberamsystems/slm/controller/SleepTimeRestController.java) with `@Deprecated(since = "0.0.3-rc9", forRemoval = true)`.
+5. **Schema Preservation**: Kept database table `sleeptime` and JPA entities completely intact for zero data loss until the future major release cleanup.
+
+### Consequences & Trade-offs
+- **Benefits**: Eliminates data fragmentation and ensures all new sleep logs leverage sleep stages and Four Pillars balance metrics, while preserving historical records in read-only mode.
+- **Constraints**: Legacy `sleeptime` table and Java classes remain in the repository until Phase 2 removal in a future major version.
+
 
 

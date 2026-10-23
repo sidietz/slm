@@ -8,6 +8,13 @@ import io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType;
 
 import jakarta.persistence.*;
 
+/**
+ * Entity for legacy standalone sleep time records.
+ *
+ * @deprecated since 0.0.3-rc9, scheduled for removal in future major release.
+ *             Use {@link SleepSession} instead.
+ */
+@Deprecated(since = "0.0.3-rc9", forRemoval = true)
 @Entity
 @Table(name = "sleeptime")
 public class SleepTime {

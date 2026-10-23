@@ -10,6 +10,12 @@ import org.springframework.web.bind.annotation.RestController;
 import de.oberamsystems.slm.model.SleepTimeRepository;
 import de.oberamsystems.slm.model.SleepTime;
 
+/**
+ * REST controller for legacy SleepTime retrieval.
+ *
+ * @deprecated since 0.0.3-rc9, scheduled for removal in future major release.
+ */
+@Deprecated(since = "0.0.3-rc9", forRemoval = true)
 @RestController
 public class SleepTimeRestController {
 	
