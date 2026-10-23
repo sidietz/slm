@@ -315,7 +315,7 @@ In [`McpVehicleTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de
 
 ### Phase 7: Documentation
 1. Document **ADR 028: Car-Related Expense Tracking, Spritmonitor Taxonomy, and Lifecycle TCO Analytics (€/100km)** in [`DECISIONS.md`](file:///home/simon/code/eclipse/slm/DECISIONS.md).
-2. Document all additions and changes in [`CHANGELOG.md`](file:///home/simon/code/eclipse/slm/CHANGELOG.md) under `[0.0.3-rc9]`.
+2. Document all additions and changes in [`CHANGELOG.md`](file:///home/simon/code/eclipse/slm/CHANGELOG.md) under `[0.0.3-rc10]`.
 
 ---
 

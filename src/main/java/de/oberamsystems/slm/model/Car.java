@@ -37,6 +37,11 @@ public class Car {
 	private long sellKilometers;
 	@Column(name = "price_per_100_km")
 	private double pricePer100km;
+	@Column(name = "target_sell_date", columnDefinition = "DATE")
+	@DateTimeFormat(pattern = "yyyy-MM-dd")
+	private LocalDate targetSellDate;
+	@Column(name = "residual_value")
+	private Double residualValue;
 
 	public Car() {
 	}
@@ -181,5 +186,21 @@ public class Car {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public LocalDate getTargetSellDate() {
+		return targetSellDate;
+	}
+
+	public void setTargetSellDate(LocalDate targetSellDate) {
+		this.targetSellDate = targetSellDate;
+	}
+
+	public Double getResidualValue() {
+		return residualValue;
+	}
+
+	public void setResidualValue(Double residualValue) {
+		this.residualValue = residualValue;
 	}
 }

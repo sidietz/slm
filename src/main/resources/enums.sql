@@ -70,3 +70,29 @@ CREATE TYPE plug_type AS ENUM (
     'UNKNOWN'
 );
 
+CREATE TYPE car_expense_type AS ENUM (
+    'MAINTENANCE',
+    'REPAIR',
+    'TIRE_CHANGE',
+    'OIL_CHANGE',
+    'INSURANCE',
+    'TAX',
+    'INSPECTION',
+    'TUNING',
+    'ACCESSORIES',
+    'PURCHASE_PRICE',
+    'OTHER',
+    'CARE',
+    'LEASING_RATE',
+    'REGISTRATION',
+    'FINANCING_RATE',
+    'REFUND',
+    'FINE',
+    'PARKING_FEE',
+    'TOLL',
+    'SPARE_PARTS',
+    'CHARGING_BASE_FEE',
+    'DIGITAL_SERVICES',
+    'GHG_QUOTA'
+);
+

@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.mcp;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,6 +16,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.oberamsystems.slm.model.Car;
+import de.oberamsystems.slm.model.CarExpense;
+import de.oberamsystems.slm.model.CarExpenseRepository;
+import de.oberamsystems.slm.model.CarExpenseType;
 import de.oberamsystems.slm.model.CarRepository;
 import de.oberamsystems.slm.model.ChargingPoint;
 import de.oberamsystems.slm.model.ChargingStation;
@@ -40,6 +44,9 @@ public class McpVehicleTools {
 
 	@Autowired
 	private CarRepository carRepository;
+
+	@Autowired
+	private CarExpenseRepository carExpenseRepository;
 
 	@Autowired
 	private StationRepository stationRepository;
@@ -247,6 +254,120 @@ public class McpVehicleTools {
 		resp.put("id", saved.getId().toString());
 		resp.put("name", saved.getName());
 		resp.put("stationType", saved.getStationType().name());
+		resp.put("status", "SUCCESS");
+		return resp;
+	}
+
+	@Tool(description = "Retrieve vehicle expense history across the 23 Spritmonitor categories (maintenance, repairs, tax, insurance, etc.)")
+	public List<Map<String, Object>> getCarExpenses(
+			@ToolParam(description = "Optional car ID to filter by. If omitted, returns expenses for all vehicles") Long carId,
+			@ToolParam(description = "Optional category filter (e.g. MAINTENANCE, REPAIR, INSURANCE, TAX, etc.)") String expenseType,
+			@ToolParam(description = "Maximum number of records to return (defaults to 25)") Integer limit) {
+
+		int max = (limit != null && limit > 0) ? limit : 25;
+		List<CarExpense> list = (carId != null)
+				? carExpenseRepository.findByCarIdOrderByExpenseDateDesc(carId)
+				: carExpenseRepository.findAllByOrderByExpenseDateDesc();
+
+		List<Map<String, Object>> result = new ArrayList<>();
+		for (CarExpense exp : list) {
+			if (expenseType != null && !expenseType.isBlank()
+					&& !exp.getExpenseType().name().equalsIgnoreCase(expenseType.trim())) {
+				continue;
+			}
+			Map<String, Object> m = new HashMap<>();
+			m.put("id", exp.getId() != null ? exp.getId().toString() : null);
+			m.put("carId", exp.getCar() != null ? exp.getCar().getId() : null);
+			m.put("carName", exp.getCar() != null ? exp.getCar().getName() : null);
+			m.put("expenseDate", exp.getExpenseDate() != null ? exp.getExpenseDate().toString() : null);
+			m.put("expenseType", exp.getExpenseType().name());
+			m.put("categoryLabel", exp.getExpenseType().getDisplayName());
+			m.put("amount", exp.getAmount());
+			m.put("isCredit", exp.isCredit());
+			m.put("odometer", exp.getOdometer());
+			m.put("title", exp.getTitle());
+			m.put("note", exp.getNote());
+			result.add(m);
+			if (result.size() >= max) {
+				break;
+			}
+		}
+		return result;
+	}
+
+	@Tool(description = "Log a car-related expense using the 23 Spritmonitor categories (e.g. MAINTENANCE, REPAIR, INSURANCE, TAX, REFUND, GHG_QUOTA)")
+	public Map<String, Object> logCarExpense(
+			@ToolParam(description = "ID of the vehicle") Long carId,
+			@ToolParam(description = "Expense type from Spritmonitor taxonomy (e.g. MAINTENANCE, REPAIR, TIRE_CHANGE, OIL_CHANGE, INSURANCE, TAX, INSPECTION, CARE, REFUND, FINE, PARKING_FEE, TOLL, SPARE_PARTS, CHARGING_BASE_FEE, DIGITAL_SERVICES, GHG_QUOTA)") String expenseType,
+			@ToolParam(description = "Expense amount in EUR (positive number)") Double amount,
+			@ToolParam(description = "Expense date in YYYY-MM-DD format (defaults to today if omitted)") String expenseDate,
+			@ToolParam(description = "Optional vehicle mileage (odometer in km)") Double odometer,
+			@ToolParam(description = "Optional title / short description") String title,
+			@ToolParam(description = "Optional detailed note or invoice reference") String note) {
+
+		Map<String, Object> resp = new HashMap<>();
+		Optional<Car> carOpt = carRepository.findById(carId);
+		if (carOpt.isEmpty()) {
+			resp.put("status", "ERROR");
+			resp.put("message", "Vehicle not found with ID: " + carId);
+			return resp;
+		}
+
+		CarExpenseType type;
+		try {
+			type = CarExpenseType.valueOf(expenseType.trim().toUpperCase());
+		} catch (IllegalArgumentException e) {
+			resp.put("status", "ERROR");
+			resp.put("message", "Unknown expenseType: " + expenseType + ". Valid types: " + java.util.Arrays.toString(CarExpenseType.values()));
+			return resp;
+		}
+
+		LocalDate date = (expenseDate != null && !expenseDate.isBlank())
+				? LocalDate.parse(expenseDate.trim())
+				: LocalDate.now();
+
+		BigDecimal amountBd = BigDecimal.valueOf(amount != null ? amount : 0.0);
+		BigDecimal odoBd = odometer != null ? BigDecimal.valueOf(odometer) : null;
+		String t = (title != null && !title.isBlank()) ? title.trim() : type.getDisplayName();
+
+		CarExpense exp = new CarExpense(carOpt.get(), type, date, odoBd, amountBd, t, note);
+		CarExpense saved = carExpenseRepository.save(exp);
+
+		resp.put("id", saved.getId().toString());
+		resp.put("carId", carId);
+		resp.put("expenseType", saved.getExpenseType().name());
+		resp.put("amount", saved.getAmount());
+		resp.put("isCredit", saved.isCredit());
+		resp.put("status", "SUCCESS");
+		return resp;
+	}
+
+	@Tool(description = "Update vehicle lifecycle parameters: target sell date and estimated residual value for TCO calculations")
+	public Map<String, Object> updateVehicleLifecycleParameters(
+			@ToolParam(description = "ID of the vehicle") Long carId,
+			@ToolParam(description = "Expected future sell date in YYYY-MM-DD format") String targetSellDate,
+			@ToolParam(description = "Expected residual value in EUR at target sell date") Double residualValue) {
+
+		Map<String, Object> resp = new HashMap<>();
+		Optional<Car> carOpt = carRepository.findById(carId);
+		if (carOpt.isEmpty()) {
+			resp.put("status", "ERROR");
+			resp.put("message", "Vehicle not found with ID: " + carId);
+			return resp;
+		}
+
+		Car car = carOpt.get();
+		if (targetSellDate != null && !targetSellDate.isBlank()) {
+			car.setTargetSellDate(LocalDate.parse(targetSellDate.trim()));
+		}
+		if (residualValue != null) {
+			car.setResidualValue(residualValue);
+		}
+		carRepository.save(car);
+
+		resp.put("carId", car.getId());
+		resp.put("targetSellDate", car.getTargetSellDate() != null ? car.getTargetSellDate().toString() : null);
+		resp.put("residualValue", car.getResidualValue());
 		resp.put("status", "SUCCESS");
 		return resp;
 	}
