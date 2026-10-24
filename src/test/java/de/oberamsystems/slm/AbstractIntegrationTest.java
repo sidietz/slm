@@ -7,6 +7,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import java.time.OffsetDateTime;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
+import de.oberamsystems.utils.Utils;
+
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {
@@ -24,5 +29,13 @@ public abstract class AbstractIntegrationTest {
 
     static {
         postgres.start();
+    }
+
+    protected OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+        return Utils.toOffset(year, month, day, hour, minute, TimeZoneConfig.getZoneId());
+    }
+
+    protected OffsetDateTime toOffset(int year, int month, int day, int hour, int minute, int second) {
+        return Utils.toOffset(year, month, day, hour, minute, second, TimeZoneConfig.getZoneId());
     }
 }

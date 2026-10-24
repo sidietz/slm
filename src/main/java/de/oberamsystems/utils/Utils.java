@@ -6,12 +6,21 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
 public class Utils {
 
 	private static String PATTERN = "dd.MM.yyyy HH:mm";
+
+	public static OffsetDateTime toOffset(int year, int month, int day, int hour, int minute, ZoneId zoneId) {
+		return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, zoneId).toOffsetDateTime();
+	}
+
+	public static OffsetDateTime toOffset(int year, int month, int day, int hour, int minute, int second, ZoneId zoneId) {
+		return ZonedDateTime.of(year, month, day, hour, minute, second, 0, zoneId).toOffsetDateTime();
+	}
 
 	public static String OffsetDateTimeToString(OffsetDateTime odt) {
 		if (odt == null) {

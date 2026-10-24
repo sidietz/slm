@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -53,10 +52,6 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
 
     @Autowired
     private EntityManager entityManager;
-
-    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
-        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
-    }
 
     @Test
     public void testSpringDaylightSavingTimeTransitionDuration() {

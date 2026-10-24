@@ -30,4 +30,18 @@ class UtilsTest {
         String result = Utils.DurationToString(dur);
         assertEquals("1 day(s) 2 hour(s) and 30 minute(s)", result);
     }
+
+    @Test
+    void testToOffset() {
+        OffsetDateTime odt = Utils.toOffset(2026, 8, 26, 17, 45, ZoneOffset.ofHours(2));
+        assertEquals(2026, odt.getYear());
+        assertEquals(8, odt.getMonthValue());
+        assertEquals(26, odt.getDayOfMonth());
+        assertEquals(17, odt.getHour());
+        assertEquals(45, odt.getMinute());
+        assertEquals(ZoneOffset.ofHours(2), odt.getOffset());
+
+        OffsetDateTime odtWithSeconds = Utils.toOffset(2026, 8, 26, 17, 45, 30, ZoneOffset.ofHours(2));
+        assertEquals(30, odtWithSeconds.getSecond());
+    }
 }

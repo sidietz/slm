@@ -11,7 +11,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -160,8 +159,8 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
 
         // Seed historical record directly to verify read-only chart and REST query
         SleepTime historicalSt = new SleepTime();
-        historicalSt.setGotobed(OffsetDateTime.of(2026, 10, 18, 23, 0, 0, 0, ZoneOffset.UTC));
-        historicalSt.setGetup(OffsetDateTime.of(2026, 10, 19, 7, 15, 0, 0, ZoneOffset.UTC));
+        historicalSt.setGotobed(toOffset(2026, 10, 18, 23, 0));
+        historicalSt.setGetup(toOffset(2026, 10, 19, 7, 15));
         sleepTimeRepository.saveAndFlush(historicalSt);
 
         // 3. GET /sleeptime-bb
@@ -199,7 +198,7 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
         assertEquals("Hydration Goal", updatedHabit.getName());
         assertEquals("Drink 3L of water daily", updatedHabit.getDescription());
 
-        HabitEntry entry = new HabitEntry(null, updatedHabit, OffsetDateTime.of(2026, 10, 20, 8, 0, 0, 0, ZoneOffset.UTC));
+        HabitEntry entry = new HabitEntry(null, updatedHabit, toOffset(2026, 10, 20, 8, 0));
         entry = habitEntryRepository.saveAndFlush(entry);
         Long entryId = entry.getId();
 
@@ -254,8 +253,8 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
     @Test
     void testUpdateSleepTimeFlow() throws Exception {
         SleepTime st = new SleepTime();
-        st.setGotobed(OffsetDateTime.of(2026, 10, 19, 22, 30, 0, 0, ZoneOffset.UTC));
-        st.setGetup(OffsetDateTime.of(2026, 10, 20, 6, 30, 0, 0, ZoneOffset.UTC));
+        st.setGotobed(toOffset(2026, 10, 19, 22, 30));
+        st.setGetup(toOffset(2026, 10, 20, 6, 30));
         st = sleepTimeRepository.saveAndFlush(st);
         long stId = st.getId();
 
@@ -271,7 +270,7 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
         assertEquals(1, sleepTimeRepository.count());
         entityManager.clear();
         SleepTime unchangedSt = sleepTimeRepository.findById(stId).orElseThrow();
-        assertTrue(OffsetDateTime.of(2026, 10, 19, 22, 30, 0, 0, ZoneOffset.UTC).isEqual(unchangedSt.getGotobed()),
+        assertTrue(toOffset(2026, 10, 19, 22, 30).isEqual(unchangedSt.getGotobed()),
                 "Legacy sleep time must remain unchanged when write operations are disabled");
     }
 

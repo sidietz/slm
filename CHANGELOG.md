@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc15] - 2026-10-24
+
+### Changed
+- **Centralized `toOffset` Construction in Integration Testing & Utility Layer**:
+  - Added static `toOffset(int year, int month, int day, int hour, int minute, ZoneId zoneId)` and `toOffset(int year, int month, int day, int hour, int minute, int second, ZoneId zoneId)` to [`Utils.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/utils/Utils.java).
+  - Provided centralized helper methods in [`AbstractIntegrationTest.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/AbstractIntegrationTest.java) passing `TimeZoneConfig.getZoneId()` by default to all subclasses.
+  - Eliminated duplicated private `toOffset` definitions across [`DateTimePrecisionIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DateTimePrecisionIT.java), [`CourseDetailIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/CourseDetailIT.java), [`SleepSessionUIIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/SleepSessionUIIT.java), [`ActivitiesAndMediaIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/ActivitiesAndMediaIT.java), [`AcademicIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/AcademicIT.java), and [`TransitAndMobilityIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java).
+  - Replaced arbitrary `ZoneOffset.UTC` reference timestamp constructors with timezone-consistent `toOffset(...)` in [`RefuelingIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/RefuelingIT.java), [`DoctorControllerIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DoctorControllerIT.java), [`WellnessAndHabitsIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/WellnessAndHabitsIT.java), and [`SleepTimeIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/SleepTimeIT.java).
+  - Added unit test coverage for `Utils.toOffset` in [`UtilsTest.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/utils/UtilsTest.java).
+
 ## [0.0.3-rc14] - 2026-10-24
 
 ### Changed

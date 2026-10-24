@@ -14,8 +14,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
-import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,10 +43,6 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
     private EntityManager entityManager;
 
     private MockMvc mockMvc;
-
-    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
-        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
-    }
 
     @BeforeEach
     void setUp() {
