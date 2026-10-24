@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.model;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Sort;
@@ -11,11 +11,11 @@ public interface TrainTripRepository extends JpaRepository<TrainTrip, Long> {
 
 	public TrainTrip findFirstByOrderByStartDesc();
 	
-	public List<TrainTrip> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate);
-	public List<TrainTrip> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate, Sort sort);
+	public List<TrainTrip> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate);
+	public List<TrainTrip> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate, Sort sort);
 	
     @Query("SELECT MIN(t.start) FROM TrainTrip t")
-    LocalDateTime findMinDate();
+    OffsetDateTime findMinDate();
     @Query("SELECT MAX(t.start) FROM TrainTrip t")
-    LocalDateTime findMaxDate();
+    OffsetDateTime findMaxDate();
 }

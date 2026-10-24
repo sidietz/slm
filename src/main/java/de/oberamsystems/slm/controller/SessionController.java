@@ -1,8 +1,10 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -235,7 +237,7 @@ public class SessionController {
 		list.sort(Comparator.comparing(CodingSession::getStart, Comparator.nullsLast(Comparator.reverseOrder())));
 		model.addAttribute("sessions", list);
 		CodingSession cs = new CodingSession();
-		cs.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		cs.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		cs.setEnd(null);
 		model.addAttribute("codingSession", cs);
 		return "coding-sessions";
@@ -244,7 +246,7 @@ public class SessionController {
 	private void initializeSessionStatus(Session session, Long breakMinutes) {
 		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
 		if (session.getStart() == null) {
-			session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+			session.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		}
 		if (session.getEnd() == null) {
 			session.setStatus("IN_PROGRESS");
@@ -268,7 +270,7 @@ public class SessionController {
 		model.addAttribute("sessions", list);
 		model.addAttribute("employers", employerRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		WorkingSession ws = new WorkingSession();
-		ws.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		ws.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		ws.setEnd(null);
 		ws.setBillable(true);
 		model.addAttribute("workingSession", ws);
@@ -305,7 +307,7 @@ public class SessionController {
 		initializeSessionStatus(session, breakMinutes);
 		if (session.getLearningItem() != null && session.getLearningItem().getId() != null) {
 			learningItemRepo.findById(session.getLearningItem().getId()).ifPresent(item -> {
-				item.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+				item.setLastUpdated(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 				learningItemRepo.save(item);
 			});
 		}
@@ -361,7 +363,7 @@ public class SessionController {
 			org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
 
 		if (session.getStart() == null) {
-			session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+			session.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		}
 
 		if (session.getEnd() == null) {
@@ -484,7 +486,7 @@ public class SessionController {
 	@PostMapping("/sessions/{id}/stop")
 	public String stopSession(
 			@PathVariable UUID id,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime end,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end,
 			@RequestParam(required = false, defaultValue = "0") Long breakMinutes,
 			@RequestParam(required = false) Integer focusRating,
 			@RequestParam(required = false) String outcomeSummary,
@@ -494,7 +496,7 @@ public class SessionController {
 		Session session = sessionRepo.findById(id)
 				.orElseThrow(() -> new IllegalArgumentException("Session not found: " + id));
 
-		LocalDateTime stopTime = (end != null) ? end : LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+		OffsetDateTime stopTime = (end != null) ? end : OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES);
 		Duration brk = DurationFormatter.fromMinutes(breakMinutes);
 		session.stop(stopTime, brk, focusRating, outcomeSummary, comment);
 

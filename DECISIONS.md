@@ -33,6 +33,9 @@ This document records the architectural and design decisions made for **Simon's 
 - [ADR 025: Two-Phase Deprecation of Legacy SleepTime UI in Preparation for Schema Removal](#adr-025-two-phase-deprecation-of-legacy-sleeptime-ui-in-preparation-for-schema-removal)
 - [ADR 026: Consistent Session Start Time Initialization & Auto-Populated Stop End Time](#adr-026-consistent-session-start-time-initialization--auto-populated-stop-end-time)
 - [ADR 027: Academic Activity Classification, STEM Lab Support & Clean Domain Separation](#adr-027-academic-activity-classification-stem-lab-support--clean-domain-separation)
+- [ADR 028: Car-Related Expense Tracking, Spritmonitor Taxonomy, and Lifecycle TCO & Multi-Vehicle Comparison Analytics (€/100km)](#adr-028-car-related-expense-tracking-spritmonitor-taxonomy-and-lifecycle-tco--multi-vehicle-comparison-analytics-100km)
+- [ADR 029: Universal PostgreSQL TIMESTAMPTZ Migration & Daylight Saving Time (Europe/Berlin) Integrity](#adr-029-universal-postgresql-timestamptz-migration--daylight-saving-time-europeberlin-integrity)
+- [ADR 030: Complete Migration to OffsetDateTime and Dynamic ZoneId Resolution for TIMESTAMPTZ Integration](#adr-030-complete-migration-to-offsetdatetime-and-dynamic-zoneid-resolution-for-timestamptz-integration)
 
 ---
 
@@ -1179,6 +1182,76 @@ SLM previously used unqualified SQL `TIMESTAMP` (`timestamp without time zone`) 
   - Zero disruption to existing web controllers and UI templates.
 - **Constraints**:
   - Legacy PostgreSQL databases must apply `migration_2026-10-24_2.sql` inside a transaction.
+
+---
+
+## ADR 030: Complete Migration to OffsetDateTime and Dynamic ZoneId Resolution for TIMESTAMPTZ Integration
+
+### Status
+Accepted (v0.0.3-rc14)
+
+### Context
+In [ADR 029](#adr-029-universal-postgresql-timestamptz-migration--daylight-saving-time-europeberlin-integrity), the database schema was fully migrated from unqualified `TIMESTAMP` to `TIMESTAMPTZ` (`TIMESTAMP WITH TIME ZONE`). However, the Java domain model initially retained `java.time.LocalDateTime`. This hybrid state introduced several technical and architectural challenges:
+1. **Type Impedance Mismatch & DTO Projection Failures**:
+   - PostgreSQL `TIMESTAMPTZ` is specified in JDBC 4.2 to map natively to `java.time.OffsetDateTime` (or `java.time.Instant`), not `LocalDateTime`.
+   - Native SQL queries, window functions, and Hibernate 7 `NativeQueryConstructorTransformer` projected database timestamps as JDBC `Instant` / `OffsetDateTime`, triggering runtime `ClassCastException` (`Cannot cast java.time.Instant to java.time.LocalDateTime`, as encountered on `/last-done-habit-entries`).
+2. **Physical Time & DST Calculation Precision**:
+   - `LocalDateTime` calculates pure wall-clock differences, ignoring daylight saving transitions. In `Europe/Berlin`, calculating `Duration.between` over the spring clock jump resulted in an inexact 8h instead of the physical 7h.
+   - During the fall cutover (03:00 -> 02:00), `LocalDateTime` cannot distinguish whether an event took place in `+02:00` or `+01:00`.
+3. **API & Spring AI MCP Timezone Ambiguity**:
+   - Exposing `LocalDateTime` over REST APIs or Spring AI Model Context Protocol (MCP) tools transmitted naive ISO strings (e.g. `2026-10-24T14:30:00`), leaving consumers and LLM agents to speculate on the active timezone offset.
+4. **Hardcoded Timezone Literal Anti-Pattern**:
+   - Hardcoding `"Europe/Berlin"` string literals in business logic violated maintainability and configurable deployment principles.
+
+### Decision
+We adopt **Option A: Full Domain Migration to `OffsetDateTime` paired with dynamic `ZoneId` resolution via `TimeZoneConfig`**:
+
+1. **Comprehensive Model & Repository Migration**:
+   - Migrated all timestamp fields across all 16 domain entities and DTOs from `LocalDateTime` to `java.time.OffsetDateTime`:
+     - [`Session.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Session.java) (`start`, `end`, `stop()`)
+     - [`Appointment.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Appointment.java) (`departure`, `arrival`, `start`, `end`, `arrivalHome`)
+     - [`CalendarEvent.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/CalendarEvent.java) (`start`, `end`)
+     - [`TrainTrip.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainTrip.java), [`TrainTrip2.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainTrip2.java) (`departure`, `arrival`)
+     - [`Activity.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Activity.java) (`start`, `end`)
+     - [`SleepTime.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`SleepSession.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/SleepSession.java) (`start`, `end`)
+     - [`CarTrip.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/CarTrip.java) (`departure`, `arrival`)
+     - [`LearningItem.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/LearningItem.java) (`lastPracticed`)
+     - [`HabitEntry.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/HabitEntry.java), [`LastDoneHabitEntry.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/LastDoneHabitEntry.java) (`lastDone`)
+     - [`Course.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Course.java) (`examDate`), [`LectureNote.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/LectureNote.java) (`noteDate`)
+     - [`Refueling.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Refueling.java), [`Station.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Station.java), [`ChargingPoint.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/ChargingPoint.java) (`refuelingDate`, `firstUsed`, `lastUsed`)
+     - [`CarExpense.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/CarExpense.java) (`expenseDate`)
+   - Updated all repository query methods, derived queries, and `@Param` parameters across [`SessionRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/SessionRepository.java), [`CalendarEventRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/CalendarEventRepository.java), [`CourseRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/CourseRepository.java), [`TrainTripRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainTripRepository.java), [`TrainTrip2Repository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/TrainTrip2Repository.java), [`ActivityRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/ActivityRepository.java), [`AppointmentRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/AppointmentRepository.java), [`SportSessionRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/SportSessionRepository.java), [`SleepTimeRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/SleepTimeRepository.java), [`SleepSessionRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/SleepSessionRepository.java), and [`MeditationSessionRepository.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/MeditationSessionRepository.java).
+   - Maintained `LocalDate` on pure dates without time components (`Human.birthday`, `Contract.startDate`, `Contract.endDate`, `Car.purchaseDate`, `Car.targetSellDate`).
+
+2. **HTML5 `<input type="datetime-local">` Transparent Converter Layer**:
+   - HTML5 datetime-local inputs submit strings in `yyyy-MM-dd'T'HH:mm` format without timezone offsets.
+   - Implemented bidirectional Spring MVC converters:
+     - [`StringToOffsetDateTimeConverter.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/converter/StringToOffsetDateTimeConverter.java): Parses standard ISO-8601 offset strings directly, and falls back to parsing local datetime strings by resolving the active application offset via `TimeZoneConfig.getZoneId()`.
+     - [`OffsetDateTimeToStringConverter.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/converter/OffsetDateTimeToStringConverter.java): Formats `OffsetDateTime` into `yyyy-MM-dd'T'HH:mm` in the configured timezone for pre-populating HTML5 datetime-local form inputs.
+     - Registered in [`ConverterConfig.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/ConverterConfig.java) without redundant `@Component` annotations to prevent `BeanDefinitionOverrideException`.
+
+3. **Dynamic Timezone Resolution without Hardcoded Literals**:
+   - Centralized timezone binding in [`TimeZoneConfig.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/config/TimeZoneConfig.java) reading `@Value("${spring.jpa.properties.hibernate.jdbc.time_zone:Europe/Berlin}")`.
+   - All `now()` invocations across controllers, services, schedulers, and tests strictly utilize `OffsetDateTime.now(TimeZoneConfig.getZoneId())`.
+   - Zero hardcoded `"Europe/Berlin"` strings exist in business logic.
+
+4. **Spring AI Model Context Protocol (MCP) & REST Alignment**:
+   - Updated all MCP tools across [`McpAcademicTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpAcademicTools.java), [`McpMedicalTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpMedicalTools.java), [`McpSessionTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpSessionTools.java), [`McpVehicleTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpVehicleTools.java), and [`McpWellnessTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpWellnessTools.java) to accept and return `OffsetDateTime`.
+   - Produces unambiguous ISO-8601 strings with offsets (e.g. `2026-10-24T14:30:00+02:00`), ensuring LLM clients and third-party integrations interpret exact physical moments without locale guesswork.
+
+5. **Utilities & Serialization**:
+   - Modernized [`Utils.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/utils/Utils.java) with `OffsetDateTimeToString(OffsetDateTime)` and an overloaded `LocalDateTimeToString(OffsetDateTime)` bridge.
+   - Updated [`SpritmonitorCsvService.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/service/SpritmonitorCsvService.java) to parse German date strings directly to `OffsetDateTime` via `TimeZoneConfig.getZoneId()`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - **100% JDBC 4.2 & Hibernate Specification Harmony**: Native SQL queries and projection transformers seamlessly map timestamps without custom object casting or reflection hacks.
+  - **Physical Duration Accuracy**: `Duration.between` calculates exact epoch seconds, guaranteeing accurate sleep, work, and exercise metrics across seasonal clock changes.
+  - **Full Temporal Order Preservation**: Disambiguates timestamps occurring during the ambiguous 02:00-03:00 fall fallback hour.
+  - **API Standardization**: Clean ISO-8601 output across MCP tools and REST endpoints.
+- **Constraints**:
+  - HTML5 datetime-local form inputs do not supply timezone offsets; the application must consistently supply the configured `ZoneId` through global converters.
+
 
 
 

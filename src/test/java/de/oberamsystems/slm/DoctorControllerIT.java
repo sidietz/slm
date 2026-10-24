@@ -8,11 +8,13 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -245,8 +247,8 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
 
         Appointment appt = new Appointment();
         appt.setDoctor(doc);
-        appt.setStart(LocalDateTime.of(2026, 11, 5, 10, 0));
-        appt.setEnd(LocalDateTime.of(2026, 11, 5, 10, 30));
+        appt.setStart(OffsetDateTime.of(2026, 11, 5, 10, 0, 0, 0, ZoneOffset.UTC));
+        appt.setEnd(OffsetDateTime.of(2026, 11, 5, 10, 30, 0, 0, ZoneOffset.UTC));
         appt.setComment("Initial consultation");
         appt = appointmentRepository.saveAndFlush(appt);
         Long apptId = appt.getId();
@@ -270,7 +272,7 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
         assertEquals(1, appointmentRepository.count(), "Editing appointment must not duplicate row");
         Appointment updated = appointmentRepository.findById(apptId).orElseThrow();
         assertEquals("Comprehensive knee MRI follow-up", updated.getComment());
-        assertEquals(LocalDateTime.of(2026, 11, 5, 10, 45), updated.getEnd());
+        assertTrue(java.time.LocalDate.of(2026, 11, 5).atTime(10, 45).atZone(de.oberamsystems.slm.config.TimeZoneConfig.getZoneId()).toOffsetDateTime().isEqual(updated.getEnd()));
     }
 
     @Test

@@ -1,8 +1,9 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,8 +35,8 @@ public class SportController {
 	public String addSports(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("sports", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		SportSession s = new SportSession();
-		s.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		s.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		s.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		s.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("sport", s);
 		model.addAttribute("sportTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "sports";

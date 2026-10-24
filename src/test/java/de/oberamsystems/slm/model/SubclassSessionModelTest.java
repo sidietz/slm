@@ -2,7 +2,7 @@ package de.oberamsystems.slm.model;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,8 +19,8 @@ public class SubclassSessionModelTest {
 		assertEquals(item, ls.getLearningItem());
 		assertEquals(5, ls.getUnitsCompleted());
 
-		ls.setStart(LocalDateTime.now().minusHours(1));
-		ls.setEnd(LocalDateTime.now());
+		ls.setStart(OffsetDateTime.now().minusHours(1));
+		ls.setEnd(OffsetDateTime.now());
 		ls.prePersist();
 		assertNotNull(ls.getId());
 		assertTrue(ls.toString().contains("Modern Java"));

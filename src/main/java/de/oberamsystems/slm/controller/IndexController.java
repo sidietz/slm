@@ -1,9 +1,11 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,14 +73,14 @@ public class IndexController {
 
 		if (s != null) {
 			String kind = s.getType().getName();
-			LocalDateTime ldt = s.getStart();
-			Duration diff = Duration.between(ldt, LocalDateTime.now());
+			OffsetDateTime ldt = s.getStart();
+			Duration diff = Duration.between(ldt, OffsetDateTime.now(TimeZoneConfig.getZoneId()));
 			msgs.add(String.format("Last sport activity was: %s at %s and was %s ago.", kind, Utils.LocalDateTimeToString(ldt), Utils.DurationToString(diff)));
 		}
 
 		if (m != null) {
-			LocalDateTime refTime = m.getEnd() != null ? m.getEnd() : m.getStart();
-			Duration diff2 = Duration.between(refTime, LocalDateTime.now());
+			OffsetDateTime refTime = m.getEnd() != null ? m.getEnd() : m.getStart();
+			Duration diff2 = Duration.between(refTime, OffsetDateTime.now(TimeZoneConfig.getZoneId()));
 			if (m.getEnd() != null) {
 				msgs.add(String.format("Last meditation was at %s and was %s ago.", Utils.LocalDateTimeToString(m.getStart()), Utils.DurationToString(diff2)));
 			} else {
@@ -87,8 +89,8 @@ public class IndexController {
 		}
 
 		if (rs != null) {
-			LocalDateTime refTime = rs.getEnd() != null ? rs.getEnd() : rs.getStart();
-			Duration diff3 = Duration.between(refTime, LocalDateTime.now());
+			OffsetDateTime refTime = rs.getEnd() != null ? rs.getEnd() : rs.getStart();
+			Duration diff3 = Duration.between(refTime, OffsetDateTime.now(TimeZoneConfig.getZoneId()));
 			if (rs.getEnd() != null) {
 				msgs.add(String.format("Last reading session was at %s and was %s ago.", Utils.LocalDateTimeToString(rs.getStart()), Utils.DurationToString(diff3)));
 			} else {

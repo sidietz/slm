@@ -3,7 +3,7 @@ package de.oberamsystems.slm.model;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -18,8 +18,8 @@ public class WorkingSessionTest {
 		ws.setBillable(true);
 		ws.setHourlyRate(new BigDecimal("125.50"));
 		ws.setTaskCategory("Backend Development");
-		ws.setStart(LocalDateTime.now().minusHours(2));
-		ws.setEnd(LocalDateTime.now());
+		ws.setStart(OffsetDateTime.now().minusHours(2));
+		ws.setEnd(OffsetDateTime.now());
 		ws.prePersist();
 
 		assertNotNull(ws.getId());

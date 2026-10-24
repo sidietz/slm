@@ -4,7 +4,7 @@ import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -35,8 +35,8 @@ public class LearningControllerTest {
         assertEquals("learning-sessions", view1);
         
         LearningSession ls = new LearningSession();
-        ls.setStart(LocalDateTime.now().minusHours(1));
-        ls.setEnd(LocalDateTime.now());
+        ls.setStart(OffsetDateTime.now().minusHours(1));
+        ls.setEnd(OffsetDateTime.now());
         ls.setLearningItem(new LearningItem());
         
         String view2 = controller.submitLearningSessions(ls, model);

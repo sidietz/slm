@@ -9,11 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -58,6 +61,10 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
     private jakarta.persistence.EntityManager entityManager;
 
     private MockMvc mockMvc;
+
+    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
+    }
 
     @BeforeEach
     void setUp() {
@@ -312,8 +319,8 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         trip.setCar(updatedCar);
         trip.setRoute(route);
         trip.setIsWayBack(false);
-        trip.setStart(LocalDateTime.of(2026, 10, 20, 8, 0));
-        trip.setEnd(LocalDateTime.of(2026, 10, 20, 9, 0));
+        trip.setStart(toOffset(2026, 10, 20, 8, 0));
+        trip.setEnd(toOffset(2026, 10, 20, 9, 0));
         trip = carTripRepository.saveAndFlush(trip);
         Long tripId = trip.getId();
 
@@ -331,8 +338,8 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         assertEquals(1, carTripRepository.count());
         entityManager.clear();
         CarTrip updatedTrip = carTripRepository.findById(tripId).orElseThrow();
-        assertEquals(LocalDateTime.of(2026, 10, 20, 8, 30), updatedTrip.getStart());
-        assertEquals(LocalDateTime.of(2026, 10, 20, 9, 45), updatedTrip.getEnd());
+        assertTrue(toOffset(2026, 10, 20, 8, 30).isEqual(updatedTrip.getStart()));
+        assertTrue(toOffset(2026, 10, 20, 9, 45).isEqual(updatedTrip.getEnd()));
         assertEquals(true, updatedTrip.getIsWayBack());
         assertNotNull(updatedTrip.getDuration());
     }
@@ -382,7 +389,7 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         TrainStation2 dest = trainStation2Repository.saveAndFlush(new TrainStation2("MNO", "Neufahrn"));
 
         TrainTrip2 tt = new TrainTrip2(null, updatedLine, updatedStation, dest,
-                LocalDateTime.of(2026, 10, 21, 10, 0), LocalDateTime.of(2026, 10, 21, 10, 15), null);
+                toOffset(2026, 10, 21, 10, 0), toOffset(2026, 10, 21, 10, 15), null);
         tt = trainTrip2Repository.saveAndFlush(tt);
         Long tripId = tt.getId();
 
@@ -399,8 +406,8 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         assertEquals(1, trainTrip2Repository.count());
         entityManager.clear();
         TrainTrip2 updatedTrip = trainTrip2Repository.findById(tripId).orElseThrow();
-        assertEquals(LocalDateTime.of(2026, 10, 21, 10, 5), updatedTrip.getStart());
-        assertEquals(LocalDateTime.of(2026, 10, 21, 10, 22), updatedTrip.getEnd());
+        assertTrue(toOffset(2026, 10, 21, 10, 5).isEqual(updatedTrip.getStart()));
+        assertTrue(toOffset(2026, 10, 21, 10, 22).isEqual(updatedTrip.getEnd()));
     }
 
     @Test
@@ -435,8 +442,8 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
         assertEquals(line.getId(), savedTrip.getLine().getId());
         assertEquals(origin.getId(), savedTrip.getOrigin().getId());
         assertEquals(dest.getId(), savedTrip.getDestination().getId());
-        assertEquals(LocalDateTime.of(2026, 10, 21, 7, 19), savedTrip.getStart());
-        assertEquals(LocalDateTime.of(2026, 10, 21, 7, 55), savedTrip.getEnd());
+        assertTrue(toOffset(2026, 10, 21, 7, 19).isEqual(savedTrip.getStart()));
+        assertTrue(toOffset(2026, 10, 21, 7, 55).isEqual(savedTrip.getEnd()));
 
         // 2. Also verify submitting with omitted lineId is REJECTED via validation
         mockMvc.perform(post("/train-trips")

@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.mcp;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -12,6 +12,8 @@ import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
+import de.oberamsystems.slm.converter.StringToOffsetDateTimeConverter;
 import de.oberamsystems.slm.model.Appointment;
 import de.oberamsystems.slm.model.AppointmentRepository;
 import de.oberamsystems.slm.model.Doctor;
@@ -29,7 +31,7 @@ public class McpMedicalTools {
 	@Tool(description = "Retrieve upcoming medical and doctor appointments with doctor details, speciality, and practice distance")
 	public List<Map<String, Object>> getUpcomingAppointments() {
 		List<Appointment> all = appointmentRepo.findAll();
-		LocalDateTime now = LocalDateTime.now();
+		OffsetDateTime now = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 
 		List<Appointment> upcoming = all.stream()
 				.filter(a -> a.getStart() != null && !a.getStart().isBefore(now.minusHours(2)))
@@ -104,8 +106,8 @@ public class McpMedicalTools {
 
 		Appointment app = new Appointment();
 		app.setDoctor(doctor);
-		app.setStart(LocalDateTime.parse(startStr));
-		app.setEnd(LocalDateTime.parse(endStr));
+		app.setStart(StringToOffsetDateTimeConverter.parse(startStr));
+		app.setEnd(StringToOffsetDateTimeConverter.parse(endStr));
 		app.setComment(comment);
 		app = appointmentRepo.save(app);
 

@@ -11,7 +11,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.*;
@@ -122,7 +122,7 @@ public class SessionHubIT extends AbstractIntegrationTest {
 
     @Test
     void testViewSessionsHubAllAndFourPillarsKpis() throws Exception {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         // 1. Productivity: Coding session (1 hour net)
         CodingSession coding = new CodingSession();
@@ -396,8 +396,8 @@ public class SessionHubIT extends AbstractIntegrationTest {
     @Test
     void testDeleteSession() throws Exception {
         CodingSession coding = new CodingSession();
-        coding.setStart(LocalDateTime.now().minusHours(2));
-        coding.setEnd(LocalDateTime.now().minusHours(1));
+        coding.setStart(OffsetDateTime.now().minusHours(2));
+        coding.setEnd(OffsetDateTime.now().minusHours(1));
         coding.setBreakDuration(Duration.ZERO);
         coding = codingSessionRepository.saveAndFlush(coding);
         UUID sessionId = coding.getId();
@@ -453,7 +453,7 @@ public class SessionHubIT extends AbstractIntegrationTest {
     void testStopActiveWorkingSession() throws Exception {
         WorkingSession active = new WorkingSession();
         active.setProject("Autonomous Agent Testing");
-        active.setStart(LocalDateTime.now().minusHours(2));
+        active.setStart(OffsetDateTime.now().minusHours(2));
         active.setEnd(null);
         active.setStatus("IN_PROGRESS");
         active.setBreakDuration(Duration.ZERO);
@@ -465,7 +465,7 @@ public class SessionHubIT extends AbstractIntegrationTest {
 
         mockMvc.perform(post("/sessions/" + activeId + "/stop")
                         .with(csrf())
-                        .param("end", LocalDateTime.now().toString())
+                        .param("end", OffsetDateTime.now().toString())
                         .param("breakMinutes", "15")
                         .param("focusRating", "5")
                         .param("outcomeSummary", "Completed test coverage for active sessions")
@@ -493,7 +493,7 @@ public class SessionHubIT extends AbstractIntegrationTest {
     void testActiveSessionHeroBannerAndRendering() throws Exception {
         CodingSession coding = new CodingSession();
         coding.setProject("SLM v0.0.3-rc2 Feature");
-        coding.setStart(LocalDateTime.now().minusMinutes(45));
+        coding.setStart(OffsetDateTime.now().minusMinutes(45));
         coding.setEnd(null);
         coding.setStatus("IN_PROGRESS");
         codingSessionRepository.saveAndFlush(coding);

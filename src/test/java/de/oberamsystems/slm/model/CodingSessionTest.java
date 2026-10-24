@@ -2,7 +2,7 @@ package de.oberamsystems.slm.model;
 
 import org.junit.jupiter.api.Test;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,8 +16,8 @@ public class CodingSessionTest {
 		cs.setBranch("feat/generalized-sessions");
 		cs.setTicket("SLM-42");
 		cs.setLanguage("Java 27");
-		cs.setStart(LocalDateTime.now().minusHours(1));
-		cs.setEnd(LocalDateTime.now());
+		cs.setStart(OffsetDateTime.now().minusHours(1));
+		cs.setEnd(OffsetDateTime.now());
 		cs.prePersist();
 
 		assertNotNull(cs.getId());

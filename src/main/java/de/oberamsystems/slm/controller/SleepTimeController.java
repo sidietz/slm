@@ -1,8 +1,9 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +44,8 @@ public class SleepTimeController {
 	public String addSleepTimes(Model model) {
 		model.addAttribute("sleeptimes", repo.findAll(Sort.by(Sort.Direction.DESC, "gotobed")));
 		SleepTime st = new SleepTime();
-		st.setGotobed(LocalDateTime.now().minusHours(9).truncatedTo(ChronoUnit.MINUTES));
-		st.setGetup(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		st.setGotobed(OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusHours(9).truncatedTo(ChronoUnit.MINUTES));
+		st.setGetup(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("sleeptime", st);
 		return "sleep-times";
 	}

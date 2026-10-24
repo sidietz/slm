@@ -3,7 +3,7 @@ package de.oberamsystems.slm.model;
 import jakarta.persistence.*;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.Type;
@@ -29,9 +29,9 @@ public class CarTrip {
 	private boolean isWayBack;
 	
 	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime start;
+	private OffsetDateTime start;
 	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime end;
+	private OffsetDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@Generated(event = { EventType.INSERT, EventType.UPDATE })
@@ -40,7 +40,7 @@ public class CarTrip {
 	public CarTrip() {
 	}
 
-	public CarTrip(Long id, Route route, boolean isWayBack, LocalDateTime start, LocalDateTime end, Duration duration) {
+	public CarTrip(Long id, Route route, boolean isWayBack, OffsetDateTime start, OffsetDateTime end, Duration duration) {
 		super();
 		this.id = id;
 		this.route = route;
@@ -82,19 +82,19 @@ public class CarTrip {
 		return isWayBack;
 	}
 
-	public LocalDateTime getStart() {
+	public OffsetDateTime getStart() {
 		return start;
 	}
 
-	public void setStart(LocalDateTime start) {
+	public void setStart(OffsetDateTime start) {
 		this.start = start;
 	}
 
-	public LocalDateTime getEnd() {
+	public OffsetDateTime getEnd() {
 		return end;
 	}
 
-	public void setEnd(LocalDateTime end) {
+	public void setEnd(OffsetDateTime end) {
 		this.end = end;
 	}
 

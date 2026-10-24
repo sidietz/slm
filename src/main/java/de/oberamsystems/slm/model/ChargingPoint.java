@@ -1,8 +1,10 @@
 package de.oberamsystems.slm.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.UuidGenerator;
@@ -46,7 +48,7 @@ public class ChargingPoint {
 	private PlugType plugType;
 
 	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime createdAt = LocalDateTime.now();
+	private OffsetDateTime createdAt = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 
 	public ChargingPoint() {
 	}
@@ -91,11 +93,11 @@ public class ChargingPoint {
 		this.plugType = plugType;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public OffsetDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(LocalDateTime createdAt) {
+	public void setCreatedAt(OffsetDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 }

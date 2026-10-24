@@ -7,7 +7,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.ui.ConcurrentModel;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -89,16 +89,16 @@ public class SessionControllerTest {
     public void testViewSessionsAll() {
         List<Session> mockList = new ArrayList<>();
         CodingSession cs = new CodingSession();
-        cs.setStart(LocalDateTime.now().minusHours(2));
-        cs.setEnd(LocalDateTime.now());
+        cs.setStart(OffsetDateTime.now().minusHours(2));
+        cs.setEnd(OffsetDateTime.now());
         cs.setBreakDuration(Duration.ofMinutes(15));
         cs.setNetDuration(Duration.ofMinutes(105));
         cs.setFocusRating(5);
         mockList.add(cs);
 
         WorkingSession ws = new WorkingSession();
-        ws.setStart(LocalDateTime.now().minusHours(4));
-        ws.setEnd(LocalDateTime.now().minusHours(2));
+        ws.setStart(OffsetDateTime.now().minusHours(4));
+        ws.setEnd(OffsetDateTime.now().minusHours(2));
         ws.setBreakDuration(Duration.ofMinutes(30));
         ws.setNetDuration(Duration.ofMinutes(90));
         ws.setFocusRating(4);
@@ -123,13 +123,13 @@ public class SessionControllerTest {
     public void testViewSessionsFilterType() {
         List<Session> mockList = new ArrayList<>();
         CodingSession cs = new CodingSession();
-        cs.setStart(LocalDateTime.now().minusHours(1));
-        cs.setEnd(LocalDateTime.now());
+        cs.setStart(OffsetDateTime.now().minusHours(1));
+        cs.setEnd(OffsetDateTime.now());
         mockList.add(cs);
 
         WorkingSession ws = new WorkingSession();
-        ws.setStart(LocalDateTime.now().minusHours(3));
-        ws.setEnd(LocalDateTime.now().minusHours(1));
+        ws.setStart(OffsetDateTime.now().minusHours(3));
+        ws.setEnd(OffsetDateTime.now().minusHours(1));
         mockList.add(ws);
 
         when(sessionRepo.findAll()).thenReturn(mockList);
@@ -215,8 +215,8 @@ public class SessionControllerTest {
 
         // Reading
         ReadingSession rs = new ReadingSession();
-        rs.setStart(LocalDateTime.now().minusHours(2));
-        rs.setEnd(LocalDateTime.now());
+        rs.setStart(OffsetDateTime.now().minusHours(2));
+        rs.setEnd(OffsetDateTime.now());
         rs.setStartPageCount(10);
         rs.setEndPageCount(70);
         String redirectRead = controller.submitReadingSession(rs, 20L); // 120 - 20 = 100 min, 60 pages -> 36 p/h
@@ -240,8 +240,8 @@ public class SessionControllerTest {
 
         // Sleep
         SleepSession sleep = new SleepSession();
-        sleep.setStart(LocalDateTime.of(2026, 10, 18, 22, 0));
-        sleep.setEnd(LocalDateTime.of(2026, 10, 19, 6, 0));
+        sleep.setStart(OffsetDateTime.now().minusHours(8));
+        sleep.setEnd(OffsetDateTime.now());
         org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap redirectAttributes = new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap();
         String redirectSleep = controller.submitSleepSession(sleep, 15L, 90L, 80L, 295L, redirectAttributes);
         assertEquals("redirect:/sessions?type=SLEEP", redirectSleep);
@@ -257,26 +257,26 @@ public class SessionControllerTest {
         List<Session> mockList = new ArrayList<>();
 
         CodingSession cs = new CodingSession();
-        cs.setStart(LocalDateTime.now().minusHours(2));
-        cs.setEnd(LocalDateTime.now().minusHours(1));
+        cs.setStart(OffsetDateTime.now().minusHours(2));
+        cs.setEnd(OffsetDateTime.now().minusHours(1));
         cs.setNetDuration(Duration.ofMinutes(60));
         mockList.add(cs);
 
         SportSession ss = new SportSession();
-        ss.setStart(LocalDateTime.now().minusHours(4));
-        ss.setEnd(LocalDateTime.now().minusHours(3));
+        ss.setStart(OffsetDateTime.now().minusHours(4));
+        ss.setEnd(OffsetDateTime.now().minusHours(3));
         ss.setNetDuration(Duration.ofMinutes(45));
         mockList.add(ss);
 
         SleepSession sl = new SleepSession();
-        sl.setStart(LocalDateTime.now().minusHours(12));
-        sl.setEnd(LocalDateTime.now().minusHours(4));
+        sl.setStart(OffsetDateTime.now().minusHours(12));
+        sl.setEnd(OffsetDateTime.now().minusHours(4));
         sl.setNetDuration(Duration.ofHours(8));
         mockList.add(sl);
 
         GamingSession gs = new GamingSession();
-        gs.setStart(LocalDateTime.now().minusHours(14));
-        gs.setEnd(LocalDateTime.now().minusHours(13));
+        gs.setStart(OffsetDateTime.now().minusHours(14));
+        gs.setEnd(OffsetDateTime.now().minusHours(13));
         gs.setNetDuration(Duration.ofMinutes(60));
         mockList.add(gs);
 
@@ -362,12 +362,12 @@ public class SessionControllerTest {
         CodingSession session = new CodingSession();
         session.setId(id);
         session.setStatus("IN_PROGRESS");
-        session.setStart(LocalDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
+        session.setStart(OffsetDateTime.now().minusHours(2).truncatedTo(ChronoUnit.MINUTES));
         session.setEnd(null);
 
         when(sessionRepo.findById(id)).thenReturn(Optional.of(session));
 
-        LocalDateTime stopTime = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        OffsetDateTime stopTime = OffsetDateTime.now().truncatedTo(ChronoUnit.MINUTES);
         String redirect = controller.stopSession(id, stopTime, 10L, 5, "Completed feature", "Great focus", "CODING");
 
         assertEquals("redirect:/sessions?type=CODING", redirect);
@@ -386,7 +386,7 @@ public class SessionControllerTest {
         CodingSession session = new CodingSession();
         session.setId(id);
         session.setStatus("IN_PROGRESS");
-        session.setStart(LocalDateTime.now().minusMinutes(45).truncatedTo(ChronoUnit.MINUTES));
+        session.setStart(OffsetDateTime.now().minusMinutes(45).truncatedTo(ChronoUnit.MINUTES));
         session.setEnd(null);
 
         when(sessionRepo.findById(id)).thenReturn(Optional.of(session));

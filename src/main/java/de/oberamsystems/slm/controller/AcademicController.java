@@ -7,8 +7,10 @@ import de.oberamsystems.slm.util.SemesterComparator;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +54,7 @@ public class AcademicController {
 				.filter(Objects::nonNull)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 
-		LocalDateTime now = LocalDateTime.now();
+		OffsetDateTime now = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 		List<Course> upcomingExams = courseRepo.findByExamDateBetweenOrderByExamDateAsc(now, now.plusDays(90));
 
 		model.addAttribute("courses", courses);
@@ -121,7 +123,7 @@ public class AcademicController {
 		}
 
 		LectureSession newSession = new LectureSession(course, sessions.size() + 1, "", course.getDefaultRoom(), LectureActivityType.LECTURE);
-		newSession.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		newSession.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		newSession.setEnd(null);
 		model.addAttribute("newSession", newSession);
 
@@ -140,7 +142,7 @@ public class AcademicController {
 		session.setActivityType(activityType != null ? activityType : LectureActivityType.LECTURE);
 		session.setBreakDuration(DurationFormatter.fromMinutes(breakMinutes));
 		if (session.getStart() == null) {
-			session.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+			session.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		}
 		if (session.getEnd() == null) {
 			session.setStatus("IN_PROGRESS");

@@ -2,7 +2,9 @@ package de.oberamsystems.slm.mcp;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
+import de.oberamsystems.slm.converter.StringToOffsetDateTimeConverter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -46,8 +48,8 @@ public class McpSessionTools {
 			@ToolParam(description = "Date in format YYYY-MM-DD (e.g. 2026-10-18)") String dateStr) {
 
 		LocalDate date = LocalDate.parse(dateStr);
-		LocalDateTime startOfDay = date.atStartOfDay();
-		LocalDateTime endOfDay = date.plusDays(1).atStartOfDay();
+		OffsetDateTime startOfDay = date.atStartOfDay(TimeZoneConfig.getZoneId()).toOffsetDateTime();
+		OffsetDateTime endOfDay = date.plusDays(1).atStartOfDay(TimeZoneConfig.getZoneId()).toOffsetDateTime();
 
 		List<Session> daySessions = sessionRepo.findByStartBetween(startOfDay, endOfDay);
 
@@ -141,8 +143,8 @@ public class McpSessionTools {
 			@ToolParam(description = "Programming language (e.g. Java, TypeScript)", required = false) String language,
 			@ToolParam(description = "Git branch", required = false) String branch) {
 
-		LocalDateTime start = LocalDateTime.parse(startStr);
-		LocalDateTime end = LocalDateTime.parse(endStr);
+		OffsetDateTime start = StringToOffsetDateTimeConverter.parse(startStr);
+		OffsetDateTime end = StringToOffsetDateTimeConverter.parse(endStr);
 		int bMinutes = (breakMinutes != null && breakMinutes >= 0) ? breakMinutes : 0;
 
 		CodingSession cs = new CodingSession();
@@ -175,8 +177,8 @@ public class McpSessionTools {
 			@ToolParam(description = "Sleep quality rating from 1 (poor) to 5 (excellent)", required = false) Integer qualityRating,
 			@ToolParam(description = "Notes on dreams or restfulness", required = false) String comment) {
 
-		LocalDateTime start = LocalDateTime.parse(bedtimeStr);
-		LocalDateTime end = LocalDateTime.parse(wakeStr);
+		OffsetDateTime start = StringToOffsetDateTimeConverter.parse(bedtimeStr);
+		OffsetDateTime end = StringToOffsetDateTimeConverter.parse(wakeStr);
 		int bMinutes = (breakMinutes != null && breakMinutes >= 0) ? breakMinutes : 0;
 
 		long totalMinutes = Duration.between(start, end).toMinutes();
@@ -208,7 +210,7 @@ public class McpSessionTools {
 	public List<Map<String, Object>> getActiveSessions() {
 		List<Session> active = sessionRepo.findByEndIsNullOrderByStartDesc();
 		List<Map<String, Object>> result = new ArrayList<>();
-		LocalDateTime now = LocalDateTime.now();
+		OffsetDateTime now = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 
 		for (Session s : active) {
 			Map<String, Object> map = new HashMap<>();
@@ -239,7 +241,7 @@ public class McpSessionTools {
 			@ToolParam(description = "Optional notes or reflections", required = false) String comment) {
 
 		String type = (sessionType != null ? sessionType.trim().toUpperCase() : "WORKING");
-		LocalDateTime now = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+		OffsetDateTime now = OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
 		Session s;
 
 		switch (type) {
@@ -324,7 +326,7 @@ public class McpSessionTools {
 					.orElseThrow(() -> new IllegalStateException("No active ongoing session found to stop"));
 		}
 
-		LocalDateTime now = LocalDateTime.now().truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
+		OffsetDateTime now = OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(java.time.temporal.ChronoUnit.MINUTES);
 		Duration brk = breakMinutes != null ? Duration.ofMinutes(breakMinutes) : Duration.ZERO;
 		session.stop(now, brk, focusRating, outcomeSummary, comment);
 

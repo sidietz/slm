@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.model.CalendarEvent;
 import de.oberamsystems.slm.model.CalendarEventRepository;
 
@@ -25,20 +26,20 @@ public class CalendarEventController {
 	
 	@GetMapping({"/event", "event.html"})
 	public String getEvent(
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fromDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime toDate,
 			Model model) {
-		fromDate = fromDate == null ? LocalDateTime.now().minusDays(28) : fromDate;
+		fromDate = fromDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(28) : fromDate;
 		toDate = toDate == null ? repo.findMaxDate() : toDate;
-		toDate = toDate == null ? LocalDateTime.now() : toDate;
+		toDate = toDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()) : toDate;
 
-		LocalDateTime minDate = repo.findMinDate();
-	    LocalDateTime maxDate = repo.findMaxDate();
+		OffsetDateTime minDate = repo.findMinDate();
+	    OffsetDateTime maxDate = repo.findMaxDate();
 	    
-	    minDate = minDate == null ? LocalDateTime.now().minusDays(1) : minDate;
-	    maxDate = maxDate == null ? LocalDateTime.now() : maxDate;
+	    minDate = minDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(1) : minDate;
+	    maxDate = maxDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()) : maxDate;
 
-		model.addAttribute("events", repo.findByStartAfter(LocalDateTime.now().minusDays(1), Sort.by(Sort.Direction.DESC, "start"))); // find getup time instead of gotobed
+		model.addAttribute("events", repo.findByStartAfter(OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(1), Sort.by(Sort.Direction.DESC, "start"))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
 		model.addAttribute("toDate", toDate.plusDays(1));
 		model.addAttribute("minDate", minDate); //fixes off by one bug
@@ -49,8 +50,8 @@ public class CalendarEventController {
 	@GetMapping("/add-event")
 	public String addEvent(@RequestParam(required = false) Long id, Model model) {
 		CalendarEvent e = new CalendarEvent();
-		e.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		e.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		e.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		e.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("event", e);
 		return "add-event";
 	}

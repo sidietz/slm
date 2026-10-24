@@ -1,7 +1,7 @@
 package de.oberamsystems.slm.model;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.Type;
 import io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType;
@@ -24,10 +24,10 @@ public class SleepTime {
 	private Long id;
 	
 	@Column(name = "gotobed", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime gotobed;
+	private OffsetDateTime gotobed;
 	
 	@Column(name = "standup", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime getup;
+	private OffsetDateTime getup;
 
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "sleeptime", columnDefinition = "interval", insertable = false, updatable = false)
@@ -38,26 +38,26 @@ public class SleepTime {
 	public SleepTime() {
 	}
 	
-	public SleepTime(Long id, LocalDateTime gotobed, LocalDateTime getup, Duration sleeptime) {
+	public SleepTime(Long id, OffsetDateTime gotobed, OffsetDateTime getup, Duration sleeptime) {
 		this.id = id;
 		this.gotobed = gotobed;
 		this.getup = getup;
 		this.sleeptime = sleeptime;
 	}
 
-	public LocalDateTime getGotobed() {
+	public OffsetDateTime getGotobed() {
 		return gotobed;
 	}
 
-	public void setGotobed(LocalDateTime gotobed) {
+	public void setGotobed(OffsetDateTime gotobed) {
 		this.gotobed = gotobed;
 	}
 	
-	public LocalDateTime getGetup() {
+	public OffsetDateTime getGetup() {
 		return getup;
 	}
 
-	public void setGetup(LocalDateTime getup) {
+	public void setGetup(OffsetDateTime getup) {
 		this.getup = getup;
 	}
 

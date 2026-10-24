@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +31,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.model.Car;
 import de.oberamsystems.slm.model.CarExpense;
 import de.oberamsystems.slm.model.CarExpenseRepository;
@@ -240,7 +242,7 @@ public class CarExpenseIT extends AbstractIntegrationTest {
 		Refueling rElec = new Refueling();
 		rElec.setCar(carA);
 		rElec.setFuelType(FuelType.ELECTRIC);
-		rElec.setFuelingDate(java.time.LocalDateTime.now().minusDays(5));
+		rElec.setFuelingDate(OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(5));
 		rElec.setLiters(new BigDecimal("75.00")); // 75 kWh
 		rElec.setTotalCost(new BigDecimal("27.00")); // 0.36 €/kWh
 		rElec.setTripDistance(new BigDecimal("400.00")); // 18.75 kWh/100km
@@ -251,7 +253,7 @@ public class CarExpenseIT extends AbstractIntegrationTest {
 		Refueling rDiesel = new Refueling();
 		rDiesel.setCar(carB);
 		rDiesel.setFuelType(FuelType.DIESEL);
-		rDiesel.setFuelingDate(java.time.LocalDateTime.now().minusDays(3));
+		rDiesel.setFuelingDate(OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(3));
 		rDiesel.setLiters(new BigDecimal("50.00")); // 50 L
 		rDiesel.setTotalCost(new BigDecimal("82.50")); // 1.65 €/L
 		rDiesel.setTripDistance(new BigDecimal("800.00")); // 6.25 L/100km

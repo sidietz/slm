@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.model;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,10 +12,10 @@ public interface SleepSessionRepository extends JpaRepository<SleepSession, UUID
 
 	public SleepSession findFirstByOrderByStartDesc();
 
-	List<SleepSession> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate);
+	List<SleepSession> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate);
 
-	List<SleepSession> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate, Sort sort);
+	List<SleepSession> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate, Sort sort);
 
 	@Query("SELECT MIN(s.start) FROM SleepSession s")
-	LocalDateTime findMinDate();
+	OffsetDateTime findMinDate();
 }

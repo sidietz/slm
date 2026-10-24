@@ -1,8 +1,10 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,11 +45,11 @@ public class DoctorController {
 	@GetMapping("/appointments")
 	public String addAppointments(@RequestParam(required = false) Long id, Model model) {
 		Appointment a = new Appointment();
-		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setDeparture(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setDeparture(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setArrival(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setArrivalHome(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
 		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
 		model.addAttribute("appointments", repo.findAll(Sort.by(Sort.Direction.DESC, "departure")));
@@ -132,17 +134,17 @@ public class DoctorController {
 
 	@GetMapping("/appointment")
 	public String getSport(
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
-			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime toDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime fromDate,
+			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime toDate,
 			Model model) {
-		fromDate = fromDate == null ? LocalDateTime.now().minusDays(90) : fromDate;
-		toDate = toDate == null ? LocalDateTime.now() : toDate;
+		fromDate = fromDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(90) : fromDate;
+		toDate = toDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()) : toDate;
 
-		LocalDateTime minDate = repo.findMinDate();
-	    LocalDateTime maxDate = repo.findMaxDate();
+		OffsetDateTime minDate = repo.findMinDate();
+	    OffsetDateTime maxDate = repo.findMaxDate();
 
-	    minDate = minDate == null ? LocalDateTime.now().minusDays(90) : minDate.minusDays(1); //fixes off by one bug
-	    maxDate = maxDate == null ? LocalDateTime.now(): maxDate;
+	    minDate = minDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(90) : minDate.minusDays(1); //fixes off by one bug
+	    maxDate = maxDate == null ? OffsetDateTime.now(TimeZoneConfig.getZoneId()): maxDate;
 
 		model.addAttribute("appointments", repo.findByStartBetween(fromDate, toDate.plusDays(1), Sort.by(Sort.Direction.DESC, "start"))); // find getup time instead of gotobed
 		model.addAttribute("fromDate", fromDate);
@@ -169,11 +171,11 @@ public class DoctorController {
 	@GetMapping("/add-appointment")
 	public String addSport(@RequestParam(required = false) Long id, Model model) {
 		Appointment a = new Appointment();
-		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setDeparture(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setArrival(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setArrivalHome(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setDeparture(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setArrival(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setArrivalHome(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("appointment", a);
 		model.addAttribute("doctors", doctorRepo.findAll(Sort.by(Sort.Direction.ASC, "lastname").and(Sort.by(Sort.Direction.ASC, "firstname"))));
 		return "add-appointment";

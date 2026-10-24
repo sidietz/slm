@@ -1,9 +1,10 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,8 +59,8 @@ public class TrainTripController2 {
 			}
 		}
 		model.addAttribute("lineId", lineId);
-		tt.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		tt.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		tt.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		tt.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("traintrip", tt);
 
 		List<TrainStation2> allStations = stationRepo.findAll(Sort.by(Sort.Direction.ASC, "name"));

@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.model;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import jakarta.persistence.*;
 
@@ -15,12 +15,12 @@ public class HabitEntry {
 	@JoinColumn(name="habit", referencedColumnName = "id")
 	private Habit habit;
 	@Column(name = "last_done", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime lastDone;
+	private OffsetDateTime lastDone;
 
 	public HabitEntry() {
 	}	
 
-	public HabitEntry(Long id, Habit habit, LocalDateTime lastDone) {
+	public HabitEntry(Long id, Habit habit, OffsetDateTime lastDone) {
 		this.id = id;
 		this.habit = habit;
 		this.lastDone = lastDone;
@@ -42,11 +42,11 @@ public class HabitEntry {
 		this.habit = habit;
 	}
 
-	public LocalDateTime getLastDone() {
+	public OffsetDateTime getLastDone() {
 		return lastDone;
 	}
 
-	public void setLastDone(LocalDateTime lastDone) {
+	public void setLastDone(OffsetDateTime lastDone) {
 		this.lastDone = lastDone;
 	}
 }

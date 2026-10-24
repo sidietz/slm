@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 import org.springframework.data.domain.Sort;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -83,12 +83,12 @@ public class DoctorControllerTest {
         assertEquals("redirect:/specialities", view6);
         
         // GET /appointment
-        when(repo.findMinDate()).thenReturn(LocalDateTime.now().minusDays(10));
-        when(repo.findMaxDate()).thenReturn(LocalDateTime.now().plusDays(10));
+        when(repo.findMinDate()).thenReturn(OffsetDateTime.now().minusDays(10));
+        when(repo.findMaxDate()).thenReturn(OffsetDateTime.now().plusDays(10));
         String view7 = controller.getSport(null, null, model);
         assertEquals("appointment", view7);
         
-        String view7b = controller.getSport(LocalDateTime.now(), LocalDateTime.now(), model);
+        String view7b = controller.getSport(OffsetDateTime.now(), OffsetDateTime.now(), model);
         assertEquals("appointment", view7b);
 
         when(repo.findMinDate()).thenReturn(null);

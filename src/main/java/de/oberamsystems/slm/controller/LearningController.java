@@ -1,8 +1,10 @@
 package de.oberamsystems.slm.controller;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -50,7 +52,7 @@ public class LearningController {
 		model.addAttribute("learningsessions", learningSessionRepo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		LearningItem li = rs.getLearningItem();
 		if (li != null) {
-			li.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+			li.setLastUpdated(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 			repo.save(li);
 		}
 		model.addAttribute("items", repo.findAll(Sort.by(Sort.Direction.ASC, "title")));
@@ -71,7 +73,7 @@ public class LearningController {
 		model.addAttribute("sources", SourceEnum.values());
 		model.addAttribute("statuss", StatusEnum.values());
 		LearningItem i = new LearningItem();
-		i.setLastUpdated(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		i.setLastUpdated(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("learningitem", i);
 		return "learning-items";
 	}

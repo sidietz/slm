@@ -2,7 +2,9 @@ package de.oberamsystems.slm.mcp;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
+import de.oberamsystems.slm.converter.StringToOffsetDateTimeConverter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -114,9 +116,9 @@ public class McpVehicleTools {
 		Refueling r = new Refueling();
 		r.setCar(car);
 		if (dateTime != null) {
-			r.setFuelingDate(LocalDateTime.parse(dateTime));
+			r.setFuelingDate(StringToOffsetDateTimeConverter.parse(dateTime));
 		} else {
-			r.setFuelingDate(LocalDateTime.now());
+			r.setFuelingDate(OffsetDateTime.now(TimeZoneConfig.getZoneId()));
 		}
 		if (liters != null) {
 			r.setLiters(BigDecimal.valueOf(liters));

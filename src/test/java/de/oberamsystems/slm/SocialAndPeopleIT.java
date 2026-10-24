@@ -10,7 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.hamcrest.Matchers.containsString;
@@ -134,13 +134,13 @@ public class SocialAndPeopleIT extends AbstractIntegrationTest {
         CalendarEvent event = new CalendarEvent();
         event.setTitle("ACM Keynote Presentation");
         event.setDescription("Keynote on High-Performance Concurrent Architectures");
-        event.setStart(LocalDateTime.now().plusDays(2));
-        event.setEnd(LocalDateTime.now().plusDays(2).plusHours(2));
+        event.setStart(OffsetDateTime.now().plusDays(2));
+        event.setEnd(OffsetDateTime.now().plusDays(2).plusHours(2));
         calendarEventRepository.saveAndFlush(event);
 
         mockMvc.perform(get("/event")
-                        .param("fromDate", LocalDateTime.now().minusDays(5).toString())
-                        .param("toDate", LocalDateTime.now().plusDays(10).toString()))
+                        .param("fromDate", OffsetDateTime.now().minusDays(5).toString())
+                        .param("toDate", OffsetDateTime.now().plusDays(10).toString()))
                 .andExpect(status().isOk())
                 .andExpect(view().name("event"))
                 .andExpect(model().attributeExists("events", "fromDate", "toDate", "minDate", "maxDate"))

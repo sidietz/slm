@@ -2,8 +2,10 @@ package de.oberamsystems.slm.model;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.UuidGenerator;
@@ -59,7 +61,7 @@ public class CarExpense {
 	private String note;
 
 	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime createdAt;
+	private OffsetDateTime createdAt;
 
 	public CarExpense() {
 	}
@@ -77,7 +79,7 @@ public class CarExpense {
 	@PrePersist
 	public void prePersist() {
 		if (this.createdAt == null) {
-			this.createdAt = LocalDateTime.now();
+			this.createdAt = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 		}
 	}
 
@@ -145,11 +147,11 @@ public class CarExpense {
 		this.note = note;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public OffsetDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(LocalDateTime createdAt) {
+	public void setCreatedAt(OffsetDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 
