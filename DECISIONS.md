@@ -1112,8 +1112,12 @@ Vehicle tracking in SLM previously captured refueling events (`Refueling`) and v
    - Synchronized baseline schemas (`tables.sql`, `enums.sql`, `init.sql`, `schema-init.sql`) and authored transactional migration `migration_2026-10-23_2.sql`.
 3. **Triple-Tab Vehicle Expenses Hub (`/car-expenses`)**:
    - **Tab 1 (Expenses Log)**: Complete expense history with vehicle filter, category badges, "+ Add Expense" modal, and deletion.
-   - **Tab 2 (Expense Analytics & €/100km)**: Computes realized and projected TCO ($\text{Depreciation} + \text{Fuel} + \text{Operating Expenses} - \text{Credits}$), price per 100 km (€/100km), component breakdowns, Billboard.js donut chart, and an inline form to adjust lifecycle parameters directly.
+   - **Tab 2 (Expense Analytics & €/100km)**: Computes realized and projected TCO ($\text{Depreciation} + \text{Fuel} + \text{Operating Expenses} - \text{Credits}$), price per 100 km (€/100km), component breakdowns, Billboard.js donut chart ("TCO torus"), and an inline form to adjust lifecycle parameters directly. Fixed initial render dimensions by hooking into Bootstrap `shown.bs.tab` events with explicit SVG bounding constraints.
    - **Tab 3 (Vehicle Comparison)**: Enables side-by-side multi-year cost trajectory comparison between two vehicles (Car A vs Car B) via a Billboard.js line chart ($X = \text{Years } 1..10, Y = \text{Total Cost } €$). Integrates an interactive annual mileage slider styled with **noUiSlider** (default 10,000 km) that dynamically recalculates trajectories on the client in real-time. Detects break-even year when curves intersect.
+   - **Decoupled Fuel & Energy Economics**:
+     - Fuel type (`ELECTRIC`, `DIESEL`, `SUPER_E10`, etc.) is inferred **strictly from recorded refuelings** (`refueling.getFuelType()`), never guessed by car or model names.
+     - Decouples unit economics: $\text{Fuel Cost per km} = \frac{\text{Weighted Avg Consumption}}{100} \times \text{Weighted Avg Price per Unit}$ ($€/L$ or $€/kWh$, $L/100km$ or $kWh/100km$).
+     - Renders a dedicated side-by-side fuel efficiency comparison card dynamically syncing annual fuel spend to the distance slider.
 4. **Security & MCP Integration**:
    - Whitelisted `/car-expenses` and `/car-expenses/**` in `SecurityConfig`.
    - Added MCP tools in `McpVehicleTools`: `getCarExpenses`, `logCarExpense`, and `updateVehicleLifecycleParameters`.
@@ -1121,6 +1125,7 @@ Vehicle tracking in SLM previously captured refueling events (`Refueling`) and v
 ### Consequences & Trade-offs
 - **Benefits**:
   - Full transparency over total mobility costs and realistic cost per kilometer.
+  - Accurately captures dramatic operational cost differences between electric vehicles and combustion engines.
   - Interactive comparison tool enables data-driven vehicle acquisition decisions (e.g. evaluating whether lower running costs of an EV offset a higher purchase price).
   - Native integration with standard Spritmonitor categories ensures future CSV import compatibility.
 - **Constraints**:

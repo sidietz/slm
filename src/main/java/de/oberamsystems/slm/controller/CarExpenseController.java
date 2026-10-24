@@ -32,6 +32,7 @@ import de.oberamsystems.slm.model.CarExpense;
 import de.oberamsystems.slm.model.CarExpenseRepository;
 import de.oberamsystems.slm.model.CarExpenseType;
 import de.oberamsystems.slm.model.CarRepository;
+import de.oberamsystems.slm.model.FuelType;
 import de.oberamsystems.slm.model.Refueling;
 import de.oberamsystems.slm.model.RefuelingRepository;
 
@@ -324,21 +325,94 @@ public class CarExpenseController {
 			horizonYears = Math.max(1.0, (double) days / 365.25);
 		}
 
-		// Historical refuelings to find variable fuel cost per km
-		List<Refueling> refuelings = refuelingRepository.findByCarIdOrderByFuelingDateAsc(car.getId());
-		double totalFuelCost = 0.0;
-		double fuelDist = 0.0;
-		for (Refueling r : refuelings) {
-			if (r.getTotalCost() != null) {
-				totalFuelCost += r.getTotalCost().doubleValue();
+		// 1. Refuelings analysis: fuel type is strictly inferred from recorded refuelings, NEVER by vehicle name
+		List<Refueling> refuelings = (car.getId() != null)
+				? refuelingRepository.findByCarIdOrderByFuelingDateAsc(car.getId())
+				: List.of();
+
+		FuelType dominantFuelType = null;
+		String fuelUnit = "L";
+		double avgConsumption = 0.0;
+		double avgPricePerUnit = 0.0;
+		double variableFuelCostPerKm = 0.0;
+		boolean hasRefuelings = false;
+
+		if (!refuelings.isEmpty()) {
+			hasRefuelings = true;
+			Map<FuelType, Integer> fuelTypeCounts = new HashMap<>();
+			double totalCostSum = 0.0;
+			double totalUnitsSum = 0.0;
+			double totalTripDistSum = 0.0;
+			int consumptionCount = 0;
+			double consumptionSum = 0.0;
+
+			for (Refueling r : refuelings) {
+				if (r.getFuelType() != null) {
+					fuelTypeCounts.put(r.getFuelType(), fuelTypeCounts.getOrDefault(r.getFuelType(), 0) + 1);
+				}
+				if (r.getTotalCost() != null) {
+					totalCostSum += r.getTotalCost().doubleValue();
+				}
+				if (r.getLiters() != null) {
+					totalUnitsSum += r.getLiters().doubleValue();
+				}
+				if (r.getTripDistance() != null) {
+					totalTripDistSum += r.getTripDistance().doubleValue();
+				}
+				if (r.getCalculatedConsumption() != null && r.getCalculatedConsumption().doubleValue() > 0) {
+					consumptionSum += r.getCalculatedConsumption().doubleValue();
+					consumptionCount++;
+				}
 			}
-			if (r.getTripDistance() != null) {
-				fuelDist += r.getTripDistance().doubleValue();
+
+			dominantFuelType = fuelTypeCounts.entrySet().stream()
+					.max(Map.Entry.comparingByValue())
+					.map(Map.Entry::getKey)
+					.orElse(FuelType.OTHER);
+
+			boolean isElectric = (dominantFuelType == FuelType.ELECTRIC);
+			fuelUnit = isElectric ? "kWh" : "L";
+
+			// Weighted average price per unit (€/L or €/kWh)
+			if (totalUnitsSum > 0.0) {
+				avgPricePerUnit = totalCostSum / totalUnitsSum;
+			} else {
+				avgPricePerUnit = isElectric ? 0.38 : 1.75;
+			}
+
+			// Weighted average consumption (L/100km or kWh/100km)
+			if (totalTripDistSum >= 50.0) {
+				avgConsumption = (totalUnitsSum / totalTripDistSum) * 100.0;
+			} else if (consumptionCount > 0) {
+				avgConsumption = consumptionSum / consumptionCount;
+			} else {
+				avgConsumption = isElectric ? 18.5 : 7.2;
+			}
+
+			variableFuelCostPerKm = (avgConsumption / 100.0) * avgPricePerUnit;
+		} else {
+			// No refuelings recorded: strictly do NOT guess fuel type by vehicle name
+			if (car.getPricePer100km() != null && car.getPricePer100km() > 0) {
+				variableFuelCostPerKm = car.getPricePer100km() / 100.0;
+				avgConsumption = 0.0;
+				avgPricePerUnit = 0.0;
+				dominantFuelType = FuelType.OTHER;
+				fuelUnit = "L";
+			} else {
+				// Standard fleet fallback
+				dominantFuelType = FuelType.OTHER;
+				fuelUnit = "L";
+				avgConsumption = 7.2;
+				avgPricePerUnit = 1.75;
+				variableFuelCostPerKm = (7.2 / 100.0) * 1.75;
 			}
 		}
-		double variableFuelCostPerKm = (fuelDist > 100.0) ? (totalFuelCost / fuelDist) : 0.08; // default 8c/km
 
-		// Operating expenses analysis
+		double fuelCostPer100Km = Math.round(variableFuelCostPerKm * 100.0 * 100.0) / 100.0;
+		avgConsumption = Math.round(avgConsumption * 100.0) / 100.0;
+		avgPricePerUnit = Math.round(avgPricePerUnit * 1000.0) / 1000.0;
+
+		// 2. Operating expenses analysis
 		List<CarExpense> expenses = expenseRepository.findByCarIdOrderByExpenseDateAsc(car.getId());
 		double annualFixedCosts = 0.0;
 		double variableExpenseCostPerKm = 0.0;
@@ -380,7 +454,9 @@ public class CarExpenseController {
 			annualFixedCosts = 600.0; // default standard insurance + tax
 		}
 
-		return new CarCoefficients(purchasePrice, residualValue, horizonYears, totalVariableCostPerKm, annualFixedCosts, annualCredits);
+		return new CarCoefficients(purchasePrice, residualValue, horizonYears, totalVariableCostPerKm, annualFixedCosts,
+				annualCredits, dominantFuelType, fuelUnit, avgConsumption, avgPricePerUnit, variableFuelCostPerKm,
+				fuelCostPer100Km, variableExpenseCostPerKm, hasRefuelings);
 	}
 
 	private Double calculateBreakEven(CarCoefficients a, CarCoefficients b, int annualDistance) {
@@ -418,15 +494,40 @@ public class CarExpenseController {
 		private final double variableCostPerKm;
 		private final double fixedCostPerYear;
 		private final double annualCredits;
+		private final FuelType fuelType;
+		private final String fuelUnit;
+		private final double avgConsumption;
+		private final double avgPricePerUnit;
+		private final double fuelCostPerKm;
+		private final double fuelCostPer100Km;
+		private final double maintenanceCostPerKm;
+		private final boolean hasRefuelings;
 
 		public CarCoefficients(double purchasePrice, double residualValue, double horizonYears,
 							   double variableCostPerKm, double fixedCostPerYear, double annualCredits) {
+			this(purchasePrice, residualValue, horizonYears, variableCostPerKm, fixedCostPerYear, annualCredits,
+					FuelType.OTHER, "L", 7.2, 1.75, 0.126, 12.6, 0.03, false);
+		}
+
+		public CarCoefficients(double purchasePrice, double residualValue, double horizonYears,
+							   double variableCostPerKm, double fixedCostPerYear, double annualCredits,
+							   FuelType fuelType, String fuelUnit, double avgConsumption, double avgPricePerUnit,
+							   double fuelCostPerKm, double fuelCostPer100Km, double maintenanceCostPerKm,
+							   boolean hasRefuelings) {
 			this.purchasePrice = purchasePrice;
 			this.residualValue = residualValue;
 			this.horizonYears = Math.max(1.0, horizonYears);
 			this.variableCostPerKm = variableCostPerKm;
 			this.fixedCostPerYear = fixedCostPerYear;
 			this.annualCredits = annualCredits;
+			this.fuelType = fuelType != null ? fuelType : FuelType.OTHER;
+			this.fuelUnit = fuelUnit != null ? fuelUnit : "L";
+			this.avgConsumption = avgConsumption;
+			this.avgPricePerUnit = avgPricePerUnit;
+			this.fuelCostPerKm = fuelCostPerKm;
+			this.fuelCostPer100Km = fuelCostPer100Km;
+			this.maintenanceCostPerKm = maintenanceCostPerKm;
+			this.hasRefuelings = hasRefuelings;
 		}
 
 		public double calculateTotalCost(int year, int annualDistanceKm) {
@@ -464,6 +565,38 @@ public class CarExpenseController {
 
 		public double getAnnualCredits() {
 			return annualCredits;
+		}
+
+		public FuelType getFuelType() {
+			return fuelType;
+		}
+
+		public String getFuelUnit() {
+			return fuelUnit;
+		}
+
+		public double getAvgConsumption() {
+			return avgConsumption;
+		}
+
+		public double getAvgPricePerUnit() {
+			return avgPricePerUnit;
+		}
+
+		public double getFuelCostPerKm() {
+			return fuelCostPerKm;
+		}
+
+		public double getFuelCostPer100Km() {
+			return fuelCostPer100Km;
+		}
+
+		public double getMaintenanceCostPerKm() {
+			return maintenanceCostPerKm;
+		}
+
+		public boolean isHasRefuelings() {
+			return hasRefuelings;
 		}
 	}
 }

@@ -107,4 +107,32 @@ public class CarExpenseModelTest {
 		double year6 = coeff.calculateTotalCost(6, 10000);
 		assertEquals(29000.0, year6, 0.01);
 	}
+
+	@Test
+	public void testCarCoefficientsFuelDecouplingElectricVsCombustion() {
+		// Electric EV: 18.5 kWh/100km @ 0.36 €/kWh -> 0.0666 €/km (6.66 €/100km)
+		CarCoefficients electricCoeff = new CarCoefficients(50000.0, 25000.0, 5.0,
+				0.0966, 600.0, 250.0, FuelType.ELECTRIC, "kWh", 18.5, 0.36, 0.0666, 6.66, 0.03, true);
+
+		assertEquals(FuelType.ELECTRIC, electricCoeff.getFuelType());
+		assertEquals("kWh", electricCoeff.getFuelUnit());
+		assertEquals(18.5, electricCoeff.getAvgConsumption());
+		assertEquals(0.36, electricCoeff.getAvgPricePerUnit());
+		assertEquals(0.0666, electricCoeff.getFuelCostPerKm(), 0.0001);
+		assertEquals(6.66, electricCoeff.getFuelCostPer100Km(), 0.01);
+		assertEquals(0.03, electricCoeff.getMaintenanceCostPerKm(), 0.0001);
+		assertTrue(electricCoeff.isHasRefuelings());
+
+		// Combustion (Petrol): 7.5 L/100km @ 1.76 €/L -> 0.132 €/km (13.20 €/100km)
+		CarCoefficients petrolCoeff = new CarCoefficients(40000.0, 18000.0, 5.0,
+				0.162, 500.0, 0.0, FuelType.SUPER_E10, "L", 7.5, 1.76, 0.132, 13.20, 0.03, true);
+
+		assertEquals(FuelType.SUPER_E10, petrolCoeff.getFuelType());
+		assertEquals("L", petrolCoeff.getFuelUnit());
+		assertEquals(7.5, petrolCoeff.getAvgConsumption());
+		assertEquals(1.76, petrolCoeff.getAvgPricePerUnit());
+		assertEquals(0.132, petrolCoeff.getFuelCostPerKm(), 0.0001);
+		assertEquals(13.20, petrolCoeff.getFuelCostPer100Km(), 0.01);
+		assertTrue(petrolCoeff.isHasRefuelings());
+	}
 }

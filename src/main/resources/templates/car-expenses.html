@@ -384,6 +384,90 @@
                         </div>
                     </div>
 
+                    <!-- Fuel & Energy Efficiency Comparison (Decoupled Consumption & Price) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-6">
+                            <div class="card slm-card border-0 shadow-sm p-3 bg-light h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i th:class="${coeffA.fuelType.displayName.contains('Electric') ? 'bi bi-lightning-charge-fill text-info fs-5' : 'bi bi-fuel-pump-fill text-primary fs-5'}"></i>
+                                        <h6 class="mb-0 fw-bold text-primary" th:text="${selectedCarA != null ? selectedCarA.name : 'Car A'}">Car A</h6>
+                                    </div>
+                                    <span class="badge"
+                                          th:classappend="${coeffA.fuelType.displayName.contains('Electric') ? 'bg-info-subtle text-info' : 'bg-primary-subtle text-primary'}"
+                                          th:text="${coeffA.fuelType.displayName}">Fuel Type</span>
+                                </div>
+                                <div class="row g-2 text-center my-1">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <span class="text-muted d-block small">Avg. Consumption</span>
+                                            <strong class="text-dark font-monospace" th:text="${coeffA.avgConsumption} + ' ' + ${coeffA.fuelUnit} + '/100km'">0</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <span class="text-muted d-block small">Avg. Price / Unit</span>
+                                            <strong class="text-dark font-monospace" th:text="${coeffA.avgPricePerUnit} + ' €/' + ${coeffA.fuelUnit}">0</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <span class="text-muted d-block small">Fuel / 100 km</span>
+                                            <strong class="text-primary font-monospace" th:text="${coeffA.fuelCostPer100Km} + ' €'">0</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center text-muted small mt-2">
+                                    <span>Annual Fuel/Energy Spend (<span class="cardADistDisplay" th:text="${annualDistanceKm}">10,000</span> km):</span>
+                                    <strong class="text-dark font-monospace" id="annualFuelSpendA">—</strong>
+                                </div>
+                                <div th:if="${!coeffA.hasRefuelings}" class="small text-warning mt-1">
+                                    <i class="bi bi-info-circle me-1"></i>No refuelings logged — using baseline rate
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card slm-card border-0 shadow-sm p-3 bg-light h-100">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i th:class="${coeffB.fuelType.displayName.contains('Electric') ? 'bi bi-lightning-charge-fill text-info fs-5' : 'bi bi-fuel-pump-fill text-danger fs-5'}"></i>
+                                        <h6 class="mb-0 fw-bold text-danger" th:text="${selectedCarB != null ? selectedCarB.name : 'Car B'}">Car B</h6>
+                                    </div>
+                                    <span class="badge"
+                                          th:classappend="${coeffB.fuelType.displayName.contains('Electric') ? 'bg-info-subtle text-info' : 'bg-danger-subtle text-danger'}"
+                                          th:text="${coeffB.fuelType.displayName}">Fuel Type</span>
+                                </div>
+                                <div class="row g-2 text-center my-1">
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <span class="text-muted d-block small">Avg. Consumption</span>
+                                            <strong class="text-dark font-monospace" th:text="${coeffB.avgConsumption} + ' ' + ${coeffB.fuelUnit} + '/100km'">0</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <span class="text-muted d-block small">Avg. Price / Unit</span>
+                                            <strong class="text-dark font-monospace" th:text="${coeffB.avgPricePerUnit} + ' €/' + ${coeffB.fuelUnit}">0</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="p-2 bg-white rounded border">
+                                            <span class="text-muted d-block small">Fuel / 100 km</span>
+                                            <strong class="text-danger font-monospace" th:text="${coeffB.fuelCostPer100Km} + ' €'">0</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center text-muted small mt-2">
+                                    <span>Annual Fuel/Energy Spend (<span class="cardBDistDisplay" th:text="${annualDistanceKm}">10,000</span> km):</span>
+                                    <strong class="text-dark font-monospace" id="annualFuelSpendB">—</strong>
+                                </div>
+                                <div th:if="${!coeffB.hasRefuelings}" class="small text-warning mt-1">
+                                    <i class="bi bi-info-circle me-1"></i>No refuelings logged — using baseline rate
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Comparison Line Chart -->
                     <div class="card slm-table-card shadow-sm border-0 p-3 mb-4">
                         <h6 class="mb-3 fw-bold text-dark"><i class="bi bi-graph-up me-2 text-primary"></i>Cumulative Total Cost over Ownership Years (€)</h6>
@@ -522,27 +606,51 @@
         const realizedDepreciation = /*[[${realizedDepreciation != null ? realizedDepreciation : 0}]]*/ 0;
         const netOperatingExpenses = /*[[${netOperatingExpenses != null ? netOperatingExpenses : 0}]]*/ 0;
 
-        const donutElement = document.getElementById('tcoDonutChart');
-        if (donutElement && (totalFuelCost > 0 || realizedDepreciation > 0 || netOperatingExpenses > 0)) {
-            bb.generate({
-                bindto: "#tcoDonutChart",
-                data: {
-                    columns: [
-                        ["Fuel & Energy", totalFuelCost],
-                        ["Depreciation", realizedDepreciation],
-                        ["Operating Expenses", netOperatingExpenses]
-                    ],
-                    type: "donut",
-                    colors: {
-                        "Fuel & Energy": "#0dcaf0",
-                        "Depreciation": "#6c757d",
-                        "Operating Expenses": "#ffc107"
+        let tcoChart = null;
+        function renderTcoDonutChart() {
+            const donutElement = document.getElementById('tcoDonutChart');
+            if (!donutElement) return;
+
+            if (totalFuelCost <= 0 && realizedDepreciation <= 0 && netOperatingExpenses <= 0) {
+                donutElement.innerHTML = `
+                    <div class="text-center text-muted p-4 my-auto">
+                        <i class="bi bi-pie-chart fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                        <span class="fw-semibold">No expense or fuel records logged yet for this vehicle</span>
+                    </div>`;
+                return;
+            }
+
+            if (!tcoChart) {
+                tcoChart = bb.generate({
+                    bindto: "#tcoDonutChart",
+                    size: {
+                        height: 260
+                    },
+                    data: {
+                        columns: [
+                            ["Fuel & Energy", totalFuelCost],
+                            ["Depreciation", realizedDepreciation],
+                            ["Operating Expenses", netOperatingExpenses]
+                        ],
+                        type: "donut",
+                        colors: {
+                            "Fuel & Energy": "#0dcaf0",
+                            "Depreciation": "#6c757d",
+                            "Operating Expenses": "#ffc107"
+                        }
+                    },
+                    donut: {
+                        title: "TCO Split",
+                        label: {
+                            format: function(value, ratio, id) {
+                                return (ratio * 100).toFixed(1) + "%";
+                            }
+                        }
                     }
-                },
-                donut: {
-                    title: "TCO Split"
-                }
-            });
+                });
+            } else {
+                tcoChart.resize();
+            }
         }
 
         // TAB 3: Comparison with noUiSlider
@@ -557,6 +665,7 @@
             residualValue: /*[[${coeffA != null ? coeffA.residualValue : 0}]]*/ 0,
             horizonYears: /*[[${coeffA != null ? coeffA.horizonYears : 5}]]*/ 5,
             variableCostPerKm: /*[[${coeffA != null ? coeffA.variableCostPerKm : 0.08}]]*/ 0.08,
+            fuelCostPerKm: /*[[${coeffA != null ? coeffA.fuelCostPerKm : 0.05}]]*/ 0.05,
             fixedCostPerYear: /*[[${coeffA != null ? coeffA.fixedCostPerYear : 600}]]*/ 600,
             annualCredits: /*[[${coeffA != null ? coeffA.annualCredits : 0}]]*/ 0
         };
@@ -567,6 +676,7 @@
             residualValue: /*[[${coeffB != null ? coeffB.residualValue : 0}]]*/ 0,
             horizonYears: /*[[${coeffB != null ? coeffB.horizonYears : 5}]]*/ 5,
             variableCostPerKm: /*[[${coeffB != null ? coeffB.variableCostPerKm : 0.08}]]*/ 0.08,
+            fuelCostPerKm: /*[[${coeffB != null ? coeffB.fuelCostPerKm : 0.05}]]*/ 0.05,
             fixedCostPerYear: /*[[${coeffB != null ? coeffB.fixedCostPerYear : 600}]]*/ 600,
             annualCredits: /*[[${coeffB != null ? coeffB.annualCredits : 0}]]*/ 0
         };
@@ -602,6 +712,16 @@
             if (inputElem) {
                 inputElem.value = annualDist;
             }
+
+            // Update Fuel Spend in Efficiency Cards
+            const fuelSpendA = Math.round(annualDist * coeffA.fuelCostPerKm);
+            const fuelSpendB = Math.round(annualDist * coeffB.fuelCostPerKm);
+            const elFuelA = document.getElementById('annualFuelSpendA');
+            const elFuelB = document.getElementById('annualFuelSpendB');
+            if (elFuelA) elFuelA.innerText = fuelSpendA.toLocaleString() + ' €/year';
+            if (elFuelB) elFuelB.innerText = fuelSpendB.toLocaleString() + ' €/year';
+            document.querySelectorAll('.cardADistDisplay').forEach(el => el.innerText = annualDist.toLocaleString());
+            document.querySelectorAll('.cardBDistDisplay').forEach(el => el.innerText = annualDist.toLocaleString());
 
             const { years, dataA, dataB } = getChartData(annualDist);
 
@@ -734,7 +854,14 @@
             }
         };
 
-        // If comparison tab active on initial load, ensure chart rendered
+        // Tab Listeners for proper Billboard.js resize
+        const analyticsTabBtn = document.getElementById('tab-analytics-btn');
+        if (analyticsTabBtn) {
+            analyticsTabBtn.addEventListener('shown.bs.tab', function () {
+                renderTcoDonutChart();
+            });
+        }
+
         const compTabBtn = document.getElementById('tab-comparison-btn');
         if (compTabBtn) {
             compTabBtn.addEventListener('shown.bs.tab', function () {
@@ -744,6 +871,14 @@
                     updateComparisonView(currentDist);
                 }
             });
+        }
+
+        // Render on initial page load if currentTab is already ANALYTICS or COMPARISON
+        const currentTab = /*[[${currentTab}]]*/ 'LOG';
+        if (currentTab === 'ANALYTICS') {
+            renderTcoDonutChart();
+        } else if (currentTab === 'COMPARISON') {
+            updateComparisonView(currentDist);
         }
     });
     /*]]>*/

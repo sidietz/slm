@@ -31,12 +31,12 @@ public class Car {
 	@Column(name = "manufacturing_date", columnDefinition = "DATE")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate manufacturingDate;
-	private double purchasePrice;
-	private double sellPrice;
-	private long purchaseKilometers;
-	private long sellKilometers;
+	private Double purchasePrice;
+	private Double sellPrice;
+	private Long purchaseKilometers;
+	private Long sellKilometers;
 	@Column(name = "price_per_100_km")
-	private double pricePer100km;
+	private Double pricePer100km;
 	@Column(name = "target_sell_date", columnDefinition = "DATE")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate targetSellDate;
@@ -48,8 +48,8 @@ public class Car {
 
 	public Car(Long id, String vin, String name, String modelName, String keyNumber, Manufacturer manufacturer,
 			Vendor vendor, LocalDate purchaseDate, LocalDate approvalDate, LocalDate manufacturingDate,
-			double purchasePrice, double sellPrice, long purchaseKilometers, long sellKilometers,
-			double pricePer100km) {
+			Double purchasePrice, Double sellPrice, Long purchaseKilometers, Long sellKilometers,
+			Double pricePer100km) {
 		super();
 		this.id = id;
 		this.vin = vin;
@@ -66,6 +66,15 @@ public class Car {
 		this.purchaseKilometers = purchaseKilometers;
 		this.sellKilometers = sellKilometers;
 		this.pricePer100km = pricePer100km;
+	}
+
+	public Car(Long id, String vin, String name, String modelName, String keyNumber, Manufacturer manufacturer,
+			Vendor vendor, LocalDate purchaseDate, LocalDate approvalDate, LocalDate manufacturingDate,
+			double purchasePrice, double sellPrice, long purchaseKilometers, long sellKilometers,
+			double pricePer100km) {
+		this(id, vin, name, modelName, keyNumber, manufacturer, vendor, purchaseDate, approvalDate, manufacturingDate,
+				Double.valueOf(purchasePrice), Double.valueOf(sellPrice), Long.valueOf(purchaseKilometers),
+				Long.valueOf(sellKilometers), Double.valueOf(pricePer100km));
 	}
 
 	public String getVin() {
@@ -140,40 +149,60 @@ public class Car {
 		this.manufacturingDate = manufacturingDate;
 	}
 
-	public double getPurchasePrice() {
-		return purchasePrice;
+	public Double getPurchasePrice() {
+		return purchasePrice != null ? purchasePrice : 0.0;
+	}
+
+	public void setPurchasePrice(Double purchasePrice) {
+		this.purchasePrice = purchasePrice;
 	}
 
 	public void setPurchasePrice(double purchasePrice) {
 		this.purchasePrice = purchasePrice;
 	}
 
-	public double getSellPrice() {
-		return sellPrice;
+	public Double getSellPrice() {
+		return sellPrice != null ? sellPrice : 0.0;
+	}
+
+	public void setSellPrice(Double sellPrice) {
+		this.sellPrice = sellPrice;
 	}
 
 	public void setSellPrice(double sellPrice) {
 		this.sellPrice = sellPrice;
 	}
 
-	public long getPurchaseKilometers() {
-		return purchaseKilometers;
+	public Long getPurchaseKilometers() {
+		return purchaseKilometers != null ? purchaseKilometers : 0L;
+	}
+
+	public void setPurchaseKilometers(Long purchaseKilometers) {
+		this.purchaseKilometers = purchaseKilometers;
 	}
 
 	public void setPurchaseKilometers(long purchaseKilometers) {
 		this.purchaseKilometers = purchaseKilometers;
 	}
 
-	public long getSellKilometers() {
-		return sellKilometers;
+	public Long getSellKilometers() {
+		return sellKilometers != null ? sellKilometers : 0L;
+	}
+
+	public void setSellKilometers(Long sellKilometers) {
+		this.sellKilometers = sellKilometers;
 	}
 
 	public void setSellKilometers(long sellKilometers) {
 		this.sellKilometers = sellKilometers;
 	}
 
-	public double getPricePer100km() {
-		return pricePer100km;
+	public Double getPricePer100km() {
+		return pricePer100km != null ? pricePer100km : 0.0;
+	}
+
+	public void setPricePer100km(Double pricePer100km) {
+		this.pricePer100km = pricePer100km;
 	}
 
 	public void setPricePer100km(double pricePer100km) {
@@ -201,6 +230,10 @@ public class Car {
 	}
 
 	public void setResidualValue(Double residualValue) {
+		this.residualValue = residualValue;
+	}
+
+	public void setResidualValue(double residualValue) {
 		this.residualValue = residualValue;
 	}
 }

@@ -11,6 +11,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -34,8 +35,11 @@ import de.oberamsystems.slm.model.CarExpense;
 import de.oberamsystems.slm.model.CarExpenseRepository;
 import de.oberamsystems.slm.model.CarExpenseType;
 import de.oberamsystems.slm.model.CarRepository;
+import de.oberamsystems.slm.model.FuelType;
 import de.oberamsystems.slm.model.Manufacturer;
 import de.oberamsystems.slm.model.ManufacturerRepository;
+import de.oberamsystems.slm.model.Refueling;
+import de.oberamsystems.slm.model.RefuelingRepository;
 import de.oberamsystems.slm.model.Vendor;
 import de.oberamsystems.slm.model.VendorRepository;
 
@@ -56,6 +60,9 @@ public class CarExpenseIT extends AbstractIntegrationTest {
 
 	@Autowired
 	private VendorRepository vendorRepository;
+
+	@Autowired
+	private RefuelingRepository refuelingRepository;
 
 	private MockMvc mockMvc;
 	private Car carA;
@@ -85,7 +92,7 @@ public class CarExpenseIT extends AbstractIntegrationTest {
 		carA.setPurchasePrice(55000.0);
 		carA.setResidualValue(28000.0);
 		carA.setTargetSellDate(LocalDate.now().plusYears(3));
-		carA.setPurchaseKilometers(10000);
+		carA.setPurchaseKilometers(10000L);
 		carA = carRepository.save(carA);
 
 		carB = new Car();
@@ -98,7 +105,7 @@ public class CarExpenseIT extends AbstractIntegrationTest {
 		carB.setPurchasePrice(42000.0);
 		carB.setResidualValue(18000.0);
 		carB.setTargetSellDate(LocalDate.now().plusYears(3));
-		carB.setPurchaseKilometers(15000);
+		carB.setPurchaseKilometers(15000L);
 		carB = carRepository.save(carB);
 	}
 
@@ -225,5 +232,41 @@ public class CarExpenseIT extends AbstractIntegrationTest {
 				.andExpect(model().attributeExists("coeffB"))
 				.andExpect(model().attribute("trajectoryA", hasSize(10)))
 				.andExpect(model().attribute("trajectoryB", hasSize(10)));
+	}
+
+	@Test
+	public void testComparisonWithElectricAndCombustionRefuelings() throws Exception {
+		// Log Electric charging for carA
+		Refueling rElec = new Refueling();
+		rElec.setCar(carA);
+		rElec.setFuelType(FuelType.ELECTRIC);
+		rElec.setFuelingDate(java.time.LocalDateTime.now().minusDays(5));
+		rElec.setLiters(new BigDecimal("75.00")); // 75 kWh
+		rElec.setTotalCost(new BigDecimal("27.00")); // 0.36 €/kWh
+		rElec.setTripDistance(new BigDecimal("400.00")); // 18.75 kWh/100km
+		rElec.setOdometer(new BigDecimal("12000.00"));
+		refuelingRepository.save(rElec);
+
+		// Log Diesel refueling for carB
+		Refueling rDiesel = new Refueling();
+		rDiesel.setCar(carB);
+		rDiesel.setFuelType(FuelType.DIESEL);
+		rDiesel.setFuelingDate(java.time.LocalDateTime.now().minusDays(3));
+		rDiesel.setLiters(new BigDecimal("50.00")); // 50 L
+		rDiesel.setTotalCost(new BigDecimal("82.50")); // 1.65 €/L
+		rDiesel.setTripDistance(new BigDecimal("800.00")); // 6.25 L/100km
+		rDiesel.setOdometer(new BigDecimal("17000.00"));
+		refuelingRepository.save(rDiesel);
+
+		mockMvc.perform(get("/car-expenses")
+						.param("tab", "COMPARISON")
+						.param("carAId", carA.getId().toString())
+						.param("carBId", carB.getId().toString()))
+				.andExpect(status().isOk())
+				.andExpect(view().name("car-expenses"))
+				.andExpect(model().attributeExists("coeffA", "coeffB"))
+				.andExpect(content().string(containsString("kWh")))
+				.andExpect(content().string(containsString("Electric (EV)")))
+				.andExpect(content().string(containsString("Diesel")));
 	}
 }
