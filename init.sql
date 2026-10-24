@@ -155,8 +155,8 @@ CREATE TABLE session(
     id UUID PRIMARY KEY DEFAULT uuidv7(),
     session_type TEXT NOT NULL,
     status TEXT NOT NULL DEFAULT 'COMPLETED',
-    starttime TIMESTAMP NOT NULL,
-    endtime TIMESTAMP,
+    starttime TIMESTAMPTZ NOT NULL,
+    endtime TIMESTAMPTZ,
     break_duration INTERVAL NOT NULL DEFAULT '0 seconds',
     duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED,
     net_duration INTERVAL GENERATED ALWAYS AS (endtime - starttime - break_duration) STORED,
@@ -184,20 +184,20 @@ CREATE INDEX IF NOT EXISTS idx_human_event_secondary_human ON human_event(second
 CREATE INDEX IF NOT EXISTS idx_human_event_type ON human_event(event_type);
 CREATE TABLE address(id BIGSERIAL PRIMARY KEY, human_id BIGSERIAL NOT NULL REFERENCES human(id), street TEXT, streetnumber INTEGER, plz CHAR(5), place TEXT, country TEXT);
 
-CREATE TABLE calendar_event(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
-CREATE TABLE sleeptime(id BIGSERIAL PRIMARY KEY, gotobed TIMESTAMP, standup TIMESTAMP, sleeptime INTERVAL GENERATED ALWAYS AS (standup - gotobed) STORED);
+CREATE TABLE calendar_event(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, starttime TIMESTAMPTZ, endtime TIMESTAMPTZ, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE sleeptime(id BIGSERIAL PRIMARY KEY, gotobed TIMESTAMPTZ, standup TIMESTAMPTZ, sleeptime INTERVAL GENERATED ALWAYS AS (standup - gotobed) STORED);
 
 CREATE TABLE train_station(id BIGSERIAL PRIMARY KEY, ds100 TEXT, name TEXT);
-CREATE TABLE train_trip(id BIGSERIAL PRIMARY KEY, line TEXT, origin_id BIGSERIAL NOT NULL REFERENCES train_station(id), destination_id BIGSERIAL NOT NULL REFERENCES train_station(id), starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE train_trip(id BIGSERIAL PRIMARY KEY, line TEXT, origin_id BIGSERIAL NOT NULL REFERENCES train_station(id), destination_id BIGSERIAL NOT NULL REFERENCES train_station(id), starttime TIMESTAMPTZ, endtime TIMESTAMPTZ, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 CREATE TABLE activity_type(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
-CREATE TABLE activity(id BIGSERIAL PRIMARY KEY, type BIGINT NOT NULL REFERENCES activity_type(id), title TEXT, location TEXT, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE activity(id BIGSERIAL PRIMARY KEY, type BIGINT NOT NULL REFERENCES activity_type(id), title TEXT, location TEXT, starttime TIMESTAMPTZ, endtime TIMESTAMPTZ, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 CREATE TABLE vendor(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE);
 CREATE TABLE purchase(id BIGSERIAL PRIMARY KEY, title TEXT, vendor BIGSERIAL NOT NULL REFERENCES vendor(id), price REAL, purchase_date DATE);
 
 CREATE TABLE habit(id BIGSERIAL PRIMARY KEY, name TEXT UNIQUE, description TEXT);
-CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFERENCES habit(id), last_done TIMESTAMP);
+CREATE TABLE habit_entry(id BIGSERIAL PRIMARY KEY, habit BIGINT NOT NULL REFERENCES habit(id), last_done TIMESTAMPTZ);
 
 CREATE TABLE gratitude(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
 CREATE TABLE diary(id BIGSERIAL PRIMARY KEY, created_at DATE, description TEXT);
@@ -208,7 +208,7 @@ CREATE TABLE line_station(line_id BIGINT NOT NULL REFERENCES trainline(id), stat
 
 CREATE TABLE train_trip2(id BIGSERIAL PRIMARY KEY, line_id BIGSERIAL NOT NULL REFERENCES trainline(id),
 origin_id BIGSERIAL NOT NULL REFERENCES trainstation2(id), destination_id BIGSERIAL NOT NULL REFERENCES trainstation2(id),
-starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+starttime TIMESTAMPTZ, endtime TIMESTAMPTZ, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 CREATE TABLE mood(id BIGSERIAL PRIMARY KEY, tracked_at DATE UNIQUE NOT NULL, happiness INTEGER, impetus INTEGER, stress INTEGER,
 CHECK (happiness BETWEEN 1 AND 10), CHECK (impetus BETWEEN 1 AND 10), CHECK (stress BETWEEN 1 AND 10));
@@ -240,11 +240,11 @@ BIGINT NOT NULL REFERENCES manufacturer(id));
 
 CREATE TABLE route(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, start_point BIGINT NOT NULL REFERENCES point(id), end_point BIGINT NOT NULL REFERENCES point(id), air_distance DOUBLE PRECISION, drive_distance REAL NOT NULL);
 CREATE TABLE car(id BIGSERIAL PRIMARY KEY, vin TEXT, name TEXT, model_name TEXT, key_number TEXT, manufacturer_id BIGINT NOT NULL REFERENCES manufacturer(id), vendor_id BIGINT NOT NULL REFERENCES vendor(id), purchase_date DATE, approval_date DATE, manufacturing_date DATE, purchase_price REAL, sell_price REAL, purchase_kilometers BIGINT, sell_kilometers BIGINT, price_per_100_km REAL, target_sell_date DATE, residual_value NUMERIC(10, 2));
-CREATE TABLE car_trip(id BIGSERIAL PRIMARY KEY, car_id BIGSERIAL NOT NULL REFERENCES car(id), route_id BIGSERIAL NOT NULL REFERENCES route(id), is_way_back BOOLEAN, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
+CREATE TABLE car_trip(id BIGSERIAL PRIMARY KEY, car_id BIGSERIAL NOT NULL REFERENCES car(id), route_id BIGSERIAL NOT NULL REFERENCES route(id), is_way_back BOOLEAN, starttime TIMESTAMPTZ, endtime TIMESTAMPTZ, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 CREATE TABLE reading_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, book_id BIGINT REFERENCES book(id), start_page_count INTEGER, end_page_count INTEGER, reading_speed REAL);
 
-CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMP);
+CREATE TABLE learning_item(id BIGSERIAL PRIMARY KEY, title TEXT, description TEXT, author TEXT, source source_type, status status_type, progress REAL, start_date DATE, end_date DATE, last_updated TIMESTAMPTZ);
 CREATE TABLE learning_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, learning_item_id BIGINT REFERENCES learning_item(id), units_completed INTEGER);
 
 CREATE TABLE publisher(id BIGSERIAL PRIMARY KEY, name TEXT, hq TEXT, founding_date DATE);
@@ -257,9 +257,9 @@ CREATE TABLE coding_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE
 CREATE TABLE employer(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL);
 CREATE TABLE working_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, employer_id BIGINT REFERENCES employer(id), project TEXT, billable BOOLEAN DEFAULT TRUE, hourly_rate NUMERIC(10, 2), task_category TEXT);
 CREATE TABLE sleep_session(id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, is_nap BOOLEAN DEFAULT FALSE, deep_sleep_duration INTERVAL, rem_sleep_duration INTERVAL, light_sleep_duration INTERVAL, awake_count INTEGER DEFAULT 0);
-CREATE TABLE course (id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, code TEXT, semester TEXT, ects_credits NUMERIC(3, 1), lecturer_id BIGINT REFERENCES human(id) ON DELETE SET NULL, default_room TEXT, meeting_link TEXT, syllabus TEXT, exam_date TIMESTAMP, exam_location TEXT, grade NUMERIC(3, 2), exam_passed BOOLEAN, status status_type DEFAULT 'IN_PROGRESS', created_at TIMESTAMP, last_updated TIMESTAMP);
+CREATE TABLE course (id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, code TEXT, semester TEXT, ects_credits NUMERIC(3, 1), lecturer_id BIGINT REFERENCES human(id) ON DELETE SET NULL, default_room TEXT, meeting_link TEXT, syllabus TEXT, exam_date TIMESTAMPTZ, exam_location TEXT, grade NUMERIC(3, 2), exam_passed BOOLEAN, status status_type DEFAULT 'IN_PROGRESS', created_at TIMESTAMPTZ, last_updated TIMESTAMPTZ);
 CREATE TABLE lecture_session (id UUID PRIMARY KEY REFERENCES session(id) ON DELETE CASCADE, course_id BIGINT REFERENCES course(id) ON DELETE SET NULL, lecture_number INTEGER, topic TEXT, room TEXT, recording_url TEXT, slides_url TEXT, activity_type academic_activity_type NOT NULL DEFAULT 'LECTURE');
-CREATE TABLE lecture_note (id UUID PRIMARY KEY DEFAULT uuidv7(), course_id BIGINT REFERENCES course(id) ON DELETE CASCADE, lecture_session_id UUID REFERENCES lecture_session(id) ON DELETE SET NULL, title TEXT NOT NULL, lecture_number INTEGER, lecture_date DATE, content_markdown TEXT, key_concepts TEXT, summary TEXT, has_homework BOOLEAN DEFAULT FALSE, homework_todo TEXT, exam_relevance_rating INTEGER, created_at TIMESTAMP, last_updated TIMESTAMP);
+CREATE TABLE lecture_note (id UUID PRIMARY KEY DEFAULT uuidv7(), course_id BIGINT REFERENCES course(id) ON DELETE CASCADE, lecture_session_id UUID REFERENCES lecture_session(id) ON DELETE SET NULL, title TEXT NOT NULL, lecture_number INTEGER, lecture_date DATE, content_markdown TEXT, key_concepts TEXT, summary TEXT, has_homework BOOLEAN DEFAULT FALSE, homework_todo TEXT, exam_relevance_rating INTEGER, created_at TIMESTAMPTZ, last_updated TIMESTAMPTZ);
 CREATE INDEX IF NOT EXISTS idx_course_lecturer ON course(lecturer_id);
 CREATE INDEX IF NOT EXISTS idx_course_semester ON course(semester);
 CREATE INDEX IF NOT EXISTS idx_lecture_session_course ON lecture_session(course_id);
@@ -272,7 +272,7 @@ CREATE TABLE contract(id BIGSERIAL PRIMARY KEY, title TEXT, contractor_id BIGINT
 
 CREATE TABLE speciality(id BIGSERIAL PRIMARY KEY, title TEXT UNIQUE);
 CREATE TABLE doctor(id BIGSERIAL PRIMARY KEY, firstname TEXT, lastname TEXT, speciality BIGINT NOT NULL REFERENCES speciality(id), place TEXT, city TEXT, plz TEXT, point_id BIGINT REFERENCES point(id), base_point_id BIGINT REFERENCES point(id), air_distance DOUBLE PRECISION);
-CREATE TABLE appointment(id BIGSERIAL PRIMARY KEY, doctor_id BIGINT NOT NULL REFERENCES doctor(id), title TEXT, location TEXT, departure TIMESTAMP, arrival TIMESTAMP, travel_duration INTERVAL GENERATED ALWAYS AS (arrival - departure) STORED, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, arrival_home TIMESTAMP, complete_duration INTERVAL GENERATED ALWAYS AS (arrival_home - departure) STORED, comment TEXT);
+CREATE TABLE appointment(id BIGSERIAL PRIMARY KEY, doctor_id BIGINT NOT NULL REFERENCES doctor(id), title TEXT, location TEXT, departure TIMESTAMPTZ, arrival TIMESTAMPTZ, travel_duration INTERVAL GENERATED ALWAYS AS (arrival - departure) STORED, starttime TIMESTAMPTZ, endtime TIMESTAMPTZ, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED, arrival_home TIMESTAMPTZ, complete_duration INTERVAL GENERATED ALWAYS AS (arrival_home - departure) STORED, comment TEXT);
 
 CREATE TABLE selfie(id BIGSERIAL PRIMARY KEY, created_at DATE, location TEXT);
 
@@ -371,8 +371,8 @@ EXECUTE FUNCTION update_doctor_air_distances_on_point_change();
 CREATE OR REPLACE FUNCTION check_sleep_session_duration()
 RETURNS TRIGGER AS $$
 DECLARE
-    v_starttime TIMESTAMP;
-    v_endtime TIMESTAMP;
+    v_starttime TIMESTAMPTZ;
+    v_endtime TIMESTAMPTZ;
     v_break INTERVAL;
     v_total INTERVAL;
     v_sum INTERVAL;
@@ -460,7 +460,7 @@ CREATE TABLE station (
     longitude DOUBLE PRECISION,
     point_id BIGINT REFERENCES point(id) ON DELETE SET NULL,
     note TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_station_name ON station(name);
 CREATE INDEX idx_station_country_city ON station(country, city);
@@ -485,7 +485,7 @@ CREATE TABLE charging_point (
     point_identifier TEXT,
     max_power_kw NUMERIC(6, 1) NOT NULL,
     plug_type plug_type NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX idx_charging_point_station ON charging_point(charging_station_id);
 
@@ -495,7 +495,7 @@ CREATE TABLE refueling (
     car_id BIGINT NOT NULL REFERENCES car(id) ON DELETE CASCADE,
     station_id UUID REFERENCES station(id) ON DELETE SET NULL,
     charging_point_id UUID REFERENCES charging_point(id) ON DELETE SET NULL,
-    fueling_date TIMESTAMP NOT NULL,
+    fueling_date TIMESTAMPTZ NOT NULL,
     odometer NUMERIC(10, 2),
     trip_distance NUMERIC(10, 2),
     liters NUMERIC(8, 2) NOT NULL,
@@ -516,7 +516,7 @@ CREATE TABLE refueling (
     board_computer_quantity NUMERIC(8, 2),    -- BC-Spritmenge (Liters)
     board_computer_speed NUMERIC(6, 2),       -- BC-Geschwindigkeit (km/h)
     note TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_refueling_car_date ON refueling(car_id, fueling_date DESC);
@@ -532,7 +532,7 @@ CREATE TABLE car_expense (
     amount NUMERIC(10, 2) NOT NULL,
     title TEXT NOT NULL,
     note TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX idx_car_expense_car_date ON car_expense(car_id, expense_date DESC);

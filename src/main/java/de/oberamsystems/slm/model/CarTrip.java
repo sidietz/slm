@@ -28,9 +28,9 @@ public class CarTrip {
 	@Column(name = "is_way_back")
 	private boolean isWayBack;
 	
-	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
+	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime start;
-	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
+	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)

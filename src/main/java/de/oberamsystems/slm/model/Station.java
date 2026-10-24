@@ -74,7 +74,7 @@ public abstract class Station {
 	@Column(name = "note", columnDefinition = "TEXT")
 	private String note;
 
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
 	public Station() {

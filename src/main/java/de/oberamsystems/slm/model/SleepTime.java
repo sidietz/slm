@@ -23,10 +23,10 @@ public class SleepTime {
 	@GeneratedValue(strategy=GenerationType.IDENTITY)
 	private Long id;
 	
-	@Column(name = "gotobed", columnDefinition = "TIMESTAMP")
+	@Column(name = "gotobed", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime gotobed;
 	
-	@Column(name = "standup", columnDefinition = "TIMESTAMP")
+	@Column(name = "standup", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime getup;
 
 	@Type(PostgreSQLIntervalType.class)

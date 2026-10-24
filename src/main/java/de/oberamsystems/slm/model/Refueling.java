@@ -44,7 +44,7 @@ public class Refueling {
 	@JoinColumn(name = "charging_point_id")
 	private ChargingPoint chargingPoint;
 
-	@Column(name = "fueling_date", nullable = false)
+	@Column(name = "fueling_date", nullable = false, columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime fuelingDate;
 
 	@Column(name = "odometer", precision = 10, scale = 2)
@@ -112,7 +112,7 @@ public class Refueling {
 	@Column(name = "note", columnDefinition = "TEXT")
 	private String note;
 
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
 	public Refueling() {

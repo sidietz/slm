@@ -1136,6 +1136,51 @@ Vehicle tracking in SLM previously captured refueling events (`Refueling`) and v
 - **Constraints**:
   - Requires estimating `residualValue` and `targetSellDate` for prospective vehicles to yield accurate projected trajectories.
 
+---
+
+## ADR 029: Universal PostgreSQL TIMESTAMPTZ Migration & Daylight Saving Time (Europe/Berlin) Integrity
+
+### Status
+Accepted (v0.0.3-rc12)
+
+### Context
+SLM previously used unqualified SQL `TIMESTAMP` (`timestamp without time zone`) across 16 tables and 25 date-time columns. Unqualified timestamps present critical architectural flaws in temporal arithmetic, cross-system integrations, and seasonal transitions:
+1. **Daylight Saving Time (DST) Distortion**: In `Europe/Berlin` (CET/CEST), clocks spring forward 1 hour in March (02:00 -> 03:00) and fall back 1 hour in October (03:00 -> 02:00). Unqualified `TIMESTAMP` differences (`endtime - starttime`) perform purely arithmetic wall-clock subtraction, ignoring DST jumps. A sleep or work session spanning the spring transition from 23:00 to 07:00 was incorrectly computed as 8 hours instead of the physical 7 hours, while the fall transition was computed as 8 hours instead of 9 hours.
+2. **PostgreSQL Generated Columns**: Columns such as `duration`, `net_duration`, `travel_duration`, `complete_duration`, and `sleeptime` are computed at the database level using `GENERATED ALWAYS AS (endtime - starttime) STORED`. With `TIMESTAMP`, generated intervals reflected distorted naive differences.
+3. **Hibernate & Multi-Tier Timezone Ambiguity**: Without explicit timezone binding, JDBC drivers interpret timestamps according to host OS timezone, creating drift across Docker containers, developer environments, and remote databases.
+
+### Decision
+1. **Universal Migration to `TIMESTAMPTZ`**:
+   - Migrated all 16 tables and 25 date-time columns to `TIMESTAMPTZ` (`TIMESTAMP WITH TIME ZONE`) in [`tables.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/tables.sql), [`init.sql`](file:///home/simon/code/eclipse/slm/init.sql), and [`schema-init.sql`](file:///home/simon/code/eclipse/slm/src/test/resources/schema-init.sql).
+   - Tables affected: `session`, `appointment`, `calendar`, `train_trip`, `train_trip2`, `activity`, `sleeptime`, `car_trip`, `learning_item`, `habit_entry`, `course`, `lecture_note`, `refueling`, `station`, `charging_point`, and `car_expense`.
+   - Updated trigger functions (e.g. `check_sleep_session_duration()`) to declare `TIMESTAMPTZ` local variables.
+2. **Daylight Saving Time & Europe/Berlin Default**:
+   - Enforced `Europe/Berlin` as authoritative application and database default time zone:
+     - Spring configuration: `spring.jpa.properties.hibernate.jdbc.time_zone=Europe/Berlin` in `application.properties`.
+     - Application initialization: `TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))` in `SlmApplication.java`.
+     - Container environments: `TZ=Europe/Berlin` and `PGTZ=Europe/Berlin` on both `app` and `db` services in `docker-compose.yml`.
+3. **Atomic Transactional Migration Script (`migration_2026-10-24_2.sql`)**:
+   - Wrapped in atomic `BEGIN; ... COMMIT;`.
+   - Safely handles PostgreSQL's restriction on altering column types used in generated column expressions by dropping dependent generated columns (`duration`, `net_duration`, `travel_duration`, `complete_duration`, `sleeptime`), altering all timestamp columns using `USING col AT TIME ZONE 'Europe/Berlin'`, and restoring generated columns.
+4. **Entity Model & Java Compatibility**:
+   - Maintained `LocalDateTime` on Java entity models while adding `@Column(columnDefinition = "TIMESTAMPTZ")` annotations.
+   - Retaining `LocalDateTime` guarantees zero friction with HTML5 `<input type="datetime-local">`, Spring MVC `@DateTimeFormat`, and Thymeleaf forms while Hibernate's `hibernate.jdbc.time_zone` delegates timezone normalization to PostgreSQL.
+5. **End-to-End Precision Verification**:
+   - Created comprehensive integration test suite [`DateTimePrecisionIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DateTimePrecisionIT.java) verifying:
+     - Spring DST cutover (+1h clock jump) yields exact physical 7h duration for an overnight session.
+     - Fall DST cutover (-1h clock jump) yields exact physical 9h duration for an overnight session.
+     - Generated column durations on `session`, `sleeptime`, and `appointment` reflect UTC-based physical duration.
+     - Exact wall-clock `LocalDateTime` preservation upon round-trip persistence and cache eviction.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Physically accurate time and duration calculations guaranteed at the database level across all DST switches.
+  - Consistent timezone handling across host, Docker, JVM, and database layers.
+  - Zero disruption to existing web controllers and UI templates.
+- **Constraints**:
+  - Legacy PostgreSQL databases must apply `migration_2026-10-24_2.sql` inside a transaction.
+
+
 
 
 

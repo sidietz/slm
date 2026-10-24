@@ -55,10 +55,10 @@ public class LectureNote {
 	@Column(name = "exam_relevance_rating")
 	private Integer examRelevanceRating;
 
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime createdAt;
 
-	@Column(name = "last_updated")
+	@Column(name = "last_updated", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime lastUpdated;
 
 	public LectureNote() {
