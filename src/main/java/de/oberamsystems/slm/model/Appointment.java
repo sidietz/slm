@@ -1,7 +1,7 @@
 package de.oberamsystems.slm.model;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.Generated;
 import org.hibernate.annotations.Type;
@@ -20,23 +20,23 @@ public class Appointment {
 	@JoinColumn(name = "doctor_id", referencedColumnName = "id")
 	private Doctor doctor;
 	@Column(name = "departure", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime departure;
+	private OffsetDateTime departure;
 	@Column(name = "arrival", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime arrival;
+	private OffsetDateTime arrival;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "travel_duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration travelDuration;
 	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime start;
+	private OffsetDateTime start;
 	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime end;
+	private OffsetDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration duration;
 	@Column(name = "arrival_home", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime arrivalHome;
+	private OffsetDateTime arrivalHome;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "complete_duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@Generated(event = { EventType.INSERT, EventType.UPDATE })
@@ -46,8 +46,8 @@ public class Appointment {
 	public Appointment() {
 	}
 	
-	public Appointment(Long id, Doctor doctor, LocalDateTime departure, LocalDateTime arrival, Duration travelDuration,
-			LocalDateTime start, LocalDateTime end, Duration duration, LocalDateTime arrivalHome,
+	public Appointment(Long id, Doctor doctor, OffsetDateTime departure, OffsetDateTime arrival, Duration travelDuration,
+			OffsetDateTime start, OffsetDateTime end, Duration duration, OffsetDateTime arrivalHome,
 			Duration completeDuration, String comment) {
 		super();
 		this.id = id;
@@ -71,19 +71,19 @@ public class Appointment {
 		this.doctor = doctor;
 	}
 
-	public LocalDateTime getDeparture() {
+	public OffsetDateTime getDeparture() {
 		return departure;
 	}
 
-	public void setDeparture(LocalDateTime departure) {
+	public void setDeparture(OffsetDateTime departure) {
 		this.departure = departure;
 	}
 
-	public LocalDateTime getArrival() {
+	public OffsetDateTime getArrival() {
 		return arrival;
 	}
 
-	public void setArrival(LocalDateTime arrival) {
+	public void setArrival(OffsetDateTime arrival) {
 		this.arrival = arrival;
 	}
 
@@ -95,19 +95,19 @@ public class Appointment {
 		this.travelDuration = travelDuration;
 	}
 
-	public LocalDateTime getStart() {
+	public OffsetDateTime getStart() {
 		return start;
 	}
 
-	public void setStart(LocalDateTime start) {
+	public void setStart(OffsetDateTime start) {
 		this.start = start;
 	}
 
-	public LocalDateTime getEnd() {
+	public OffsetDateTime getEnd() {
 		return end;
 	}
 
-	public void setEnd(LocalDateTime end) {
+	public void setEnd(OffsetDateTime end) {
 		this.end = end;
 	}
 
@@ -119,11 +119,11 @@ public class Appointment {
 		this.duration = duration;
 	}
 
-	public LocalDateTime getArrivalHome() {
+	public OffsetDateTime getArrivalHome() {
 		return arrivalHome;
 	}
 
-	public void setArrivalHome(LocalDateTime arrivalHome) {
+	public void setArrivalHome(OffsetDateTime arrivalHome) {
 		this.arrivalHome = arrivalHome;
 	}
 

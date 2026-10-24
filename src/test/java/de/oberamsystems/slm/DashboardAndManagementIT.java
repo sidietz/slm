@@ -10,7 +10,7 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
@@ -85,15 +85,15 @@ public class DashboardAndManagementIT extends AbstractIntegrationTest {
 
         SportSession sport = new SportSession();
         sport.setType(sportType);
-        sport.setStart(LocalDateTime.now().minusHours(2));
-        sport.setEnd(LocalDateTime.now().minusHours(1));
+        sport.setStart(OffsetDateTime.now().minusHours(2));
+        sport.setEnd(OffsetDateTime.now().minusHours(1));
         sport.setBreakDuration(Duration.ZERO);
         sport = sportSessionRepository.saveAndFlush(sport);
 
         // 4. Create MeditationSession
         MeditationSession meditation = new MeditationSession();
-        meditation.setStart(LocalDateTime.now().minusHours(4));
-        meditation.setEnd(LocalDateTime.now().minusHours(3).minusMinutes(40));
+        meditation.setStart(OffsetDateTime.now().minusHours(4));
+        meditation.setEnd(OffsetDateTime.now().minusHours(3).minusMinutes(40));
         meditation.setBreakDuration(Duration.ZERO);
         meditation = meditationSessionRepository.saveAndFlush(meditation);
 
@@ -118,8 +118,8 @@ public class DashboardAndManagementIT extends AbstractIntegrationTest {
         reading.setBook(book);
         reading.setStartPageCount(100);
         reading.setEndPageCount(145);
-        reading.setStart(LocalDateTime.now().minusHours(6));
-        reading.setEnd(LocalDateTime.now().minusHours(5));
+        reading.setStart(OffsetDateTime.now().minusHours(6));
+        reading.setEnd(OffsetDateTime.now().minusHours(5));
         reading.setBreakDuration(Duration.ZERO);
         reading = readingSessionRepository.saveAndFlush(reading);
 

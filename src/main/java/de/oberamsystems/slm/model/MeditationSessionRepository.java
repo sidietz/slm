@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.model;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -12,13 +12,13 @@ public interface MeditationSessionRepository extends JpaRepository<MeditationSes
 
 	public MeditationSession findFirstByOrderByStartDesc();
 
-	List<MeditationSession> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate);
+	List<MeditationSession> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate);
 
-	List<MeditationSession> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate, Sort sort);
+	List<MeditationSession> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate, Sort sort);
 
 	@Query("SELECT MIN(s.start) FROM MeditationSession s")
-	LocalDateTime findMinDate();
+	OffsetDateTime findMinDate();
 
 	@Query("SELECT MAX(s.start) FROM MeditationSession s")
-	LocalDateTime findMaxDate();
+	OffsetDateTime findMaxDate();
 }

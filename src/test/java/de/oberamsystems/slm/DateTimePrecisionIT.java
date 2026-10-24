@@ -1,5 +1,6 @@
 package de.oberamsystems.slm;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.model.*;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.Test;
@@ -8,7 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -52,12 +54,16 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
     @Autowired
     private EntityManager entityManager;
 
+    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
+    }
+
     @Test
     public void testSpringDaylightSavingTimeTransitionDuration() {
         // In Europe/Berlin, on Sunday March 29, 2026, clocks turn forward 1 hour at 02:00 to 03:00.
         // A session spanning from 23:00 CET (2026-03-28) to 07:00 CEST (2026-03-29) is physically 7 hours long.
-        LocalDateTime start = LocalDateTime.of(2026, 3, 28, 23, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 3, 29, 7, 0);
+        OffsetDateTime start = toOffset(2026, 3, 28, 23, 0);
+        OffsetDateTime end = toOffset(2026, 3, 29, 7, 0);
 
         CodingSession session = new CodingSession();
         session.setStart(start);
@@ -80,8 +86,8 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
     public void testFallDaylightSavingTimeTransitionDuration() {
         // In Europe/Berlin, on Sunday October 25, 2026, clocks turn back 1 hour at 03:00 to 02:00.
         // A session spanning from 23:00 CEST (2026-10-24) to 07:00 CET (2026-10-25) is physically 9 hours long.
-        LocalDateTime start = LocalDateTime.of(2026, 10, 24, 23, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 10, 25, 7, 0);
+        OffsetDateTime start = toOffset(2026, 10, 24, 23, 0);
+        OffsetDateTime end = toOffset(2026, 10, 25, 7, 0);
 
         CodingSession session = new CodingSession();
         session.setStart(start);
@@ -104,8 +110,8 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
     public void testSleepTimeDstTransitionDurations() {
         // Spring DST transition in SleepTime table (gotobed -> standup)
         SleepTime springSleep = new SleepTime();
-        springSleep.setGotobed(LocalDateTime.of(2026, 3, 28, 23, 0));
-        springSleep.setGetup(LocalDateTime.of(2026, 3, 29, 7, 0));
+        springSleep.setGotobed(toOffset(2026, 3, 28, 23, 0));
+        springSleep.setGetup(toOffset(2026, 3, 29, 7, 0));
 
         springSleep = sleepTimeRepository.saveAndFlush(springSleep);
         entityManager.refresh(springSleep);
@@ -115,8 +121,8 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
 
         // Fall DST transition in SleepTime table
         SleepTime fallSleep = new SleepTime();
-        fallSleep.setGotobed(LocalDateTime.of(2026, 10, 24, 23, 0));
-        fallSleep.setGetup(LocalDateTime.of(2026, 10, 25, 7, 0));
+        fallSleep.setGotobed(toOffset(2026, 10, 24, 23, 0));
+        fallSleep.setGetup(toOffset(2026, 10, 25, 7, 0));
 
         fallSleep = sleepTimeRepository.saveAndFlush(fallSleep);
         entityManager.refresh(fallSleep);
@@ -136,11 +142,11 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
         doctor.setSpeciality(spec);
         doctor = doctorRepository.saveAndFlush(doctor);
 
-        LocalDateTime departure = LocalDateTime.of(2026, 6, 15, 8, 30);
-        LocalDateTime arrival = LocalDateTime.of(2026, 6, 15, 9, 0);
-        LocalDateTime start = LocalDateTime.of(2026, 6, 15, 9, 15);
-        LocalDateTime end = LocalDateTime.of(2026, 6, 15, 10, 0);
-        LocalDateTime arrivalHome = LocalDateTime.of(2026, 6, 15, 10, 30);
+        OffsetDateTime departure = toOffset(2026, 6, 15, 8, 30);
+        OffsetDateTime arrival = toOffset(2026, 6, 15, 9, 0);
+        OffsetDateTime start = toOffset(2026, 6, 15, 9, 15);
+        OffsetDateTime end = toOffset(2026, 6, 15, 10, 0);
+        OffsetDateTime arrivalHome = toOffset(2026, 6, 15, 10, 30);
 
         Appointment appointment = new Appointment();
         appointment.setDoctor(doctor);
@@ -161,8 +167,8 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
 
     @Test
     public void testCalendarEventDurationAndWallClockPreservation() {
-        LocalDateTime start = LocalDateTime.of(2026, 5, 10, 14, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 5, 10, 16, 30);
+        OffsetDateTime start = toOffset(2026, 5, 10, 14, 0);
+        OffsetDateTime end = toOffset(2026, 5, 10, 16, 30);
 
         CalendarEvent event = new CalendarEvent();
         event.setTitle("Tech Architecture Review");
@@ -176,14 +182,14 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
         entityManager.clear();
 
         CalendarEvent reloaded = calendarEventRepository.findById(id).orElseThrow();
-        assertEquals(start, reloaded.getStart(), "Start time must preserve exact wall-clock LocalDateTime");
-        assertEquals(end, reloaded.getEnd(), "End time must preserve exact wall-clock LocalDateTime");
+        assertTrue(start.isEqual(reloaded.getStart()), "Start time must preserve exact instant");
+        assertTrue(end.isEqual(reloaded.getEnd()), "End time must preserve exact instant");
         assertEquals(Duration.ofMinutes(150), reloaded.getDuration(), "Duration must be 2h 30m");
     }
 
     @Test
     public void testCourseAndRefuelingTimestamptzPersistence() {
-        LocalDateTime examDate = LocalDateTime.of(2026, 7, 20, 10, 0);
+        OffsetDateTime examDate = toOffset(2026, 7, 20, 10, 0);
         Course course = new Course();
         course.setTitle("Distributed Systems");
         course.setCode("CS-401");
@@ -195,7 +201,7 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
         entityManager.clear();
 
         Course reloadedCourse = courseRepository.findById(courseId).orElseThrow();
-        assertEquals(examDate, reloadedCourse.getExamDate());
+        assertTrue(examDate.isEqual(reloadedCourse.getExamDate()));
         assertNotNull(reloadedCourse.getCreatedAt(), "CreatedAt must be auto-populated");
         assertNotNull(reloadedCourse.getLastUpdated(), "LastUpdated must be auto-populated");
 
@@ -214,7 +220,7 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
         car.setVendor(vendor);
         car = carRepository.saveAndFlush(car);
 
-        LocalDateTime fuelingDate = LocalDateTime.of(2026, 8, 1, 12, 45);
+        OffsetDateTime fuelingDate = toOffset(2026, 8, 1, 12, 45);
         Refueling refueling = new Refueling();
         refueling.setCar(car);
         refueling.setFuelingDate(fuelingDate);
@@ -226,7 +232,7 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
         entityManager.clear();
 
         Refueling reloadedRefueling = refuelingRepository.findById(refuelingId).orElseThrow();
-        assertEquals(fuelingDate, reloadedRefueling.getFuelingDate());
+        assertTrue(fuelingDate.isEqual(reloadedRefueling.getFuelingDate()));
         assertNotNull(reloadedRefueling.getCreatedAt());
     }
 }

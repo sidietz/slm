@@ -4,7 +4,7 @@ import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -25,13 +25,13 @@ public class CalendarEventControllerTest {
         ConcurrentModel model = new ConcurrentModel();
         
         // event
-        when(repo.findMinDate()).thenReturn(LocalDateTime.now().minusDays(10));
-        when(repo.findMaxDate()).thenReturn(LocalDateTime.now().plusDays(10));
+        when(repo.findMinDate()).thenReturn(OffsetDateTime.now().minusDays(10));
+        when(repo.findMaxDate()).thenReturn(OffsetDateTime.now().plusDays(10));
         
         String view1 = controller.getEvent(null, null, model);
         assertEquals("event", view1);
         
-        String view2 = controller.getEvent(LocalDateTime.now(), LocalDateTime.now(), model);
+        String view2 = controller.getEvent(OffsetDateTime.now(), OffsetDateTime.now(), model);
         assertEquals("event", view2);
         
         when(repo.findMinDate()).thenReturn(null);

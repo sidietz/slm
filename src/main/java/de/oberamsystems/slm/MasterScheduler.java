@@ -1,6 +1,6 @@
 package de.oberamsystems.slm;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
@@ -11,6 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.mail.EmailService;
 import de.oberamsystems.slm.model.CalendarEvent;
 import de.oberamsystems.slm.model.CalendarEventRepository;
@@ -30,7 +31,8 @@ public class MasterScheduler {
 	@Scheduled(cron = "0 0 6 * * *")
 	public int scheduleTest() {
 
-		List<CalendarEvent> events = repo.findByStartBetween(LocalDateTime.now(), LocalDateTime.now().plusDays(1));
+		OffsetDateTime now = OffsetDateTime.now(TimeZoneConfig.getZoneId());
+		List<CalendarEvent> events = repo.findByStartBetween(now, now.plusDays(1));
 
 		log.debug(String.format("%d events sent via email", events.size()));
 		sendNrMail(events);
@@ -44,7 +46,7 @@ public class MasterScheduler {
 			return;
 		}
 
-		String subject = "[SLM] 📅 upcoming events on " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("E, dd.MM.yyy"));
+		String subject = "[SLM] 📅 upcoming events on " + OffsetDateTime.now(TimeZoneConfig.getZoneId()).format(DateTimeFormatter.ofPattern("E, dd.MM.yyy"));
 
 		mailer.sendHtmlEmail(subject, nrs);
 	}

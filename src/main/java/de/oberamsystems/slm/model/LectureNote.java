@@ -1,12 +1,13 @@
 package de.oberamsystems.slm.model;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.annotations.UuidGenerator.Style;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import jakarta.persistence.*;
 
 @Entity
@@ -56,10 +57,10 @@ public class LectureNote {
 	private Integer examRelevanceRating;
 
 	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime createdAt;
+	private OffsetDateTime createdAt;
 
 	@Column(name = "last_updated", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime lastUpdated;
+	private OffsetDateTime lastUpdated;
 
 	public LectureNote() {
 	}
@@ -74,8 +75,8 @@ public class LectureNote {
 
 	@PrePersist
 	public void prePersist() {
-		this.createdAt = LocalDateTime.now();
-		this.lastUpdated = LocalDateTime.now();
+		this.createdAt = OffsetDateTime.now(TimeZoneConfig.getZoneId());
+		this.lastUpdated = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 		if (this.hasHomework == null) {
 			this.hasHomework = false;
 		}
@@ -83,7 +84,7 @@ public class LectureNote {
 
 	@PreUpdate
 	public void preUpdate() {
-		this.lastUpdated = LocalDateTime.now();
+		this.lastUpdated = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 	}
 
 	public UUID getId() {
@@ -182,19 +183,19 @@ public class LectureNote {
 		this.examRelevanceRating = examRelevanceRating;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public OffsetDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(LocalDateTime createdAt) {
+	public void setCreatedAt(OffsetDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 
-	public LocalDateTime getLastUpdated() {
+	public OffsetDateTime getLastUpdated() {
 		return lastUpdated;
 	}
 
-	public void setLastUpdated(LocalDateTime lastUpdated) {
+	public void setLastUpdated(OffsetDateTime lastUpdated) {
 		this.lastUpdated = lastUpdated;
 	}
 

@@ -2,7 +2,8 @@ package de.oberamsystems.slm;
 
 import java.sql.Date;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.List;
 import java.util.Map;
 
@@ -151,8 +152,8 @@ public class McpServerIT extends AbstractIntegrationTest {
 	void testSessionToolsExecution() {
 		CodingSession cs = new CodingSession();
 		cs.setProject("SLM");
-		cs.setStart(LocalDateTime.of(2026, 10, 18, 10, 0));
-		cs.setEnd(LocalDateTime.of(2026, 10, 18, 12, 30));
+		cs.setStart(LocalDate.of(2026, 10, 18).atTime(10, 0).atZone(TimeZoneConfig.getZoneId()).toOffsetDateTime());
+		cs.setEnd(LocalDate.of(2026, 10, 18).atTime(12, 30).atZone(TimeZoneConfig.getZoneId()).toOffsetDateTime());
 		codingRepo.saveAndFlush(cs);
 
 		Map<String, Object> balance = sessionTools.getDailyLifeBalance("2026-10-18");

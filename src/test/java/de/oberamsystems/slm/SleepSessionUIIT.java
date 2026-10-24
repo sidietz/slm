@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -43,6 +45,10 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
     private EntityManager entityManager;
 
     private MockMvc mockMvc;
+
+    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
+    }
 
     @BeforeEach
     void setUp() {
@@ -292,8 +298,8 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
     void testDatabaseTriggerRejectsDirectInconsistentInsert() {
         // Attempt direct SQL insert bypassing application validation with mismatched sleep stages
         UUID sessionId = UUID.randomUUID();
-        LocalDateTime start = LocalDateTime.of(2026, 10, 18, 22, 0);
-        LocalDateTime end = LocalDateTime.of(2026, 10, 19, 6, 0); // 8 hours
+        OffsetDateTime start = toOffset(2026, 10, 18, 22, 0);
+        OffsetDateTime end = toOffset(2026, 10, 19, 6, 0); // 8 hours
 
         entityManager.createNativeQuery(
                 "INSERT INTO session (id, session_type, status, starttime, endtime, break_duration) " +
@@ -353,8 +359,8 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
     @Test
     void testDeleteSleepSessionOverUI() throws Exception {
         SleepSession session = new SleepSession();
-        session.setStart(LocalDateTime.of(2026, 10, 17, 23, 0));
-        session.setEnd(LocalDateTime.of(2026, 10, 18, 7, 0)); // 8h
+        session.setStart(toOffset(2026, 10, 17, 23, 0));
+        session.setEnd(toOffset(2026, 10, 18, 7, 0)); // 8h
         session.setBreakDuration(Duration.ZERO);
         session.setDeepSleepDuration(Duration.ZERO);
         session.setRemSleepDuration(Duration.ZERO);
@@ -428,7 +434,7 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
         entityManager.refresh(completed);
 
         assertEquals("COMPLETED", completed.getStatus());
-        assertEquals(LocalDateTime.of(2026, 10, 24, 6, 14), completed.getEnd());
+        assertTrue(toOffset(2026, 10, 24, 6, 14).isEqual(completed.getEnd()));
         assertEquals(Duration.ofMinutes(434), completed.getDuration(), "7h 14m gross duration");
         assertEquals(Duration.ofMinutes(434), completed.getLightSleepDuration(), "All net sleep must default to light sleep");
         assertEquals(Duration.ZERO, completed.getDeepSleepDuration());
@@ -438,8 +444,8 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
     @Test
     void testEditExistingCompletedSleepSessionDurationWithStagesEmpty() throws Exception {
         SleepSession session = new SleepSession();
-        session.setStart(LocalDateTime.of(2026, 10, 22, 23, 0));
-        session.setEnd(LocalDateTime.of(2026, 10, 23, 7, 0)); // 8h = 480m
+        session.setStart(toOffset(2026, 10, 22, 23, 0));
+        session.setEnd(toOffset(2026, 10, 23, 7, 0)); // 8h = 480m
         session.setBreakDuration(Duration.ZERO);
         session.setDeepSleepDuration(Duration.ZERO);
         session.setRemSleepDuration(Duration.ZERO);

@@ -3,7 +3,7 @@ package de.oberamsystems.slm.model;
 import jakarta.persistence.*;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.Type;
 
@@ -24,9 +24,9 @@ public class TrainTrip {
 	private TrainStation destination;
 	
 	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime start;
+	private OffsetDateTime start;
 	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime end;
+	private OffsetDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@org.hibernate.annotations.Generated(event = { org.hibernate.generator.EventType.INSERT, org.hibernate.generator.EventType.UPDATE })
@@ -35,7 +35,7 @@ public class TrainTrip {
 	public TrainTrip() {
 	}
 	
-	public TrainTrip(Long id, String line, TrainStation origin, TrainStation destination, LocalDateTime start, LocalDateTime end,
+	public TrainTrip(Long id, String line, TrainStation origin, TrainStation destination, OffsetDateTime start, OffsetDateTime end,
 			Duration duration) {
 		this.id = id;
 		this.line = line;
@@ -70,19 +70,19 @@ public class TrainTrip {
 		this.destination = destination;
 	}
 
-	public LocalDateTime getStart() {
+	public OffsetDateTime getStart() {
 		return start;
 	}
 
-	public void setStart(LocalDateTime start) {
+	public void setStart(OffsetDateTime start) {
 		this.start = start;
 	}
 
-	public LocalDateTime getEnd() {
+	public OffsetDateTime getEnd() {
 		return end;
 	}
 
-	public void setEnd(LocalDateTime end) {
+	public void setEnd(OffsetDateTime end) {
 		this.end = end;
 	}
 

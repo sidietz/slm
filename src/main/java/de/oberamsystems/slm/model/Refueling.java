@@ -2,10 +2,11 @@ package de.oberamsystems.slm.model;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Currency;
 import java.util.UUID;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.annotations.UuidGenerator.Style;
@@ -45,7 +46,7 @@ public class Refueling {
 	private ChargingPoint chargingPoint;
 
 	@Column(name = "fueling_date", nullable = false, columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime fuelingDate;
+	private OffsetDateTime fuelingDate;
 
 	@Column(name = "odometer", precision = 10, scale = 2)
 	private BigDecimal odometer;
@@ -113,7 +114,7 @@ public class Refueling {
 	private String note;
 
 	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime createdAt = LocalDateTime.now();
+	private OffsetDateTime createdAt = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 
 	public Refueling() {
 	}
@@ -161,11 +162,11 @@ public class Refueling {
 		this.chargingPoint = chargingPoint;
 	}
 
-	public LocalDateTime getFuelingDate() {
+	public OffsetDateTime getFuelingDate() {
 		return fuelingDate;
 	}
 
-	public void setFuelingDate(LocalDateTime fuelingDate) {
+	public void setFuelingDate(OffsetDateTime fuelingDate) {
 		this.fuelingDate = fuelingDate;
 	}
 
@@ -323,11 +324,11 @@ public class Refueling {
 		this.note = note;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public OffsetDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(LocalDateTime createdAt) {
+	public void setCreatedAt(OffsetDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 }

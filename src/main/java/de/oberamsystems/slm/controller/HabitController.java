@@ -1,7 +1,9 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
+
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +53,7 @@ public class HabitController {
 	public String addHabitEntries(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("habitentries", entryRepo.findAll(Sort.by(Sort.Direction.DESC, "lastDone")));
 		HabitEntry e = new HabitEntry();
-		e.setLastDone(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		e.setLastDone(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("habitentry", e);
 		model.addAttribute("habits", repo.findAll(Sort.by(Sort.Direction.ASC, "name")));
 		return "habit-entries";
@@ -85,7 +87,7 @@ public class HabitController {
 		model.addAttribute("lastdonehabitentries", entryRepo.lastDoneHabitEntryById(id));
 		HabitEntry e = new HabitEntry();
 		e.setHabit(selected);
-		e.setLastDone(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		e.setLastDone(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("habitentry", e);
 		return "last-done-habit-entries";
 	}

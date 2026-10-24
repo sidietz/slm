@@ -4,7 +4,7 @@ import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -63,8 +63,8 @@ public class BookControllerTest {
         
         // POST /reading-sessions
         ReadingSession rs = new ReadingSession();
-        rs.setStart(LocalDateTime.now().minusHours(1));
-        rs.setEnd(LocalDateTime.now());
+        rs.setStart(OffsetDateTime.now().minusHours(1));
+        rs.setEnd(OffsetDateTime.now());
         rs.setStartPageCount(10);
         rs.setEndPageCount(60);
         String view6 = controller.submitReadingSessions(rs, model);

@@ -8,8 +8,8 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,6 +19,7 @@ import java.util.Map;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.model.Car;
 import de.oberamsystems.slm.model.DrivingStyle;
 import de.oberamsystems.slm.model.FuelType;
@@ -108,7 +109,8 @@ public class SpritmonitorCsvService {
 		}
 
 		// Use a noon timestamp or adjust slightly for ordering within same day
-		LocalDateTime fuelingDateTime = date.atTime(LocalTime.of(12, 0).plusSeconds(rowIndex % 60));
+		OffsetDateTime fuelingDateTime = date.atTime(LocalTime.of(12, 0).plusSeconds(rowIndex % 60))
+				.atZone(TimeZoneConfig.getZoneId()).toOffsetDateTime();
 
 		BigDecimal liters = parseGermanDecimal(getToken(tokens, 3));
 		BigDecimal totalCost = parseGermanDecimal(getToken(tokens, 4));

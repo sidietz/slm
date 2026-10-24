@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
@@ -11,6 +11,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.model.MeditationSession;
 import de.oberamsystems.slm.model.MeditationSessionRepository;
 
@@ -28,8 +29,8 @@ public class MeditationController {
 	public String addMeditations(@RequestParam(required = false) Long id, Model model) {
 		model.addAttribute("meditations", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		MeditationSession ms = new MeditationSession();
-		ms.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		ms.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		ms.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		ms.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("meditation", ms);
 		log.warn(String.format("%d", id));
 		return "meditations";

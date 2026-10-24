@@ -1,7 +1,7 @@
 package de.oberamsystems.slm.model;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
@@ -32,13 +32,13 @@ public class LearningItem {
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate end;
 	@Column(name = "last_updated", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime lastUpdated;
+	private OffsetDateTime lastUpdated;
 	
 	public LearningItem() {
 	}
 
 	public LearningItem(Long id, String title, String description, String author, SourceEnum source, StatusEnum status,
-			Float progress, LocalDate start, LocalDate end, LocalDateTime lastUpdated) {
+			Float progress, LocalDate start, LocalDate end, OffsetDateTime lastUpdated) {
 		super();
 		this.id = id;
 		this.title = title;
@@ -116,11 +116,11 @@ public class LearningItem {
 		this.end = end;
 	}
 
-	public LocalDateTime getLastUpdated() {
+	public OffsetDateTime getLastUpdated() {
 		return lastUpdated;
 	}
 
-	public void setLastUpdated(LocalDateTime lastUpdated) {
+	public void setLastUpdated(OffsetDateTime lastUpdated) {
 		this.lastUpdated = lastUpdated;
 	}
 

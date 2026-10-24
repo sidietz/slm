@@ -1,10 +1,11 @@
 package de.oberamsystems.slm.model;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.UUID;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import org.hibernate.annotations.UuidGenerator;
 import org.hibernate.annotations.UuidGenerator.Style;
 import org.hibernate.annotations.Generated;
@@ -30,10 +31,10 @@ public abstract class Session {
 	private String status = "COMPLETED";
 
 	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+	private OffsetDateTime start = OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES);
 
 	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime end;
+	private OffsetDateTime end;
 
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "break_duration", columnDefinition = "interval")
@@ -61,7 +62,7 @@ public abstract class Session {
 	public Session() {
 	}
 
-	public Session(UUID id, String status, LocalDateTime start, LocalDateTime end, Duration breakDuration,
+	public Session(UUID id, String status, OffsetDateTime start, OffsetDateTime end, Duration breakDuration,
 			Duration duration, Duration netDuration, Integer focusRating, String comment, String outcomeSummary) {
 		this.id = id;
 		this.status = status;
@@ -98,19 +99,19 @@ public abstract class Session {
 		this.status = status;
 	}
 
-	public LocalDateTime getStart() {
+	public OffsetDateTime getStart() {
 		return start;
 	}
 
-	public void setStart(LocalDateTime start) {
+	public void setStart(OffsetDateTime start) {
 		this.start = start;
 	}
 
-	public LocalDateTime getEnd() {
+	public OffsetDateTime getEnd() {
 		return end;
 	}
 
-	public void setEnd(LocalDateTime end) {
+	public void setEnd(OffsetDateTime end) {
 		this.end = end;
 	}
 
@@ -166,8 +167,8 @@ public abstract class Session {
 		return "IN_PROGRESS".equalsIgnoreCase(this.status) || this.end == null;
 	}
 
-	public void stop(LocalDateTime stopTime, Duration breakDuration, Integer focusRating, String outcomeSummary, String comment) {
-		this.end = stopTime != null ? stopTime : LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+	public void stop(OffsetDateTime stopTime, Duration breakDuration, Integer focusRating, String outcomeSummary, String comment) {
+		this.end = stopTime != null ? stopTime : OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES);
 		this.status = "COMPLETED";
 		if (breakDuration != null) {
 			this.breakDuration = breakDuration;

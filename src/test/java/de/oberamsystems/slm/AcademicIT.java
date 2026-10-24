@@ -12,7 +12,9 @@ import org.springframework.web.context.WebApplicationContext;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -52,6 +54,10 @@ public class AcademicIT extends AbstractIntegrationTest {
         @Autowired
         private jakarta.persistence.EntityManager entityManager;
 
+        private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
+        }
+
         @Test
         public void testCourseAndLectureHierarchyAndUuidv7Note() {
                 // 1. Create Lecturer Human
@@ -62,8 +68,8 @@ public class AcademicIT extends AbstractIntegrationTest {
                 lecturer = humanRepository.saveAndFlush(lecturer);
                 assertNotNull(lecturer.getId());
 
-                // 2. Create Course with LocalDateTime examDate
-                LocalDateTime examDate = LocalDateTime.of(2027, 2, 15, 9, 30);
+                // 2. Create Course with OffsetDateTime examDate
+                OffsetDateTime examDate = toOffset(2027, 2, 15, 9, 30);
                 Course course = new Course();
                 course.setTitle("Advanced Distributed Systems");
                 course.setCode("CS-701");
@@ -79,12 +85,12 @@ public class AcademicIT extends AbstractIntegrationTest {
 
                 assertNotNull(course.getId());
                 assertEquals("CS-701", course.getCode());
-                assertEquals(examDate, course.getExamDate());
+                assertTrue(examDate.isEqual(course.getExamDate()));
                 assertEquals("Ada Lovelace", course.getLecturer().getName());
 
                 // 3. Create polymorphic LectureSession
-                LocalDateTime sessionStart = LocalDateTime.of(2026, 10, 20, 10, 15);
-                LocalDateTime sessionEnd = LocalDateTime.of(2026, 10, 20, 11, 45); // 90 min gross
+                OffsetDateTime sessionStart = toOffset(2026, 10, 20, 10, 15);
+                OffsetDateTime sessionEnd = toOffset(2026, 10, 20, 11, 45); // 90 min gross
                 LectureSession lectureSession = new LectureSession();
                 lectureSession.setCourse(course);
                 lectureSession.setLectureNumber(1);
@@ -269,8 +275,8 @@ public class AcademicIT extends AbstractIntegrationTest {
                 session.setCourse(course);
                 session.setLectureNumber(1);
                 session.setTopic("Temporal Logic of Actions");
-                session.setStart(LocalDateTime.of(2026, 11, 2, 10, 0));
-                session.setEnd(LocalDateTime.of(2026, 11, 2, 11, 30));
+                session.setStart(toOffset(2026, 11, 2, 10, 0));
+                session.setEnd(toOffset(2026, 11, 2, 11, 30));
                 session = lectureSessionRepository.saveAndFlush(session);
 
                 LectureNote note = new LectureNote();
@@ -322,8 +328,8 @@ public class AcademicIT extends AbstractIntegrationTest {
                 // 1. Create courses where createdAt order is the REVERSE of title ASC
                 // Course A: "Distributed Systems" created at T0 (earlier)
                 // Course B: "Applied Cryptography" created at T1 (later)
-                LocalDateTime t0 = LocalDateTime.now().minusDays(5);
-                LocalDateTime t1 = LocalDateTime.now().minusDays(1);
+                OffsetDateTime t0 = OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(5);
+                OffsetDateTime t1 = OffsetDateTime.now(TimeZoneConfig.getZoneId()).minusDays(1);
 
                 Course c1 = new Course();
                 c1.setTitle("Distributed Systems");
@@ -545,7 +551,7 @@ public class AcademicIT extends AbstractIntegrationTest {
                 assertEquals("COMPLETED", stoppedSession.getStatus());
                 assertFalse(stoppedSession.isInProgress());
                 assertNotNull(stoppedSession.getEnd());
-                assertEquals(LocalDateTime.of(2026, 10, 21, 10, 45), stoppedSession.getEnd());
+                assertTrue(toOffset(2026, 10, 21, 10, 45).isEqual(stoppedSession.getEnd()));
                 assertEquals(Duration.ofMinutes(10), stoppedSession.getBreakDuration());
                 assertEquals(Duration.ofMinutes(90), stoppedSession.getDuration());
                 assertEquals(Duration.ofMinutes(80), stoppedSession.getNetDuration());

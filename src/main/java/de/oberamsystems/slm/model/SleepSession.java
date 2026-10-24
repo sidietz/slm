@@ -1,6 +1,7 @@
 package de.oberamsystems.slm.model;
 
 import java.time.Duration;
+import java.time.OffsetDateTime;
 
 import org.hibernate.annotations.Type;
 import io.hypersistence.utils.hibernate.type.interval.PostgreSQLIntervalType;
@@ -74,20 +75,20 @@ public class SleepSession extends Session {
 	}
 
 	@Transient
-	public java.time.LocalDateTime getGotobed() {
+	public OffsetDateTime getGotobed() {
 		return getStart();
 	}
 
-	public void setGotobed(java.time.LocalDateTime gotobed) {
+	public void setGotobed(OffsetDateTime gotobed) {
 		setStart(gotobed);
 	}
 
 	@Transient
-	public java.time.LocalDateTime getGetup() {
+	public OffsetDateTime getGetup() {
 		return getEnd();
 	}
 
-	public void setGetup(java.time.LocalDateTime getup) {
+	public void setGetup(OffsetDateTime getup) {
 		setEnd(getup);
 	}
 

@@ -11,7 +11,9 @@ import org.springframework.web.context.WebApplicationContext;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,6 +56,10 @@ public class CourseDetailIT extends AbstractIntegrationTest {
                 .build();
     }
 
+    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
+    }
+
     @Test
     void testViewCourseDetailsWithFullMetadataSessionsAndNotes() throws Exception {
         // 1. Create Lecturer
@@ -64,7 +70,7 @@ public class CourseDetailIT extends AbstractIntegrationTest {
         lecturer = humanRepository.saveAndFlush(lecturer);
 
         // 2. Create Course with rich metadata
-        LocalDateTime examDate = LocalDateTime.of(2027, 2, 18, 10, 0);
+        OffsetDateTime examDate = toOffset(2027, 2, 18, 10, 0);
         Course course = new Course();
         course.setTitle("Reliable Distributed Systems");
         course.setCode("CS-801");
@@ -86,8 +92,8 @@ public class CourseDetailIT extends AbstractIntegrationTest {
         session.setLectureNumber(1);
         session.setTopic("Byzantine Fault Tolerance & PBFT");
         session.setRoom("Audimax II");
-        session.setStart(LocalDateTime.of(2026, 10, 21, 10, 15));
-        session.setEnd(LocalDateTime.of(2026, 10, 21, 11, 45)); // 90 min gross
+        session.setStart(toOffset(2026, 10, 21, 10, 15));
+        session.setEnd(toOffset(2026, 10, 21, 11, 45)); // 90 min gross
         session.setBreakDuration(Duration.ofMinutes(15)); // 75 min net
         session.setFocusRating(5);
         session.setComment("In-depth discussion on safety vs liveness under network partitions.");
@@ -210,7 +216,7 @@ public class CourseDetailIT extends AbstractIntegrationTest {
         assertEquals("Grace Hopper", updated.getLecturer().getName());
         assertEquals("Seminar Room 404", updated.getDefaultRoom());
         assertEquals("https://zoom.us/j/123456789", updated.getMeetingLink());
-        assertEquals(LocalDateTime.of(2027, 7, 15, 14, 0), updated.getExamDate());
+        assertTrue(toOffset(2027, 7, 15, 14, 0).isEqual(updated.getExamDate()));
         assertEquals("Lecture Hall 1", updated.getExamLocation());
         assertEquals(0, BigDecimal.valueOf(1.0).compareTo(updated.getGrade()));
         assertEquals(StatusEnum.COMPLETED, updated.getStatus());
@@ -264,8 +270,8 @@ public class CourseDetailIT extends AbstractIntegrationTest {
         session.setCourse(course);
         session.setLectureNumber(1);
         session.setTopic("Lexical Analysis & Parsing");
-        session.setStart(LocalDateTime.of(2026, 10, 22, 9, 0));
-        session.setEnd(LocalDateTime.of(2026, 10, 22, 10, 30));
+        session.setStart(toOffset(2026, 10, 22, 9, 0));
+        session.setEnd(toOffset(2026, 10, 22, 10, 30));
         session = lectureSessionRepository.saveAndFlush(session);
 
         LectureNote note = new LectureNote();
@@ -315,8 +321,8 @@ public class CourseDetailIT extends AbstractIntegrationTest {
         session.setCourse(course);
         session.setLectureNumber(2);
         session.setTopic("TCP Congestion Control & BBR");
-        session.setStart(LocalDateTime.of(2026, 10, 23, 11, 0));
-        session.setEnd(LocalDateTime.of(2026, 10, 23, 12, 30));
+        session.setStart(toOffset(2026, 10, 23, 11, 0));
+        session.setEnd(toOffset(2026, 10, 23, 12, 30));
         session = lectureSessionRepository.saveAndFlush(session);
 
         // 1. GET /courses/{courseId}/notes/new?sessionId=... pre-populates form

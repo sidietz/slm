@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.controller;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 
 import org.slf4j.Logger;
@@ -12,6 +12,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import de.oberamsystems.slm.model.Activity;
 import de.oberamsystems.slm.model.ActivityRepository;
 import de.oberamsystems.slm.model.ActivityType;
@@ -33,8 +34,8 @@ public class ActivityController {
 	@GetMapping("/activities")
 	public String addActivity(@RequestParam(required = false) Long id, Model model) {
 		Activity a = new Activity();
-		a.setStart(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
-		a.setEnd(LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES));
+		a.setStart(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
+		a.setEnd(OffsetDateTime.now(TimeZoneConfig.getZoneId()).truncatedTo(ChronoUnit.MINUTES));
 		model.addAttribute("activities", repo.findAll(Sort.by(Sort.Direction.DESC, "start")));
 		model.addAttribute("activity", a);
 		model.addAttribute("activityTypes", typeRepo.findAll(Sort.by(Sort.Direction.ASC, "name")));

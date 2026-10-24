@@ -10,11 +10,13 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -158,8 +160,8 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
 
         // Seed historical record directly to verify read-only chart and REST query
         SleepTime historicalSt = new SleepTime();
-        historicalSt.setGotobed(LocalDateTime.of(2026, 10, 18, 23, 0));
-        historicalSt.setGetup(LocalDateTime.of(2026, 10, 19, 7, 15));
+        historicalSt.setGotobed(OffsetDateTime.of(2026, 10, 18, 23, 0, 0, 0, ZoneOffset.UTC));
+        historicalSt.setGetup(OffsetDateTime.of(2026, 10, 19, 7, 15, 0, 0, ZoneOffset.UTC));
         sleepTimeRepository.saveAndFlush(historicalSt);
 
         // 3. GET /sleeptime-bb
@@ -197,7 +199,7 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
         assertEquals("Hydration Goal", updatedHabit.getName());
         assertEquals("Drink 3L of water daily", updatedHabit.getDescription());
 
-        HabitEntry entry = new HabitEntry(null, updatedHabit, LocalDateTime.of(2026, 10, 20, 8, 0));
+        HabitEntry entry = new HabitEntry(null, updatedHabit, OffsetDateTime.of(2026, 10, 20, 8, 0, 0, 0, ZoneOffset.UTC));
         entry = habitEntryRepository.saveAndFlush(entry);
         Long entryId = entry.getId();
 
@@ -212,7 +214,7 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
         assertEquals(1, habitEntryRepository.count());
         entityManager.clear();
         HabitEntry updatedEntry = habitEntryRepository.findById(entryId).orElseThrow();
-        assertEquals(LocalDateTime.of(2026, 10, 20, 8, 45), updatedEntry.getLastDone());
+        assertTrue(java.time.LocalDate.of(2026, 10, 20).atTime(8, 45).atZone(de.oberamsystems.slm.config.TimeZoneConfig.getZoneId()).toOffsetDateTime().isEqual(updatedEntry.getLastDone()));
 
         // Verify completion log endpoint safety: /last-done-habit-entries must ALWAYS append a new row
         mockMvc.perform(post("/last-done-habit-entries")
@@ -252,8 +254,8 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
     @Test
     void testUpdateSleepTimeFlow() throws Exception {
         SleepTime st = new SleepTime();
-        st.setGotobed(LocalDateTime.of(2026, 10, 19, 22, 30));
-        st.setGetup(LocalDateTime.of(2026, 10, 20, 6, 30));
+        st.setGotobed(OffsetDateTime.of(2026, 10, 19, 22, 30, 0, 0, ZoneOffset.UTC));
+        st.setGetup(OffsetDateTime.of(2026, 10, 20, 6, 30, 0, 0, ZoneOffset.UTC));
         st = sleepTimeRepository.saveAndFlush(st);
         long stId = st.getId();
 
@@ -269,7 +271,7 @@ public class WellnessAndHabitsIT extends AbstractIntegrationTest {
         assertEquals(1, sleepTimeRepository.count());
         entityManager.clear();
         SleepTime unchangedSt = sleepTimeRepository.findById(stId).orElseThrow();
-        assertEquals(LocalDateTime.of(2026, 10, 19, 22, 30), unchangedSt.getGotobed(),
+        assertTrue(OffsetDateTime.of(2026, 10, 19, 22, 30, 0, 0, ZoneOffset.UTC).isEqual(unchangedSt.getGotobed()),
                 "Legacy sleep time must remain unchanged when write operations are disabled");
     }
 

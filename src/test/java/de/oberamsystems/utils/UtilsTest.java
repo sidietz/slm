@@ -3,6 +3,8 @@ package de.oberamsystems.utils;
 import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -12,6 +14,13 @@ class UtilsTest {
     void testLocalDateTimeToString() {
         LocalDateTime ldt = LocalDateTime.of(2026, 8, 26, 17, 45);
         String result = Utils.LocalDateTimeToString(ldt);
+        assertEquals("26.08.2026 17:45", result);
+    }
+
+    @Test
+    void testOffsetDateTimeToString() {
+        OffsetDateTime odt = OffsetDateTime.of(2026, 8, 26, 17, 45, 0, 0, ZoneOffset.ofHours(2));
+        String result = Utils.OffsetDateTimeToString(odt);
         assertEquals("26.08.2026 17:45", result);
     }
 

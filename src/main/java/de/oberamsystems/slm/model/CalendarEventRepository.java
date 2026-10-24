@@ -1,6 +1,6 @@
 package de.oberamsystems.slm.model;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Sort;
@@ -11,14 +11,14 @@ public interface CalendarEventRepository extends JpaRepository<CalendarEvent, Lo
 
 	public CalendarEvent findFirstByOrderByStartDesc();
 
-	List<CalendarEvent> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate);
-	List<CalendarEvent> findByStartBetween(LocalDateTime fromDate, LocalDateTime toDate, Sort sort);
+	List<CalendarEvent> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate);
+	List<CalendarEvent> findByStartBetween(OffsetDateTime fromDate, OffsetDateTime toDate, Sort sort);
 
-	List<CalendarEvent> findByStartAfter(LocalDateTime ldt);
-	List<CalendarEvent> findByStartAfter(LocalDateTime ldt, Sort sort);
+	List<CalendarEvent> findByStartAfter(OffsetDateTime ldt);
+	List<CalendarEvent> findByStartAfter(OffsetDateTime ldt, Sort sort);
 	
 	@Query("SELECT MIN(s.start) FROM CalendarEvent s")
-    LocalDateTime findMinDate();
+    OffsetDateTime findMinDate();
     @Query("SELECT MAX(s.start) FROM CalendarEvent s")
-    LocalDateTime findMaxDate();
+    OffsetDateTime findMaxDate();
 }

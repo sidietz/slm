@@ -3,7 +3,8 @@ package de.oberamsystems.slm.model;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,8 +39,8 @@ public class SessionModelTest {
 		assertEquals("COMPLETED", session.getStatus());
 		assertEquals(Duration.ZERO, session.getBreakDuration());
 
-		LocalDateTime start = LocalDateTime.of(2026, 10, 17, 10, 0);
-		LocalDateTime end = LocalDateTime.of(2026, 10, 17, 12, 0);
+		OffsetDateTime start = OffsetDateTime.of(2026, 10, 17, 10, 0, 0, 0, ZoneOffset.UTC);
+		OffsetDateTime end = OffsetDateTime.of(2026, 10, 17, 12, 0, 0, 0, ZoneOffset.UTC);
 		Duration breakDur = Duration.ofMinutes(15);
 		Duration grossDur = Duration.ofHours(2);
 		Duration netDur = Duration.ofMinutes(105);
@@ -75,7 +76,7 @@ public class SessionModelTest {
 		};
 		assertNotNull(session.getStart(), "Start time must be initialized when created");
 		assertNull(session.getEnd(), "End time must be null for ongoing sessions by default");
-		LocalDateTime now = LocalDateTime.now();
+		OffsetDateTime now = OffsetDateTime.now();
 		assertEquals(0, session.getStart().getSecond());
 		assertEquals(0, session.getStart().getNano());
 		assertTrue(Duration.between(session.getStart(), now).abs().toMinutes() <= 1);

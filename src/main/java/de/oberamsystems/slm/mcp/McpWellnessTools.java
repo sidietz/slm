@@ -1,7 +1,9 @@
 package de.oberamsystems.slm.mcp;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
+import de.oberamsystems.slm.converter.StringToOffsetDateTimeConverter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -53,7 +55,7 @@ public class McpWellnessTools {
 				entries.stream()
 						.map(HabitEntry::getLastDone)
 						.filter(d -> d != null)
-						.max(LocalDateTime::compareTo)
+						.max(OffsetDateTime::compareTo)
 						.ifPresentOrElse(
 								last -> m.put("lastDone", last.toString()),
 								() -> m.put("lastDone", null)
@@ -72,9 +74,9 @@ public class McpWellnessTools {
 			@ToolParam(description = "Name or ID of the habit (e.g. 'Gym', 'Floss', '1')") String habitIdentifier,
 			@ToolParam(description = "Completion timestamp in format YYYY-MM-DDTHH:mm (optional, defaults to now)", required = false) String timestampStr) {
 
-		LocalDateTime timestamp = (timestampStr != null && !timestampStr.trim().isEmpty())
-				? LocalDateTime.parse(timestampStr)
-				: LocalDateTime.now();
+		OffsetDateTime timestamp = (timestampStr != null && !timestampStr.trim().isEmpty())
+				? StringToOffsetDateTimeConverter.parse(timestampStr)
+				: OffsetDateTime.now(TimeZoneConfig.getZoneId());
 
 		Habit targetHabit = null;
 		try {

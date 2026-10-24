@@ -4,7 +4,7 @@ import de.oberamsystems.slm.model.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.ui.ConcurrentModel;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.Mockito.mock;
@@ -47,7 +47,7 @@ public class IndexControllerTest {
         SportType st = new SportType();
         st.setName("Running");
         ss.setType(st);
-        ss.setStart(LocalDateTime.now().minusHours(1));
+        ss.setStart(OffsetDateTime.now().minusHours(1));
         when(sportRepo.findFirstByOrderByStartDesc()).thenReturn(ss);
         
         Human h = new Human();
@@ -57,13 +57,13 @@ public class IndexControllerTest {
         when(humanRepo.findFirstByOrderByDaysUntilBirthdayAsc()).thenReturn(h);
         
         MeditationSession ms = new MeditationSession();
-        ms.setStart(LocalDateTime.now().minusHours(2));
-        ms.setEnd(LocalDateTime.now().minusHours(1));
+        ms.setStart(OffsetDateTime.now().minusHours(2));
+        ms.setEnd(OffsetDateTime.now().minusHours(1));
         when(meditationRepo.findFirstByOrderByStartDesc()).thenReturn(ms);
         
         ReadingSession rs = new ReadingSession();
-        rs.setStart(LocalDateTime.now().minusHours(3));
-        rs.setEnd(LocalDateTime.now().minusHours(2));
+        rs.setStart(OffsetDateTime.now().minusHours(3));
+        rs.setEnd(OffsetDateTime.now().minusHours(2));
         when(readingRepo.findFirstByOrderByStartDesc()).thenReturn(rs);
         
         ConcurrentModel model = new ConcurrentModel();

@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -32,7 +32,7 @@ public class SessionHierarchyIT extends AbstractIntegrationTest {
 
     @Test
     public void testPolymorphicSessionHierarchyAndDuration() {
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         // 1. Coding session: 2 hours gross, 30 mins break -> 90 mins net
         CodingSession coding = new CodingSession();

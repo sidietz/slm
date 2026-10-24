@@ -9,11 +9,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZonedDateTime;
+import de.oberamsystems.slm.config.TimeZoneConfig;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -88,6 +91,10 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
     private jakarta.persistence.EntityManager entityManager;
 
     private MockMvc mockMvc;
+
+    private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
+        return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
+    }
 
     @BeforeEach
     void setUp() {
@@ -421,8 +428,8 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
         act.setType(updatedType);
         act.setTitle("Oak Table Build");
         act.setLocation("Workshop");
-        act.setStart(LocalDateTime.of(2026, 10, 20, 14, 0));
-        act.setEnd(LocalDateTime.of(2026, 10, 20, 16, 0));
+        act.setStart(toOffset(2026, 10, 20, 14, 0));
+        act.setEnd(toOffset(2026, 10, 20, 16, 0));
         act = activityRepository.saveAndFlush(act);
         Long actId = act.getId();
 
@@ -442,8 +449,8 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
         Activity updatedAct = activityRepository.findById(actId).orElseThrow();
         assertEquals("Dining Table Finishing", updatedAct.getTitle());
         assertEquals("Main Studio", updatedAct.getLocation());
-        assertEquals(LocalDateTime.of(2026, 10, 20, 14, 30), updatedAct.getStart());
-        assertEquals(LocalDateTime.of(2026, 10, 20, 17, 30), updatedAct.getEnd());
+        assertTrue(toOffset(2026, 10, 20, 14, 30).isEqual(updatedAct.getStart()));
+        assertTrue(toOffset(2026, 10, 20, 17, 30).isEqual(updatedAct.getEnd()));
         assertNotNull(updatedAct.getDuration());
     }
 
@@ -521,8 +528,8 @@ public class ActivitiesAndMediaIT extends AbstractIntegrationTest {
 
         ReadingSession rs = new ReadingSession();
         rs.setBook(updatedBook);
-        rs.setStart(LocalDateTime.of(2026, 10, 20, 19, 0));
-        rs.setEnd(LocalDateTime.of(2026, 10, 20, 20, 0));
+        rs.setStart(toOffset(2026, 10, 20, 19, 0));
+        rs.setEnd(toOffset(2026, 10, 20, 20, 0));
         rs.setStartPageCount(1);
         rs.setEndPageCount(31);
         rs.setReadingSpeed(30.0F);

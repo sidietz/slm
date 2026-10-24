@@ -8,6 +8,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.Date;
 import java.time.Duration;
 
@@ -121,6 +122,8 @@ public class GenericModelTest {
                         return 1.0f;
                 if (type == Boolean.class || type == boolean.class)
                         return true;
+                if (type == OffsetDateTime.class)
+                        return OffsetDateTime.now();
                 if (type == LocalDateTime.class)
                         return LocalDateTime.now();
                 if (type == LocalDate.class)

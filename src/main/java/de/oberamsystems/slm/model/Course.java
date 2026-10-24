@@ -1,11 +1,12 @@
 package de.oberamsystems.slm.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.type.PostgreSQLEnumJdbcType;
 import org.springframework.format.annotation.DateTimeFormat;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
 import jakarta.persistence.*;
 
 @Entity
@@ -43,7 +44,7 @@ public class Course {
 
 	@Column(name = "exam_date", columnDefinition = "TIMESTAMPTZ")
 	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
-	private LocalDateTime examDate;
+	private OffsetDateTime examDate;
 
 	@Column(name = "exam_location", columnDefinition = "TEXT")
 	private String examLocation;
@@ -60,10 +61,10 @@ public class Course {
 	private StatusEnum status = StatusEnum.IN_PROGRESS;
 
 	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime createdAt;
+	private OffsetDateTime createdAt;
 
 	@Column(name = "last_updated", columnDefinition = "TIMESTAMPTZ")
-	private LocalDateTime lastUpdated;
+	private OffsetDateTime lastUpdated;
 
 	public Course() {
 	}
@@ -78,8 +79,8 @@ public class Course {
 
 	@PrePersist
 	public void prePersist() {
-		this.createdAt = LocalDateTime.now();
-		this.lastUpdated = LocalDateTime.now();
+		this.createdAt = OffsetDateTime.now(TimeZoneConfig.getZoneId());
+		this.lastUpdated = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 		if (this.status == null) {
 			this.status = StatusEnum.IN_PROGRESS;
 		}
@@ -87,7 +88,7 @@ public class Course {
 
 	@PreUpdate
 	public void preUpdate() {
-		this.lastUpdated = LocalDateTime.now();
+		this.lastUpdated = OffsetDateTime.now(TimeZoneConfig.getZoneId());
 	}
 
 	public Long getId() {
@@ -162,11 +163,11 @@ public class Course {
 		this.syllabus = syllabus;
 	}
 
-	public LocalDateTime getExamDate() {
+	public OffsetDateTime getExamDate() {
 		return examDate;
 	}
 
-	public void setExamDate(LocalDateTime examDate) {
+	public void setExamDate(OffsetDateTime examDate) {
 		this.examDate = examDate;
 	}
 
@@ -202,19 +203,19 @@ public class Course {
 		this.status = status;
 	}
 
-	public LocalDateTime getCreatedAt() {
+	public OffsetDateTime getCreatedAt() {
 		return createdAt;
 	}
 
-	public void setCreatedAt(LocalDateTime createdAt) {
+	public void setCreatedAt(OffsetDateTime createdAt) {
 		this.createdAt = createdAt;
 	}
 
-	public LocalDateTime getLastUpdated() {
+	public OffsetDateTime getLastUpdated() {
 		return lastUpdated;
 	}
 
-	public void setLastUpdated(LocalDateTime lastUpdated) {
+	public void setLastUpdated(OffsetDateTime lastUpdated) {
 		this.lastUpdated = lastUpdated;
 	}
 
