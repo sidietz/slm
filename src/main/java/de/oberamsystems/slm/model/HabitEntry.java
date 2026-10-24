@@ -14,7 +14,7 @@ public class HabitEntry {
 	@ManyToOne
 	@JoinColumn(name="habit", referencedColumnName = "id")
 	private Habit habit;
-	@Column(name = "last_done", columnDefinition = "TIMESTAMP")
+	@Column(name = "last_done", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime lastDone;
 
 	public HabitEntry() {

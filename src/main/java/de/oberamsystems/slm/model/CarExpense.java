@@ -58,7 +58,7 @@ public class CarExpense {
 	@Column(name = "note")
 	private String note;
 
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime createdAt;
 
 	public CarExpense() {

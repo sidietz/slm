@@ -24,9 +24,9 @@ public class TrainTrip2 {
 	@ManyToOne
 	private TrainStation2 destination;
 	
-	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
+	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime start;
-	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
+	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)

@@ -31,7 +31,7 @@ public class LearningItem {
 	@Column(name = "end_date", columnDefinition = "DATE")
 	@DateTimeFormat(pattern = "yyyy-MM-dd")
 	private LocalDate end;
-	@Column(name = "last_updated", columnDefinition = "TIMESTAMP")
+	@Column(name = "last_updated", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime lastUpdated;
 	
 	public LearningItem() {

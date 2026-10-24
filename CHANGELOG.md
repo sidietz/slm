@@ -5,6 +5,33 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc12] - 2026-10-24
+
+### Changed
+- **Universal Migration to PostgreSQL `TIMESTAMPTZ` (`TIMESTAMP WITH TIME ZONE`) & Daylight Saving Time (DST) Integrity** (ADR 029):
+  - **Database Schemas & Generated Column Expressions**:
+    - Migrated all 16 tables and 25 date-time columns from unqualified `TIMESTAMP` to `TIMESTAMPTZ` across [`src/main/resources/tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql).
+    - Preserved UTC-accurate generated column expressions (`endtime - starttime`) for `duration`, `net_duration`, `travel_duration`, `complete_duration`, and `sleeptime`.
+    - Updated trigger functions (`check_sleep_session_duration()`) to use `TIMESTAMPTZ` local variables for stage calculation.
+  - **Incremental Atomic Migration**:
+    - Created [`src/main/resources/migration_2026-10-24_2.sql`](src/main/resources/migration_2026-10-24_2.sql) enclosed in `BEGIN; ... COMMIT;` to upgrade existing databases safely: drops dependent generated columns, alters all date-time columns using `USING col AT TIME ZONE 'Europe/Berlin'`, and restores generated duration columns.
+  - **Timezone Standardization & Daylight Saving Time (`Europe/Berlin`)**:
+    - Configured Hibernate JDBC driver time zone `spring.jpa.properties.hibernate.jdbc.time_zone=Europe/Berlin` in [`application.properties`](src/main/resources/application.properties).
+    - Initialized JVM default time zone `TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))` in [`SlmApplication.java`](src/main/java/de/oberamsystems/slm/SlmApplication.java).
+    - Added `TZ=Europe/Berlin` and `PGTZ=Europe/Berlin` environment variables to `app` and `db` services in [`docker-compose.yml`](docker-compose.yml).
+  - **Entity Model Annotations**:
+    - Updated entity mappings to `@Column(name = "...", columnDefinition = "TIMESTAMPTZ")` across [`Session.java`](src/main/java/de/oberamsystems/slm/model/Session.java), [`Appointment.java`](src/main/java/de/oberamsystems/slm/model/Appointment.java), [`CalendarEvent.java`](src/main/java/de/oberamsystems/slm/model/CalendarEvent.java), [`TrainTrip.java`](src/main/java/de/oberamsystems/slm/model/TrainTrip.java), [`TrainTrip2.java`](src/main/java/de/oberamsystems/slm/model/TrainTrip2.java), [`Activity.java`](src/main/java/de/oberamsystems/slm/model/Activity.java), [`SleepTime.java`](src/main/java/de/oberamsystems/slm/model/SleepTime.java), [`CarTrip.java`](src/main/java/de/oberamsystems/slm/model/CarTrip.java), [`LearningItem.java`](src/main/java/de/oberamsystems/slm/model/LearningItem.java), [`HabitEntry.java`](src/main/java/de/oberamsystems/slm/model/HabitEntry.java), [`Course.java`](src/main/java/de/oberamsystems/slm/model/Course.java), [`LectureNote.java`](src/main/java/de/oberamsystems/slm/model/LectureNote.java), [`Refueling.java`](src/main/java/de/oberamsystems/slm/model/Refueling.java), [`Station.java`](src/main/java/de/oberamsystems/slm/model/Station.java), [`ChargingPoint.java`](src/main/java/de/oberamsystems/slm/model/ChargingPoint.java), and [`CarExpense.java`](src/main/java/de/oberamsystems/slm/model/CarExpense.java).
+    - Preserved `LocalDateTime` on Java entity properties to maintain complete compatibility with HTML5 `<input type="datetime-local">`, Spring MVC `@DateTimeFormat`, and Thymeleaf UI views.
+
+### Added
+- **Daylight Saving Time (DST) & Temporal Precision Integration Tests**:
+  - Authored [`DateTimePrecisionIT.java`](src/test/java/de/oberamsystems/slm/DateTimePrecisionIT.java) verifying:
+    - Spring DST clock forward jump (+1h, Sunday March 29, 2026): 23:00 to 07:00 yields exact physical 7h duration in generated `duration` and `net_duration`.
+    - Fall DST clock backward jump (-1h, Sunday October 25, 2026): 23:00 to 07:00 yields exact physical 9h duration in generated `duration` and `net_duration`.
+    - `SleepTime` generated column `sleeptime` accurately reflects physical 7h and 9h across DST transitions.
+    - `Appointment` multi-leg travel and total durations compute accurately with `TIMESTAMPTZ`.
+    - Exact wall-clock `LocalDateTime` round-trip persistence and cache eviction for `CalendarEvent`, `Course`, and `Refueling`.
+
 ## [0.0.3-rc11] - 2026-10-24
 
 ### Fixed

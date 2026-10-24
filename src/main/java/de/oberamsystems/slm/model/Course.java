@@ -41,7 +41,7 @@ public class Course {
 	@Column(name = "syllabus", columnDefinition = "TEXT")
 	private String syllabus;
 
-	@Column(name = "exam_date")
+	@Column(name = "exam_date", columnDefinition = "TIMESTAMPTZ")
 	@DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm")
 	private LocalDateTime examDate;
 
@@ -59,10 +59,10 @@ public class Course {
 	@Column(name = "status")
 	private StatusEnum status = StatusEnum.IN_PROGRESS;
 
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime createdAt;
 
-	@Column(name = "last_updated")
+	@Column(name = "last_updated", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime lastUpdated;
 
 	public Course() {

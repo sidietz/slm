@@ -19,9 +19,9 @@ public class CalendarEvent {
 
 	private String title;
 	private String description;
-	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
+	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime start;
-	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
+	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)

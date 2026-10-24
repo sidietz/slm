@@ -29,10 +29,10 @@ public abstract class Session {
 	@Column(name = "status", columnDefinition = "TEXT")
 	private String status = "COMPLETED";
 
-	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
+	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime start = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
 
-	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
+	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime end;
 
 	@Type(PostgreSQLIntervalType.class)

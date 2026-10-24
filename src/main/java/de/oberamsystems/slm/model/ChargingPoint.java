@@ -45,7 +45,7 @@ public class ChargingPoint {
 	@Column(name = "plug_type", nullable = false)
 	private PlugType plugType;
 
-	@Column(name = "created_at")
+	@Column(name = "created_at", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime createdAt = LocalDateTime.now();
 
 	public ChargingPoint() {

@@ -19,23 +19,23 @@ public class Appointment {
 	@ManyToOne
 	@JoinColumn(name = "doctor_id", referencedColumnName = "id")
 	private Doctor doctor;
-	@Column(name = "departure", columnDefinition = "TIMESTAMP")
+	@Column(name = "departure", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime departure;
-	@Column(name = "arrival", columnDefinition = "TIMESTAMP")
+	@Column(name = "arrival", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime arrival;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "travel_duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration travelDuration;
-	@Column(name = "starttime", columnDefinition = "TIMESTAMP")
+	@Column(name = "starttime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime start;
-	@Column(name = "endtime", columnDefinition = "TIMESTAMP")
+	@Column(name = "endtime", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime end;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "duration", columnDefinition = "interval", insertable = false, updatable = false)
 	@Generated(event = { EventType.INSERT, EventType.UPDATE })
 	private Duration duration;
-	@Column(name = "arrival_home", columnDefinition = "TIMESTAMP")
+	@Column(name = "arrival_home", columnDefinition = "TIMESTAMPTZ")
 	private LocalDateTime arrivalHome;
 	@Type(PostgreSQLIntervalType.class)
 	@Column(name = "complete_duration", columnDefinition = "interval", insertable = false, updatable = false)
