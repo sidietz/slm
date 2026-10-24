@@ -63,7 +63,7 @@ book_type book_type, book_genre book_genre);
 CREATE TABLE point(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, latitude DOUBLE PRECISION NOT NULL, longitude DOUBLE PRECISION NOT NULL, is_home BOOLEAN DEFAULT FALSE, geom geography(Point, 4326) GENERATED ALWAYS AS (ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography) STORED);
 CREATE INDEX IF NOT EXISTS idx_point_geom ON point USING GIST (geom);
 CREATE TABLE route(id BIGSERIAL PRIMARY KEY, name TEXT NOT NULL, description TEXT, start_point BIGINT NOT NULL REFERENCES point(id), end_point BIGINT NOT NULL REFERENCES point(id), air_distance DOUBLE PRECISION, drive_distance REAL NOT NULL);
-CREATE TABLE car(id BIGSERIAL PRIMARY KEY, vin TEXT, name TEXT, model_name TEXT, key_number TEXT, manufacturer_id BIGINT NOT NULL REFERENCES manufacturer(id), vendor_id BIGINT NOT NULL REFERENCES vendor(id), purchase_date DATE, approval_date DATE, manufacturing_date DATE, purchase_price REAL, sell_price REAL, purchase_kilometers BIGINT, sell_kilometers BIGINT, price_per_100_km REAL);
+CREATE TABLE car(id BIGSERIAL PRIMARY KEY, vin TEXT, name TEXT, model_name TEXT, key_number TEXT, manufacturer_id BIGINT NOT NULL REFERENCES manufacturer(id), vendor_id BIGINT NOT NULL REFERENCES vendor(id), purchase_date DATE, approval_date DATE, manufacturing_date DATE, purchase_price REAL, sell_price REAL, purchase_kilometers BIGINT, sell_kilometers BIGINT, price_per_100_km REAL, target_sell_date DATE, residual_value NUMERIC(10, 2));
 CREATE TABLE car_trip(id BIGSERIAL PRIMARY KEY, car_id BIGSERIAL NOT NULL REFERENCES car(id), route_id BIGSERIAL NOT NULL REFERENCES route(id), is_way_back BOOLEAN, starttime TIMESTAMP, endtime TIMESTAMP, duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED);
 
 
@@ -336,8 +336,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_check_session_sleep_duration ON session;
-CREATE TRIGGER trg_check_session_sleep_duration
-AFTER UPDATE OF starttime, endtime, break_duration ON session
+CREATE CONSTRAINT TRIGGER trg_check_session_sleep_duration
+AFTER UPDATE ON session
+DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW
 EXECUTE FUNCTION check_session_sleep_duration();
 
@@ -417,4 +418,20 @@ CREATE TABLE refueling (
 
 CREATE INDEX idx_refueling_car_date ON refueling(car_id, fueling_date DESC);
 CREATE INDEX idx_refueling_station ON refueling(station_id);
+
+-- Vehicle Operating & Capital Expenses (Spritmonitor Taxonomy, Native UUIDv7)
+CREATE TABLE car_expense (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    car_id BIGINT NOT NULL REFERENCES car(id) ON DELETE CASCADE,
+    expense_type car_expense_type NOT NULL,
+    expense_date DATE NOT NULL,
+    odometer NUMERIC(10, 2),
+    amount NUMERIC(10, 2) NOT NULL,
+    title TEXT NOT NULL,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_car_expense_car_date ON car_expense(car_id, expense_date DESC);
+CREATE INDEX idx_car_expense_type ON car_expense(expense_type);
 

@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc11] - 2026-10-24
+
+### Fixed
+- Fixed unhandled PostgreSQL trigger exception (`ERROR: Sleep stages sum (00:00:00) does not equal total session duration (07:14:00)`) when logging, completing, or editing a `SleepSession` with start and end times where sleep stage inputs are omitted:
+  - **Deferred Constraint Trigger on `session`**: Converted `trg_check_session_sleep_duration` on the `session` table into a PostgreSQL `CONSTRAINT TRIGGER ... AFTER UPDATE ON session DEFERRABLE INITIALLY DEFERRED`. This defers cross-table consistency validation until transaction `COMMIT` time, preventing immediate statement-boundary trigger execution while Hibernate flushes joined-table mutations in hierarchy order (parent `session` before child `sleep_session`).
+  - **Light Sleep Fallback Guarantee**: Preserved automatic allocation of the entire net sleep duration (`sleepMinutes = totalMinutes - awakeMinutes`) to light sleep (`lightSleepDuration = sleepMinutes`, `deep = 0`, `rem = 0`) when sleep stage inputs are omitted.
+  - **Database Migration & Baseline Sync**: Created transactional migration script [`src/main/resources/migration_2026-10-24_1.sql`](src/main/resources/migration_2026-10-24_1.sql) and synchronized authoritative baseline definitions in [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql).
+  - **Regression Integration Tests**: Added end-to-end integration tests in [`SleepSessionUIIT.java`](src/test/java/de/oberamsystems/slm/SleepSessionUIIT.java) verifying concluding an ongoing sleep session (`status = 'IN_PROGRESS'`) with omitted stages via `POST /sessions/sleep` and editing the duration of an existing completed sleep session.
+
+## [0.0.3-rc10] - 2026-10-23
+
+### Added
+- Implemented **Car Expense Tracking (23 Spritmonitor Categories), Lifecycle TCO Analytics (€/100km), and Multi-Vehicle Comparison** (ADR 028):
+  - Database Schema & Migration:
+    - Added PostgreSQL enum `car_expense_type` with 23 values in English matching Spritmonitor taxonomy (`MAINTENANCE`, `REPAIR`, `TIRE_CHANGE`, `OIL_CHANGE`, `INSURANCE`, `TAX`, `INSPECTION`, `TUNING`, `ACCESSORIES`, `PURCHASE_PRICE`, `OTHER`, `CARE`, `LEASING_RATE`, `REGISTRATION`, `FINANCING_RATE`, `REFUND`, `FINE`, `PARKING_FEE`, `TOLL`, `SPARE_PARTS`, `CHARGING_BASE_FEE`, `DIGITAL_SERVICES`, `GHG_QUOTA`) in [`migration_2026-10-23_2.sql`](src/main/resources/migration_2026-10-23_2.sql).
+    - Added columns `target_sell_date DATE` and `residual_value NUMERIC(10, 2)` to `car` table.
+    - Created `car_expense` table with native UUIDv7 primary key, indexes on `(car_id, expense_date DESC)` and `(expense_type)`.
+    - Synchronized baseline schema artifacts in [`tables.sql`](src/main/resources/tables.sql), [`enums.sql`](src/main/resources/enums.sql), [`init.sql`](init.sql), and [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql).
+  - Domain Model & Entities:
+    - Created Java enum [`CarExpenseType.java`](src/main/java/de/oberamsystems/slm/model/CarExpenseType.java) with English identifiers, Spritmonitor ID mapping, German and English labels, Bootstrap icons, badge classes, and credit flags (`REFUND` and `GHG_QUOTA` marked as credits/inflows).
+    - Created entity [`CarExpense.java`](src/main/java/de/oberamsystems/slm/model/CarExpense.java) and repository [`CarExpenseRepository.java`](src/main/java/de/oberamsystems/slm/model/CarExpenseRepository.java).
+    - Extended [`Car.java`](src/main/java/de/oberamsystems/slm/model/Car.java) with `targetSellDate`, `residualValue`, and accessors.
+  - Controller & Analytics Engine:
+    - Created [`CarExpenseController.java`](src/main/java/de/oberamsystems/slm/controller/CarExpenseController.java) managing `/car-expenses` with support for three tabs (`LOG`, `ANALYTICS`, `COMPARISON`), expense CRUD, and inline lifecycle parameter updates (`/car-expenses/cars/{carId}/parameters`).
+    - Implemented comprehensive TCO model: $\text{Total Net TCO} = \text{Depreciation} + \text{Fuel} + \text{Operating Expenses} - \text{Credits}$, realized price per 100km ($\text{TCO} / \Delta km \times 100$), and subcomponent breakdown (€/100km for fuel, depreciation, operating).
+    - Whitelisted `/car-expenses` and `/car-expenses/**` in [`SecurityConfig.java`](src/main/java/de/oberamsystems/slm/SecurityConfig.java).
+  - User Interface & Interactive Multi-Vehicle Comparison:
+    - Authored [`car-expenses.html`](src/main/resources/templates/car-expenses.html) with:
+      - **Tab 1 (Expenses Log)**: Table with Spritmonitor badges, positive/negative amount styling, and "+ Add Expense" modal.
+      - **Tab 2 (Expense Analytics & €/100km)**: Lifecycle parameters card, KPI summary cards, cost breakdown table, and Billboard.js donut chart.
+      - **Tab 3 (Vehicle Comparison)**: Head-to-head comparison of two vehicles (Car A vs Car B) via a Billboard.js multi-line chart (Years 1..10 on X-axis, Total Cost € on Y-axis). Features an interactive annual mileage slider powered by **noUiSlider** (default **10,000 km**) with synchronized number input and quick preset buttons (5k, 10k, 15k, 20k, 30k) that smoothly update trajectories and break-even insights in real-time without full page reloads.
+      - **Decoupled Fuel & Energy Efficiency Card**: Displays fuel type, unit prices ($€/L$ vs $€/kWh$), average consumption, and running fuel cost per 100km inferred strictly from recorded refuelings, with real-time annual fuel spend updates tied to the distance slider.
+    - Updated [`cars.html`](src/main/resources/templates/cars.html) and [`refuelings.html`](src/main/resources/templates/refuelings.html) with navigation links, target sell date, residual value table columns, and modal fields.
+  - MCP Server Tools:
+    - Added `@Tool getCarExpenses`, `@Tool logCarExpense`, and `@Tool updateVehicleLifecycleParameters` in [`McpVehicleTools.java`](src/main/java/de/oberamsystems/slm/mcp/McpVehicleTools.java).
+  - Automated Tests:
+    - Created [`CarExpenseModelTest.java`](src/test/java/de/oberamsystems/slm/model/CarExpenseModelTest.java) for taxonomy mapping, credits, and trajectory calculations.
+    - Created [`CarExpenseIT.java`](src/test/java/de/oberamsystems/slm/CarExpenseIT.java) testing the complete lifecycle: expense logging, credits, deletion, parameter updates, analytics, electric vs. combustion refueling comparisons, and multi-vehicle comparison.
+
+### Fixed
+- Fixed visual appearance bug where the TCO torus (donut chart) failed to display on the Analytics tab by connecting Billboard.js rendering to Bootstrap `shown.bs.tab` lifecycle events, enforcing explicit sizing, and rendering an empty-state message when no expenses are recorded yet.
+- Fixed `MethodArgumentNotValidException` / `typeMismatch` upon submitting the vehicle modal (`POST /cars`) with empty strings for optional numeric fields (`sellPrice`, `sellKilometers`, `pricePer100km`, `purchasePrice`, `purchaseKilometers`, `residualValue`):
+  - Refactored numeric fields in [`Car.java`](src/main/java/de/oberamsystems/slm/model/Car.java) from primitive types to boxed wrappers (`Double`, `Long`) with null-safe default accessors (`0.0`, `0L`) and backward-compatible primitive overloads.
+  - Added `BindingResult` parameter to `submitCars` and `submitCarTrips` in [`RouteController.java`](src/main/java/de/oberamsystems/slm/controller/RouteController.java) to catch binding errors and gracefully flash user-facing error messages instead of throwing fatal unhandled exceptions.
+  - Added regression integration tests in [`TransitAndMobilityIT.java`](src/test/java/de/oberamsystems/slm/TransitAndMobilityIT.java) verifying vehicle creation with empty optional fields and invalid input handling.
+
 ## [0.0.3-rc9] - 2026-10-23
 
 ### Added

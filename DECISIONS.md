@@ -730,8 +730,12 @@ In SLM, restorative wellness practices are tracked under the Wellness pillar (AD
    - **Invalid inputs**: Rejects mismatched or ambiguous combinations with user-facing validation error flash messages (`errorMessage`).
 3. **Cross-Table PostgreSQL Database Triggers**:
    - Implemented `trg_check_sleep_session_duration` (`BEFORE INSERT OR UPDATE ON sleep_session`) and `trg_check_session_sleep_duration` (`AFTER UPDATE ON session`) raising a PostgreSQL exception if sleep stages plus awake disruptions do not equal total gross session duration.
+   - **Deferred Constraint Trigger for Joined-Table Inheritance Flush Ordering (v0.0.3-rc11)**:
+     - In Hibernate joined inheritance, updating an entity flushes the parent table (`session`) before the child table (`sleep_session`). An immediate `AFTER UPDATE` trigger on `session` evaluated `sleep_session` with stale stages before Hibernate had executed `UPDATE sleep_session`.
+     - Converted `trg_check_session_sleep_duration` on `session` into a `CONSTRAINT TRIGGER ... AFTER UPDATE ON session DEFERRABLE INITIALLY DEFERRED`. This defers consistency checks until transaction `COMMIT` time when both tables have flushed, while `trg_check_sleep_session_duration` on `sleep_session` enforces immediate validation on child inserts/updates.
 4. **Migration & Baselines**:
    - Authored atomic transactional migration `migration_2026-10-19_2.sql` (`BEGIN;` ... `COMMIT;`) backfilling legacy records (`light = duration - break - deep - rem`) and establishing triggers.
+   - Authored incremental transactional migration [`migration_2026-10-24_1.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-24_1.sql) converting `trg_check_session_sleep_duration` to a deferred constraint trigger.
    - Synchronized `tables.sql`, `init.sql`, and `schema-init.sql`.
 
 ### Consequences & Trade-offs
@@ -739,6 +743,7 @@ In SLM, restorative wellness practices are tracked under the Wellness pillar (AD
   - Full polysomnographic sleep architecture representation.
   - Frictionless UI experience: users can log simple sleep with 0 stage inputs (auto-defaults to Light Sleep) or enter 2 stages (third auto-calculates).
   - Absolute data integrity guaranteed at the PostgreSQL database level across all entry channels.
+  - Deferring `trg_check_session_sleep_duration` until transaction `COMMIT` cleanly aligns database integrity constraints with Hibernate's joined-table entity flush lifecycle without loosening validation.
 - **Constraints**:
   - Direct SQL scripts and external integrations must satisfy `deep + rem + light + break = end - start`.
 
@@ -1087,6 +1092,49 @@ We adopted **Approach B: Clean Domain Separation**:
   - Complete ECTS progress tracking gives students immediate visibility into remaining semester effort.
 - **Constraints**:
   - Unstructured/self-paced apps (e.g. Duolingo) remain logged under `LearningItem` / `LearningSession` and do not appear in course workload totals.
+
+---
+
+## ADR 028: Car-Related Expense Tracking, Spritmonitor Taxonomy, and Lifecycle TCO & Multi-Vehicle Comparison Analytics (€/100km)
+
+### Status
+Accepted (v0.0.3-rc10)
+
+### Context
+Vehicle tracking in SLM previously captured refueling events (`Refueling`) and vehicle specifications (`Car`), but suffered from several limitations:
+1. Non-fuel operating expenses (insurance, taxes, maintenance, inspections, repairs, tolls, parking, charging base fees, etc.) could not be tracked.
+2. Vehicles lacked forward-looking lifecycle parameters (`targetSellDate` and `residualValue`), making real-world Total Cost of Ownership (TCO) and €/100km calculation impossible.
+3. Users could not perform head-to-head comparisons between vehicles (e.g. ICE vs. EV) across ownership horizons with interactive annual mileage adjustments.
+
+### Decision
+1. **Spritmonitor.de Expense Taxonomy (`car_expense_type`)**:
+   - Implemented all 23 official Spritmonitor.de categories as a PostgreSQL enum `car_expense_type` and Java enum `CarExpenseType` using clean, idiomatic English identifiers:
+     `MAINTENANCE`, `REPAIR`, `TIRE_CHANGE`, `OIL_CHANGE`, `INSURANCE`, `TAX`, `INSPECTION`, `TUNING`, `ACCESSORIES`, `PURCHASE_PRICE`, `OTHER`, `CARE`, `LEASING_RATE`, `REGISTRATION`, `FINANCING_RATE`, `REFUND`, `FINE`, `PARKING_FEE`, `TOLL`, `SPARE_PARTS`, `CHARGING_BASE_FEE`, `DIGITAL_SERVICES`, `GHG_QUOTA`.
+   - Categories `REFUND` (16, Erstattung) and `GHG_QUOTA` (23, THG-Prämie) are modeled with `isCredit() = true`, allowing positive amount inputs while automatically reducing net TCO in financial calculations.
+2. **Database Schema & Migration**:
+   - Added `target_sell_date DATE` and `residual_value NUMERIC(10, 2)` to `car`.
+   - Created table `car_expense` with native UUIDv7 primary key, foreign key to `car`, `expense_type`, `expense_date`, `odometer`, `amount`, `title`, and `note`.
+   - Synchronized baseline schemas (`tables.sql`, `enums.sql`, `init.sql`, `schema-init.sql`) and authored transactional migration `migration_2026-10-23_2.sql`.
+3. **Triple-Tab Vehicle Expenses Hub (`/car-expenses`)**:
+   - **Tab 1 (Expenses Log)**: Complete expense history with vehicle filter, category badges, "+ Add Expense" modal, and deletion.
+   - **Tab 2 (Expense Analytics & €/100km)**: Computes realized and projected TCO ($\text{Depreciation} + \text{Fuel} + \text{Operating Expenses} - \text{Credits}$), price per 100 km (€/100km), component breakdowns, Billboard.js donut chart ("TCO torus"), and an inline form to adjust lifecycle parameters directly. Fixed initial render dimensions by hooking into Bootstrap `shown.bs.tab` events with explicit SVG bounding constraints.
+   - **Tab 3 (Vehicle Comparison)**: Enables side-by-side multi-year cost trajectory comparison between two vehicles (Car A vs Car B) via a Billboard.js line chart ($X = \text{Years } 1..10, Y = \text{Total Cost } €$). Integrates an interactive annual mileage slider styled with **noUiSlider** (default 10,000 km) that dynamically recalculates trajectories on the client in real-time. Detects break-even year when curves intersect.
+   - **Decoupled Fuel & Energy Economics**:
+     - Fuel type (`ELECTRIC`, `DIESEL`, `SUPER_E10`, etc.) is inferred **strictly from recorded refuelings** (`refueling.getFuelType()`), never guessed by car or model names.
+     - Decouples unit economics: $\text{Fuel Cost per km} = \frac{\text{Weighted Avg Consumption}}{100} \times \text{Weighted Avg Price per Unit}$ ($€/L$ or $€/kWh$, $L/100km$ or $kWh/100km$).
+     - Renders a dedicated side-by-side fuel efficiency comparison card dynamically syncing annual fuel spend to the distance slider.
+4. **Security & MCP Integration**:
+   - Whitelisted `/car-expenses` and `/car-expenses/**` in `SecurityConfig`.
+   - Added MCP tools in `McpVehicleTools`: `getCarExpenses`, `logCarExpense`, and `updateVehicleLifecycleParameters`.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Full transparency over total mobility costs and realistic cost per kilometer.
+  - Accurately captures dramatic operational cost differences between electric vehicles and combustion engines.
+  - Interactive comparison tool enables data-driven vehicle acquisition decisions (e.g. evaluating whether lower running costs of an EV offset a higher purchase price).
+  - Native integration with standard Spritmonitor categories ensures future CSV import compatibility.
+- **Constraints**:
+  - Requires estimating `residualValue` and `targetSellDate` for prospective vehicles to yield accurate projected trajectories.
 
 
 

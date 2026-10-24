@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -116,8 +117,21 @@ public class RouteController {
 		return submitCarTrips(rs, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
 	}
 
+	public String submitCarTrips(CarTrip rs, Model model, RedirectAttributes redirectAttributes) {
+		return submitCarTrips(rs, new org.springframework.validation.BeanPropertyBindingResult(rs, "cartrip"), model, redirectAttributes);
+	}
+
 	@PostMapping("/car-trips")
-	public String submitCarTrips(@ModelAttribute CarTrip rs, Model model, RedirectAttributes redirectAttributes) {
+	public String submitCarTrips(@ModelAttribute CarTrip rs, org.springframework.validation.BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
+		if (bindingResult.hasErrors()) {
+			String errorMsg = bindingResult.getAllErrors().stream()
+					.map(org.springframework.context.support.DefaultMessageSourceResolvable::getDefaultMessage)
+					.filter(java.util.Objects::nonNull)
+					.findFirst()
+					.orElse("Validation failed for car trip input.");
+			redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+			return "redirect:/car-trips";
+		}
 		if (rs.getCar() == null || rs.getCar().getId() == null || !carRepo.existsById(rs.getCar().getId())) {
 			redirectAttributes.addFlashAttribute("errorMessage", "Car is required.");
 			return "redirect:/car-trips";
@@ -146,8 +160,21 @@ public class RouteController {
 		return submitCars(rs, model, new org.springframework.web.servlet.mvc.support.RedirectAttributesModelMap());
 	}
 
+	public String submitCars(Car rs, Model model, RedirectAttributes redirectAttributes) {
+		return submitCars(rs, new org.springframework.validation.BeanPropertyBindingResult(rs, "car"), model, redirectAttributes);
+	}
+
 	@PostMapping("/cars")
-	public String submitCars(@ModelAttribute Car rs, Model model, RedirectAttributes redirectAttributes) {
+	public String submitCars(@ModelAttribute Car rs, org.springframework.validation.BindingResult bindingResult, Model model, RedirectAttributes redirectAttributes) {
+		if (bindingResult.hasErrors()) {
+			String errorMsg = bindingResult.getAllErrors().stream()
+					.map(org.springframework.context.support.DefaultMessageSourceResolvable::getDefaultMessage)
+					.filter(java.util.Objects::nonNull)
+					.findFirst()
+					.orElse("Validation failed for car input.");
+			redirectAttributes.addFlashAttribute("errorMessage", errorMsg);
+			return "redirect:/cars";
+		}
 		if (rs.getManufacturer() == null || rs.getManufacturer().getId() == null || !manufacturerRepo.existsById(rs.getManufacturer().getId())) {
 			redirectAttributes.addFlashAttribute("errorMessage", "Manufacturer is required.");
 			return "redirect:/cars";

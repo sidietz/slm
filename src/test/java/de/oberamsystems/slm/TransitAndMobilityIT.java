@@ -555,5 +555,94 @@ public class TransitAndMobilityIT extends AbstractIntegrationTest {
                 .andExpect(redirectedUrl("/train-stations"));
         assertEquals(1, trainStation2Repository.count());
     }
+
+    @Test
+    void testSubmitCarWithEmptyOptionalFieldsRegression() throws Exception {
+        Manufacturer manufacturer = manufacturerRepository.saveAndFlush(new Manufacturer(null, "Audi AG", "Ingolstadt", null));
+        Vendor vendor = vendorRepository.saveAndFlush(new Vendor(null, "Audi Zentrum"));
+
+        // Submitting with empty strings for all optional numeric, date, and text fields
+        // exactly as sent by browser modal forms (which previously crashed with typeMismatch on sellPrice)
+        mockMvc.perform(post("/cars")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Audi e-tron GT")
+                        .param("modelName", "RS e-tron GT")
+                        .param("vin", "")
+                        .param("keyNumber", "")
+                        .param("manufacturer", manufacturer.getId().toString())
+                        .param("vendor", vendor.getId().toString())
+                        .param("purchasePrice", "")
+                        .param("sellPrice", "")
+                        .param("purchaseKilometers", "")
+                        .param("sellKilometers", "")
+                        .param("pricePer100km", "")
+                        .param("targetSellDate", "")
+                        .param("residualValue", "")
+                        .param("purchaseDate", "")
+                        .param("approvalDate", "")
+                        .param("manufacturingDate", ""))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cars"))
+                .andExpect(flash().attributeCount(0));
+
+        assertEquals(1, carRepository.count());
+        Car savedCar = carRepository.findAll().getFirst();
+        assertEquals("Audi e-tron GT", savedCar.getName());
+        assertEquals("RS e-tron GT", savedCar.getModelName());
+        assertEquals(0.0, savedCar.getSellPrice());
+        assertEquals(0.0, savedCar.getPurchasePrice());
+        assertEquals(0L, savedCar.getSellKilometers());
+        assertEquals(0L, savedCar.getPurchaseKilometers());
+    }
+
+    @Test
+    void testSubmitCarWithActiveVehicleEmptySellFields() throws Exception {
+        Manufacturer manufacturer = manufacturerRepository.saveAndFlush(new Manufacturer(null, "Porsche AG", "Stuttgart", null));
+        Vendor vendor = vendorRepository.saveAndFlush(new Vendor(null, "Porsche Zentrum"));
+
+        mockMvc.perform(post("/cars")
+                        .with(csrf())
+                        .param("id", "")
+                        .param("name", "Porsche Taycan")
+                        .param("modelName", "Taycan 4S")
+                        .param("manufacturer", manufacturer.getId().toString())
+                        .param("vendor", vendor.getId().toString())
+                        .param("purchasePrice", "95000.50")
+                        .param("purchaseKilometers", "15000")
+                        .param("pricePer100km", "0.22")
+                        .param("sellPrice", "")
+                        .param("sellKilometers", "")
+                        .param("residualValue", "45000.00")
+                        .param("targetSellDate", "2028-12-31"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cars"))
+                .andExpect(flash().attributeCount(0));
+
+        assertEquals(1, carRepository.count());
+        Car savedCar = carRepository.findAll().getFirst();
+        assertEquals(95000.50, savedCar.getPurchasePrice());
+        assertEquals(15000L, savedCar.getPurchaseKilometers());
+        assertEquals(0.0, savedCar.getSellPrice());
+        assertEquals(0L, savedCar.getSellKilometers());
+        assertEquals(45000.0, savedCar.getResidualValue());
+        assertEquals(LocalDate.of(2028, 12, 31), savedCar.getTargetSellDate());
+    }
+
+    @Test
+    void testSubmitCarWithInvalidInputGracefulError() throws Exception {
+        Manufacturer manufacturer = manufacturerRepository.saveAndFlush(new Manufacturer(null, "BMW AG", "Munich", null));
+        Vendor vendor = vendorRepository.saveAndFlush(new Vendor(null, "BMW Niederlassung"));
+
+        mockMvc.perform(post("/cars")
+                        .with(csrf())
+                        .param("name", "BMW M3")
+                        .param("manufacturer", manufacturer.getId().toString())
+                        .param("vendor", vendor.getId().toString())
+                        .param("sellPrice", "not-a-number"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/cars"))
+                .andExpect(flash().attributeExists("errorMessage"));
+    }
 }
 
