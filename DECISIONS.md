@@ -730,8 +730,12 @@ In SLM, restorative wellness practices are tracked under the Wellness pillar (AD
    - **Invalid inputs**: Rejects mismatched or ambiguous combinations with user-facing validation error flash messages (`errorMessage`).
 3. **Cross-Table PostgreSQL Database Triggers**:
    - Implemented `trg_check_sleep_session_duration` (`BEFORE INSERT OR UPDATE ON sleep_session`) and `trg_check_session_sleep_duration` (`AFTER UPDATE ON session`) raising a PostgreSQL exception if sleep stages plus awake disruptions do not equal total gross session duration.
+   - **Deferred Constraint Trigger for Joined-Table Inheritance Flush Ordering (v0.0.3-rc11)**:
+     - In Hibernate joined inheritance, updating an entity flushes the parent table (`session`) before the child table (`sleep_session`). An immediate `AFTER UPDATE` trigger on `session` evaluated `sleep_session` with stale stages before Hibernate had executed `UPDATE sleep_session`.
+     - Converted `trg_check_session_sleep_duration` on `session` into a `CONSTRAINT TRIGGER ... AFTER UPDATE ON session DEFERRABLE INITIALLY DEFERRED`. This defers consistency checks until transaction `COMMIT` time when both tables have flushed, while `trg_check_sleep_session_duration` on `sleep_session` enforces immediate validation on child inserts/updates.
 4. **Migration & Baselines**:
    - Authored atomic transactional migration `migration_2026-10-19_2.sql` (`BEGIN;` ... `COMMIT;`) backfilling legacy records (`light = duration - break - deep - rem`) and establishing triggers.
+   - Authored incremental transactional migration [`migration_2026-10-24_1.sql`](file:///home/simon/code/eclipse/slm/src/main/resources/migration_2026-10-24_1.sql) converting `trg_check_session_sleep_duration` to a deferred constraint trigger.
    - Synchronized `tables.sql`, `init.sql`, and `schema-init.sql`.
 
 ### Consequences & Trade-offs
@@ -739,6 +743,7 @@ In SLM, restorative wellness practices are tracked under the Wellness pillar (AD
   - Full polysomnographic sleep architecture representation.
   - Frictionless UI experience: users can log simple sleep with 0 stage inputs (auto-defaults to Light Sleep) or enter 2 stages (third auto-calculates).
   - Absolute data integrity guaranteed at the PostgreSQL database level across all entry channels.
+  - Deferring `trg_check_session_sleep_duration` until transaction `COMMIT` cleanly aligns database integrity constraints with Hibernate's joined-table entity flush lifecycle without loosening validation.
 - **Constraints**:
   - Direct SQL scripts and external integrations must satisfy `deep + rem + light + break = end - start`.
 

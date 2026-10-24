@@ -385,4 +385,88 @@ public class SleepSessionUIIT extends AbstractIntegrationTest {
                         .param("isNap", "false"))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void testCompleteOngoingSleepSessionWithAllStagesEmptyDefaultsToLightSleep() throws Exception {
+        String comment = "Ongoing sleep completed with light sleep default";
+
+        // 1. Start ongoing sleep session (bedtime known, wake-up unknown)
+        mockMvc.perform(post("/sessions/sleep")
+                        .with(csrf())
+                        .param("start", "2026-10-23T23:00")
+                        .param("end", "")
+                        .param("isNap", "false")
+                        .param("comment", comment))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=SLEEP"));
+
+        entityManager.flush();
+
+        SleepSession ongoing = sleepSessionRepository.findAll().stream()
+                .filter(s -> comment.equals(s.getComment()))
+                .findFirst().orElseThrow();
+        assertEquals("IN_PROGRESS", ongoing.getStatus());
+        assertNull(ongoing.getEnd());
+        UUID sessionId = ongoing.getId();
+
+        // 2. Wake up and complete session via POST /sessions/sleep with id and 7h 14m duration (07:14:00)
+        mockMvc.perform(post("/sessions/sleep")
+                        .with(csrf())
+                        .param("id", sessionId.toString())
+                        .param("start", "2026-10-23T23:00")
+                        .param("end", "2026-10-24T06:14")
+                        .param("breakMinutes", "0")
+                        .param("isNap", "false")
+                        .param("focusRating", "4")
+                        .param("comment", comment))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=SLEEP"));
+
+        entityManager.flush();
+
+        SleepSession completed = sleepSessionRepository.findById(sessionId).orElseThrow();
+        entityManager.refresh(completed);
+
+        assertEquals("COMPLETED", completed.getStatus());
+        assertEquals(LocalDateTime.of(2026, 10, 24, 6, 14), completed.getEnd());
+        assertEquals(Duration.ofMinutes(434), completed.getDuration(), "7h 14m gross duration");
+        assertEquals(Duration.ofMinutes(434), completed.getLightSleepDuration(), "All net sleep must default to light sleep");
+        assertEquals(Duration.ZERO, completed.getDeepSleepDuration());
+        assertEquals(Duration.ZERO, completed.getRemSleepDuration());
+    }
+
+    @Test
+    void testEditExistingCompletedSleepSessionDurationWithStagesEmpty() throws Exception {
+        SleepSession session = new SleepSession();
+        session.setStart(LocalDateTime.of(2026, 10, 22, 23, 0));
+        session.setEnd(LocalDateTime.of(2026, 10, 23, 7, 0)); // 8h = 480m
+        session.setBreakDuration(Duration.ZERO);
+        session.setDeepSleepDuration(Duration.ZERO);
+        session.setRemSleepDuration(Duration.ZERO);
+        session.setLightSleepDuration(Duration.ofHours(8));
+        session.setIsNap(false);
+        session.setComment("Initial completed sleep");
+        session = sleepSessionRepository.saveAndFlush(session);
+        UUID sessionId = session.getId();
+
+        // Edit end time to 07:30 (8h 30m = 510m) with sleep stages omitted
+        mockMvc.perform(post("/sessions/sleep")
+                        .with(csrf())
+                        .param("id", sessionId.toString())
+                        .param("start", "2026-10-22T23:00")
+                        .param("end", "2026-10-23T07:30")
+                        .param("breakMinutes", "0")
+                        .param("isNap", "false")
+                        .param("comment", "Edited completed sleep"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/sessions?type=SLEEP"));
+
+        entityManager.flush();
+
+        SleepSession updated = sleepSessionRepository.findById(sessionId).orElseThrow();
+        entityManager.refresh(updated);
+
+        assertEquals(Duration.ofMinutes(510), updated.getDuration());
+        assertEquals(Duration.ofMinutes(510), updated.getLightSleepDuration(), "Updated duration must default to light sleep");
+    }
 }

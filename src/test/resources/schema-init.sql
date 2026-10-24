@@ -440,8 +440,9 @@ END;
 $$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trg_check_session_sleep_duration ON session;
-CREATE TRIGGER trg_check_session_sleep_duration
-AFTER UPDATE OF starttime, endtime, break_duration ON session
+CREATE CONSTRAINT TRIGGER trg_check_session_sleep_duration
+AFTER UPDATE ON session
+DEFERRABLE INITIALLY DEFERRED
 FOR EACH ROW
 EXECUTE FUNCTION check_session_sleep_duration();
 

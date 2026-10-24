@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc11] - 2026-10-24
+
+### Fixed
+- Fixed unhandled PostgreSQL trigger exception (`ERROR: Sleep stages sum (00:00:00) does not equal total session duration (07:14:00)`) when logging, completing, or editing a `SleepSession` with start and end times where sleep stage inputs are omitted:
+  - **Deferred Constraint Trigger on `session`**: Converted `trg_check_session_sleep_duration` on the `session` table into a PostgreSQL `CONSTRAINT TRIGGER ... AFTER UPDATE ON session DEFERRABLE INITIALLY DEFERRED`. This defers cross-table consistency validation until transaction `COMMIT` time, preventing immediate statement-boundary trigger execution while Hibernate flushes joined-table mutations in hierarchy order (parent `session` before child `sleep_session`).
+  - **Light Sleep Fallback Guarantee**: Preserved automatic allocation of the entire net sleep duration (`sleepMinutes = totalMinutes - awakeMinutes`) to light sleep (`lightSleepDuration = sleepMinutes`, `deep = 0`, `rem = 0`) when sleep stage inputs are omitted.
+  - **Database Migration & Baseline Sync**: Created transactional migration script [`src/main/resources/migration_2026-10-24_1.sql`](src/main/resources/migration_2026-10-24_1.sql) and synchronized authoritative baseline definitions in [`tables.sql`](src/main/resources/tables.sql), [`init.sql`](init.sql), and [`src/test/resources/schema-init.sql`](src/test/resources/schema-init.sql).
+  - **Regression Integration Tests**: Added end-to-end integration tests in [`SleepSessionUIIT.java`](src/test/java/de/oberamsystems/slm/SleepSessionUIIT.java) verifying concluding an ongoing sleep session (`status = 'IN_PROGRESS'`) with omitted stages via `POST /sessions/sleep` and editing the duration of an existing completed sleep session.
+
 ## [0.0.3-rc10] - 2026-10-23
 
 ### Added
