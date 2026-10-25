@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.context.WebApplicationContext;
 
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -247,8 +246,8 @@ public class DoctorControllerIT extends AbstractIntegrationTest {
 
         Appointment appt = new Appointment();
         appt.setDoctor(doc);
-        appt.setStart(OffsetDateTime.of(2026, 11, 5, 10, 0, 0, 0, ZoneOffset.UTC));
-        appt.setEnd(OffsetDateTime.of(2026, 11, 5, 10, 30, 0, 0, ZoneOffset.UTC));
+        appt.setStart(toOffset(2026, 11, 5, 10, 0));
+        appt.setEnd(toOffset(2026, 11, 5, 10, 30));
         appt.setComment("Initial consultation");
         appt = appointmentRepository.saveAndFlush(appt);
         Long apptId = appt.getId();

@@ -25,7 +25,6 @@ import java.io.FileInputStream;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -274,7 +273,7 @@ public class RefuelingIT extends AbstractIntegrationTest {
 		Refueling r = new Refueling();
 		r.setCar(testCar);
 		r.setStation(gs);
-		r.setFuelingDate(OffsetDateTime.of(2026, 10, 20, 11, 0, 0, 0, ZoneOffset.UTC));
+		r.setFuelingDate(toOffset(2026, 10, 20, 11, 0));
 		r.setLiters(new BigDecimal("50.00"));
 		r.setTotalCost(new BigDecimal("85.00"));
 		r.setTripDistance(new BigDecimal("800.0"));

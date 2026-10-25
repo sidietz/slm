@@ -13,7 +13,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 import java.time.Duration;
 import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
@@ -51,8 +50,8 @@ public class SleepTimeIT extends AbstractIntegrationTest {
     public void testSleepTimeIntervalAndJsonSerializationEndToEnd() throws Exception {
         // 1. Create and persist sleep record
         SleepTime st = new SleepTime();
-        st.setGotobed(OffsetDateTime.of(2026, 10, 18, 23, 0, 0, 0, ZoneOffset.UTC));
-        st.setGetup(OffsetDateTime.of(2026, 10, 19, 7, 30, 0, 0, ZoneOffset.UTC));
+        st.setGotobed(toOffset(2026, 10, 18, 23, 0));
+        st.setGetup(toOffset(2026, 10, 19, 7, 30));
         st = sleepTimeRepository.saveAndFlush(st);
         entityManager.refresh(st);
 
@@ -95,8 +94,8 @@ public class SleepTimeIT extends AbstractIntegrationTest {
     public void testSleepSessionPolymorphicInheritanceAndEndpoints() throws Exception {
         // 1. Create and persist SleepSession (joined inheritance to session and sleep_session tables)
         SleepSession ss = new SleepSession();
-        ss.setStart(OffsetDateTime.of(2026, 10, 18, 22, 30, 0, 0, ZoneOffset.UTC));
-        ss.setEnd(OffsetDateTime.of(2026, 10, 19, 7, 0, 0, 0, ZoneOffset.UTC));
+        ss.setStart(toOffset(2026, 10, 18, 22, 30));
+        ss.setEnd(toOffset(2026, 10, 19, 7, 0));
         ss.setBreakDuration(Duration.ofMinutes(15));
         ss.setDeepSleepDuration(Duration.ofMinutes(95));
         ss.setRemSleepDuration(Duration.ofMinutes(85));

@@ -98,7 +98,7 @@ public class SecurityConfig {
 						.requestMatchers("/academics", "/academics/**", "/academic", "/academic/**").permitAll()
 						.requestMatchers("/favicon.ico", "/favicon/**").permitAll()
 						.requestMatchers("/habit-entries", "/moods", "/learning-items", "/habits").permitAll()
-						.requestMatchers("/points", "/routes", "/car-trips", "/cars", "/refuelings", "/refuelings/**", "/stations", "/stations/**", "/car-expenses", "/car-expenses/**").permitAll()
+						.requestMatchers("/points", "/routes", "/car-trips", "/cars", "/refuelings", "/refuelings/**", "/stations", "/stations/**", "/car-expenses", "/car-expenses/**", "/drones", "/drones/**", "/drone-flights", "/drone-flights/**").permitAll()
 						.requestMatchers("/mcp/**", "/sse").permitAll()
 						.requestMatchers("/api/**")
 						.authenticated().anyRequest().denyAll())

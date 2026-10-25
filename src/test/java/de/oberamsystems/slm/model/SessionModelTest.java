@@ -7,6 +7,8 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.UUID;
 
+import de.oberamsystems.utils.Utils;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 public class SessionModelTest {
@@ -39,8 +41,8 @@ public class SessionModelTest {
 		assertEquals("COMPLETED", session.getStatus());
 		assertEquals(Duration.ZERO, session.getBreakDuration());
 
-		OffsetDateTime start = OffsetDateTime.of(2026, 10, 17, 10, 0, 0, 0, ZoneOffset.UTC);
-		OffsetDateTime end = OffsetDateTime.of(2026, 10, 17, 12, 0, 0, 0, ZoneOffset.UTC);
+		OffsetDateTime start = Utils.toOffset(2026, 10, 17, 10, 0, ZoneOffset.UTC);
+		OffsetDateTime end = Utils.toOffset(2026, 10, 17, 12, 0, ZoneOffset.UTC);
 		Duration breakDur = Duration.ofMinutes(15);
 		Duration grossDur = Duration.ofHours(2);
 		Duration netDur = Duration.ofMinutes(105);

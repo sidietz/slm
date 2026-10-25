@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
 import de.oberamsystems.slm.config.TimeZoneConfig;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +52,6 @@ public class AcademicIT extends AbstractIntegrationTest {
 
         @Autowired
         private jakarta.persistence.EntityManager entityManager;
-
-        private OffsetDateTime toOffset(int year, int month, int day, int hour, int minute) {
-                return ZonedDateTime.of(year, month, day, hour, minute, 0, 0, TimeZoneConfig.getZoneId()).toOffsetDateTime();
-        }
 
         @Test
         public void testCourseAndLectureHierarchyAndUuidv7Note() {
