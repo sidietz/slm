@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <th:block th:replace="~{fragments/layout :: standard-head('Drone Flight Logs')}"></th:block>
+    <!-- Leaflet CSS & JS for flight path coordinates map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <style>
+        #flightsMap {
+            height: 380px;
+            width: 100%;
+            border-radius: 8px;
+            z-index: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('Drone Flight Logs', 'Log flight sessions, takeoff & landing coordinates, air distance, and mission notes', 'bi bi-compass', 'theme-transit', '/drones', 'UAV Fleet')}"></header>
+
+    <main class="container mb-5">
+        <!-- Flash Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}">Success</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}">Error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Metric KPI Summary Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-4 col-12">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-info p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Logged Flights</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalFlightCount}">0</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-6">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-success p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Air Duration</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalDurationHours}">0.0 h</div>
+                </div>
+            </div>
+            <div class="col-md-4 col-6">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-warning p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Distance</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalDistanceKm} + ' km'">0.0 km</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter & Action Bar -->
+        <div class="card slm-card shadow-sm mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <form th:action="@{/drone-flights}" method="get" class="d-flex align-items-center gap-2">
+                    <label for="droneFilter" class="form-label mb-0 small fw-semibold text-secondary">Drone:</label>
+                    <select id="droneFilter" name="droneId" class="form-select form-select-sm" onchange="this.form.submit()">
+                        <option value="">-- All Drones --</option>
+                        <option th:each="d : ${drones}"
+                                th:value="${d.id}"
+                                th:text="${d.name + ' (' + d.category + ')'}"
+                                th:selected="${selectedDroneId != null and selectedDroneId.equals(d.id)}">
+                            DJI Mini 4 Pro
+                        </option>
+                    </select>
+                </form>
+
+                <div class="d-flex gap-2">
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#logFlightModal">
+                        <i class="bi bi-plus-lg me-1"></i> Log Drone Flight
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Flight Map Card (Rendered if any flights have coordinates) -->
+        <div class="card slm-card shadow-sm mb-4" id="mapCard" style="display: none;">
+            <div class="card-header bg-transparent fw-bold text-dark d-flex justify-content-between align-items-center py-3">
+                <span><i class="bi bi-geo-alt-fill text-danger me-2"></i>Flight Telemetry &amp; Coordinates Map</span>
+                <span class="badge bg-light text-secondary border small">OpenStreetMap</span>
+            </div>
+            <div class="card-body p-2">
+                <div id="flightsMap"></div>
+            </div>
+        </div>
+
+        <!-- Flights Table -->
+        <div class="card slm-card shadow-sm mb-4" th:if="${!#lists.isEmpty(flights)}">
+            <div class="card-header bg-transparent py-3 fw-bold text-dark d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-card-checklist me-2 text-primary"></i>Flight Log History</span>
+                <span class="badge bg-primary text-white" th:text="${flights.size()} + ' records'">0 records</span>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Drone</th>
+                            <th>Takeoff (Start)</th>
+                            <th>Landing (End)</th>
+                            <th>Duration</th>
+                            <th>Coordinates</th>
+                            <th>Air Dist.</th>
+                            <th>Altitude</th>
+                            <th>Notes</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="f : ${flights}"
+                            th:attr="data-start-lat=${f.startLatitude}, data-start-lon=${f.startLongitude}, data-end-lat=${f.landingLatitude}, data-end-lon=${f.landingLongitude}, data-drone-name=${f.drone.name}">
+                            <td>
+                                <div class="fw-bold text-dark" th:text="${f.drone.name}">DJI Mini 4 Pro</div>
+                                <span class="badge"
+                                      th:classappend="${f.drone.category.name() == 'C0' ? 'bg-success' : 'bg-primary'}"
+                                      th:text="${f.drone.category}">C0</span>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold text-dark" th:text="${#temporals.format(f.start, 'yyyy-MM-dd HH:mm')}">2026-10-25 14:00</div>
+                                <div class="text-muted fs-8" th:text="${#temporals.format(f.start, 'O')}">+01:00</div>
+                            </td>
+                            <td>
+                                <div class="small fw-semibold text-dark" th:text="${#temporals.format(f.end, 'yyyy-MM-dd HH:mm')}">2026-10-25 14:28</div>
+                                <div class="text-muted fs-8" th:text="${#temporals.format(f.end, 'O')}">+01:00</div>
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info border border-info-subtle"
+                                      th:if="${f.duration}"
+                                      th:text="${f.duration.toMinutes()} + ' min'">28 min</span>
+                                <span th:unless="${f.duration}" class="text-muted">-</span>
+                            </td>
+                            <td class="small">
+                                <div th:if="${f.hasCoordinates()}">
+                                    <span class="text-success"><i class="bi bi-geo-alt-fill"></i></span>
+                                    <span th:text="${f.formattedCoordinates}">48.13, 11.57</span>
+                                    <div th:if="${f.landingLatitude != null and !f.isRoundTrip()}" class="text-muted fs-8">
+                                        &rarr; <span th:text="${f.formattedLandingCoordinates}">48.14, 11.58</span>
+                                    </div>
+                                    <span th:if="${f.isRoundTrip()}" class="badge bg-light text-secondary border fs-8">Roundtrip</span>
+                                </div>
+                                <span th:unless="${f.hasCoordinates()}" class="text-muted">None</span>
+                            </td>
+                            <td>
+                                <span class="fw-semibold text-dark small" th:text="${f.airDistanceFormatted}">350 m</span>
+                            </td>
+                            <td>
+                                <span th:if="${f.maxAltitudeMeters != null}" th:text="${f.maxAltitudeMeters} + ' m'" class="small text-dark">85 m</span>
+                                <span th:unless="${f.maxAltitudeMeters != null}" class="text-muted">-</span>
+                            </td>
+                            <td>
+                                <div class="text-truncate small text-secondary" style="max-width: 200px;" th:text="${f.notes}" th:title="${f.notes}">Mission notes</div>
+                            </td>
+                            <td class="text-end">
+                                <form th:action="@{/drone-flights/{id}/delete(id=${f.id})}" method="post" onsubmit="return confirm('Delete this flight log?');" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete flight">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${#lists.isEmpty(flights)}" class="card slm-card text-center p-5 shadow-sm">
+            <div class="fs-1 text-muted mb-3"><i class="bi bi-compass"></i></div>
+            <h4 class="fw-bold text-dark">No Flight Logs Found</h4>
+            <p class="text-muted mb-3">Record your flights with takeoff and landing timestamps, coordinates, and notes.</p>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#logFlightModal">
+                    <i class="bi bi-plus-lg me-1"></i> Log Drone Flight
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Log Flight Modal -->
+    <div class="modal fade" id="logFlightModal" tabindex="-1" aria-labelledby="logFlightModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <form th:action="@{/drone-flights}" method="post">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title" id="logFlightModalLabel"><i class="bi bi-compass-fill me-2"></i>Log Drone Flight</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label for="flightDrone" class="form-label fw-semibold">Drone *</label>
+                                <select class="form-select" id="flightDrone" name="droneId" required>
+                                    <option th:each="d : ${drones}"
+                                            th:value="${d.id}"
+                                            th:text="${d.name + ' (' + d.category + ' - ' + d.weightGrams + 'g)'}"
+                                            th:selected="${selectedDroneId != null and selectedDroneId.equals(d.id)}">
+                                        DJI Mini 4 Pro
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="flightStart" class="form-label fw-semibold">Takeoff Time (Start) *</label>
+                                <input type="datetime-local" class="form-control" id="flightStart" name="start" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="flightEnd" class="form-label fw-semibold">Landing Time (End) *</label>
+                                <input type="datetime-local" class="form-control" id="flightEnd" name="end" required>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="fw-semibold text-secondary small text-uppercase">Coordinates (WGS84)</span>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCurrentLocation">
+                                            <i class="bi bi-crosshair me-1"></i> Current Location
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" id="btnCopyTakeoffToLanding">
+                                            <i class="bi bi-copy me-1"></i> Roundtrip (Copy Start &rarr; End)
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="startLat" class="form-label small">Takeoff Latitude</label>
+                                <input type="number" step="0.000001" class="form-control form-control-sm" id="startLat" name="startLatitude" placeholder="e.g. 48.137154">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="startLon" class="form-label small">Takeoff Longitude</label>
+                                <input type="number" step="0.000001" class="form-control form-control-sm" id="startLon" name="startLongitude" placeholder="e.g. 11.576124">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="landingLat" class="form-label small">Landing Latitude</label>
+                                <input type="number" step="0.000001" class="form-control form-control-sm" id="landingLat" name="landingLatitude" placeholder="e.g. 48.137154">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="landingLon" class="form-label small">Landing Longitude</label>
+                                <input type="number" step="0.000001" class="form-control form-control-sm" id="landingLon" name="landingLongitude" placeholder="e.g. 11.576124">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="maxAltitude" class="form-label fw-semibold">Max Altitude (meters)</label>
+                                <input type="number" step="0.1" class="form-control" id="maxAltitude" name="maxAltitudeMeters" placeholder="e.g. 118 (EU max 120m)">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="flightNotes" class="form-label fw-semibold">Flight Notes &amp; Weather</label>
+                                <textarea class="form-control" id="flightNotes" name="notes" rows="3" placeholder="Wind speeds, GPS satellite count, video footage, battery status, mission objectives..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Save Flight</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script: Auto-population & Map Rendering -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Prepopulate start/end time with current time if empty
+            const startInput = document.getElementById('flightStart');
+            const endInput = document.getElementById('flightEnd');
+            if (startInput && !startInput.value) {
+                const now = new Date();
+                const past = new Date(now.getTime() - 20 * 60000);
+                startInput.value = past.toISOString().slice(0, 16);
+                endInput.value = now.toISOString().slice(0, 16);
+            }
+
+            // Quick Roundtrip copy button
+            document.getElementById('btnCopyTakeoffToLanding').addEventListener('click', function () {
+                document.getElementById('landingLat').value = document.getElementById('startLat').value;
+                document.getElementById('landingLon').value = document.getElementById('startLon').value;
+            });
+
+            // Geolocation API button
+            document.getElementById('btnCurrentLocation').addEventListener('click', function () {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(function (pos) {
+                        const lat = pos.coords.latitude.toFixed(6);
+                        const lon = pos.coords.longitude.toFixed(6);
+                        document.getElementById('startLat').value = lat;
+                        document.getElementById('startLon').value = lon;
+                        document.getElementById('landingLat').value = lat;
+                        document.getElementById('landingLon').value = lon;
+                    }, function (err) {
+                        alert('Geolocation failed: ' + err.message);
+                    });
+                } else {
+                    alert('Geolocation is not supported by your browser.');
+                }
+            });
+
+            // Map initialization if flight coordinates exist
+            const rows = document.querySelectorAll('tr[data-start-lat]');
+            const validPoints = [];
+            rows.forEach(r => {
+                const startLat = parseFloat(r.getAttribute('data-start-lat'));
+                const startLon = parseFloat(r.getAttribute('data-start-lon'));
+                const endLat = parseFloat(r.getAttribute('data-end-lat'));
+                const endLon = parseFloat(r.getAttribute('data-end-lon'));
+                const droneName = r.getAttribute('data-drone-name') || 'Flight';
+
+                if (!isNaN(startLat) && !isNaN(startLon)) {
+                    validPoints.push({
+                        start: [startLat, startLon],
+                        end: (!isNaN(endLat) && !isNaN(endLon)) ? [endLat, endLon] : null,
+                        name: droneName
+                    });
+                }
+            });
+
+            if (validPoints.length > 0) {
+                document.getElementById('mapCard').style.display = 'block';
+                const map = L.map('flightsMap').setView(validPoints[0].start, 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors'
+                }).addTo(map);
+
+                const latLngs = [];
+                validPoints.forEach(p => {
+                    const marker = L.circleMarker(p.start, {
+                        radius: 7,
+                        color: '#16a34a',
+                        fillColor: '#22c55e',
+                        fillOpacity: 0.9
+                    }).addTo(map).bindPopup('<b>Takeoff</b>: ' + p.name);
+                    latLngs.push(p.start);
+
+                    if (p.end) {
+                        L.circleMarker(p.end, {
+                            radius: 7,
+                            color: '#dc2626',
+                            fillColor: '#ef4444',
+                            fillOpacity: 0.9
+                        }).addTo(map).bindPopup('<b>Landing</b>: ' + p.name);
+                        latLngs.push(p.end);
+
+                        L.polyline([p.start, p.end], {
+                            color: '#0284c7',
+                            weight: 3,
+                            dashArray: '5, 10'
+                        }).addTo(map);
+                    }
+                });
+
+                if (latLngs.length > 0) {
+                    map.fitBounds(L.latLngBounds(latLngs), { padding: [40, 40] });
+                }
+            }
+        });
+    </script>
+
+    <!-- Standard Footer Fragment -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+
+</html>

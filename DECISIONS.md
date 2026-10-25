@@ -1252,6 +1252,40 @@ We adopt **Option A: Full Domain Migration to `OffsetDateTime` paired with dynam
 - **Constraints**:
   - HTML5 datetime-local form inputs do not supply timezone offsets; the application must consistently supply the configured `ZoneId` through global converters.
 
+---
+
+## ADR 031: UAV / Drone & Flight Tracking with PostGIS Geodesics and OffsetDateTime Interval Duration
+
+### Status
+Accepted (v0.0.3-rc15)
+
+### Context
+SLM tracks mobility and transit assets including cars, refuelings, train journeys, and routes. Personal aviation and Unmanned Aerial Vehicles (UAVs / drones) were unrepresented:
+1. **EU UAS Regulation Compliance**: EU Regulations 2019/945 and 2019/947 classify open-category drones into five standardized classes (`C0`, `C1`, `C2`, `C3`, `C4`) based on maximum takeoff mass (MTOM) and operational constraints. The system needed structured categorization, weight in grams, purchase tracking, and operator e-ID management.
+2. **Flight Telemetry & Geodesics**: Drone flights require precise temporal tracking (`start` and `end` with timezone semantics), exact physical duration, takeoff and landing coordinates (WGS84 lat/lon), max altitude, and straight-line air distance.
+3. **Hardware Provenance**: UAVs involve both manufacturers (e.g. DJI, Autel) and vendors (point of sale / retailer), requiring explicit relational tracking.
+
+### Decision
+1. **Native UUIDv7 & Domain Modeling**:
+   - Implemented [`Drone`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/Drone.java) with `id UUID PRIMARY KEY DEFAULT uuidv7()`, `name`, `modelName`, `category` (`drone_category` enum: `C0`, `C1`, `C2`, `C3`, `C4`), `weightGrams`, `buyDate` (`LocalDate`), `serialNumber`, `uasOperatorId`, `purchasePrice`, and `Manufacturer` and `Vendor` relationships.
+   - Implemented [`DroneFlight`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/model/DroneFlight.java) with `id UUID PRIMARY KEY DEFAULT uuidv7()`, `starttime` and `endtime` as `OffsetDateTime` (`TIMESTAMPTZ`), and text notes.
+2. **Database-Computed Interval Duration & PostGIS Geodesics**:
+   - `duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED` mapped with Hibernate's `PostgreSQLIntervalType`.
+   - PostGIS geography points `start_geom` and `landing_geom` (`geography(Point, 4326)`) generated automatically from `latitude` and `longitude` with GIST spatial indices.
+   - Straight-line air distance generated directly in the database:
+     `air_distance DOUBLE PRECISION GENERATED ALWAYS AS (CASE WHEN start_latitude IS NOT NULL AND landing_latitude IS NOT NULL THEN ST_Distance(start_geom, landing_geom) ELSE NULL END) STORED`.
+3. **Web UI & Spring AI Automation**:
+   - Built dedicated views [`drones.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/drones.html) and [`drone-flights.html`](file:///home/simon/code/eclipse/slm/src/main/resources/templates/drone-flights.html) with Leaflet interactive coordinate maps and HTML5 `<input type="datetime-local">` form binding.
+   - Exposed Spring AI MCP tools in [`McpDroneTools.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/mcp/McpDroneTools.java) (`listDrones`, `registerDrone`, `logDroneFlight`, `listDroneFlights`).
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - Exact geodesic flight distances computed transparently by PostGIS on ellipsoidal coordinates (WGS84).
+  - High performance via native UUIDv7 sequential B-tree indexing.
+  - Full EU UAS regulatory alignment across class categories.
+- **Constraints**:
+  - PostGIS spatial extension must be active (guaranteed by standard SLM baseline).
+
 
 
 

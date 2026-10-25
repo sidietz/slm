@@ -96,3 +96,10 @@ CREATE TYPE car_expense_type AS ENUM (
     'GHG_QUOTA'
 );
 
+CREATE TYPE drone_category AS ENUM (
+    'C0',
+    'C1',
+    'C2',
+    'C3',
+    'C4'
+);

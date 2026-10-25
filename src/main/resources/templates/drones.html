@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:replace="~{fragments/layout :: standard-head('Drones & UAV Fleet')}"></head>
+
+<body>
+    <!-- Header Hero Banner -->
+    <header th:replace="~{fragments/layout :: header('UAV & Drone Fleet', 'Manage unmanned aerial vehicles, EU categories C0–C4, weights, and telemetry', 'bi bi-send-fill', 'theme-transit', '/misc-management', 'Transit Hub')}"></header>
+
+    <main class="container mb-5">
+        <!-- Flash Alert Messages -->
+        <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i><span th:text="${successMessage}">Success</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i><span th:text="${errorMessage}">Error</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+
+        <!-- Metric KPI Summary Cards -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3 col-6">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-primary p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Fleet</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalFleetCount}">0</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-info p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Flights</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalFlightsCount}">0</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-success p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Flight Hours</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalFlightHours}">0.0 h</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-6">
+                <div class="card slm-card shadow-sm border-0 border-start border-4 border-warning p-3">
+                    <div class="text-muted small fw-semibold text-uppercase">Flight Distance</div>
+                    <div class="fs-3 fw-bold text-dark mt-1" th:text="${totalDistanceKm} + ' km'">0.0 km</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Bar: Category Filter & Register Button -->
+        <div class="card slm-card shadow-sm mb-4">
+            <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div class="btn-group" role="group">
+                    <a th:href="@{/drones}"
+                       class="btn btn-sm"
+                       th:classappend="${selectedCategory == null} ? 'btn-primary' : 'btn-outline-secondary'">
+                        All Categories
+                    </a>
+                    <a th:each="cat : ${categories}"
+                       th:href="@{/drones(category=${cat})}"
+                       class="btn btn-sm"
+                       th:classappend="${selectedCategory == cat} ? 'btn-primary' : 'btn-outline-secondary'"
+                       th:text="${cat}">C0</a>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <a th:href="@{/drone-flights}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-clock-history me-1"></i> Flight Logs
+                    </a>
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#registerDroneModal">
+                        <i class="bi bi-plus-lg me-1"></i> Register UAV
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Drones Fleet Grid -->
+        <div class="row g-4" th:if="${!#lists.isEmpty(drones)}">
+            <div class="col-md-6 col-lg-4" th:each="d : ${drones}">
+                <div class="card slm-card h-100 shadow-sm border-0 slm-card-hover">
+                    <div class="card-header bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
+                        <span class="badge px-2.5 py-1.5 fw-bold"
+                              th:classappend="${d.category.name() == 'C0' ? 'bg-success' : (d.category.name() == 'C1' ? 'bg-info text-dark' : (d.category.name() == 'C2' ? 'bg-primary' : (d.category.name() == 'C3' ? 'bg-warning text-dark' : 'bg-danger')))}"
+                              th:text="${d.category.displayName}">C0</span>
+                        <span th:if="${d.active}" class="badge bg-success-subtle text-success border border-success-subtle">Active</span>
+                        <span th:unless="${d.active}" class="badge bg-secondary">Inactive</span>
+                    </div>
+                    <div class="card-body pt-2">
+                        <h4 class="card-title fw-bold text-dark mb-1" th:text="${d.name}">DJI Mini 4 Pro</h4>
+                        <p class="text-muted small mb-3" th:text="${d.modelName}">Mini 4 Pro</p>
+
+                        <ul class="list-unstyled small mb-3 text-secondary">
+                            <li class="mb-1"><i class="bi bi-speedometer2 me-2"></i><strong>Weight:</strong> <span th:text="${d.weightGrams} + ' g'">249 g</span></li>
+                            <li class="mb-1" th:if="${d.buyDate}"><i class="bi bi-calendar3 me-2"></i><strong>Bought:</strong> <span th:text="${d.buyDate}">2026-05-10</span></li>
+                            <li class="mb-1" th:if="${d.manufacturer}"><i class="bi bi-building me-2"></i><strong>Maker:</strong> <span th:text="${d.manufacturer.name}">DJI</span></li>
+                            <li class="mb-1" th:if="${d.vendor}"><i class="bi bi-shop me-2"></i><strong>Vendor:</strong> <span th:text="${d.vendor.name}">Amazon</span></li>
+                            <li class="mb-1" th:if="${d.serialNumber}"><i class="bi bi-upc me-2"></i><strong>Serial:</strong> <span th:text="${d.serialNumber}">1581F...</span></li>
+                            <li class="mb-1" th:if="${d.uasOperatorId}"><i class="bi bi-shield-check me-2"></i><strong>UAS e-ID:</strong> <span th:text="${d.uasOperatorId}">DEU1234567890</span></li>
+                        </ul>
+
+                        <div class="p-2 bg-light rounded text-center mb-3">
+                            <div class="row g-2">
+                                <div class="col-6 border-end">
+                                    <div class="text-muted small">Flights</div>
+                                    <div class="fw-bold fs-5 text-dark" th:text="${d.flightCount}">0</div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-muted small">Total Time</div>
+                                    <div class="fw-bold fs-5 text-dark" th:text="${d.totalFlightHoursFormatted}">0.0 h</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="small text-muted mb-0" th:if="${d.notes}" th:text="${d.notes}">Notes</p>
+                    </div>
+                    <div class="card-footer bg-transparent border-0 pb-3 pt-0 d-flex justify-content-between align-items-center">
+                        <a th:href="@{/drone-flights(droneId=${d.id})}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-list-check me-1"></i> View Flights
+                        </a>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                Actions
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0">
+                                <li>
+                                    <form th:action="@{/drones/{id}/delete(id=${d.id})}" method="post" onsubmit="return confirm('Are you sure you want to delete this drone and all its flight logs?');">
+                                        <button type="submit" class="dropdown-item text-danger">
+                                            <i class="bi bi-trash me-2"></i> Delete Drone
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div th:if="${#lists.isEmpty(drones)}" class="card slm-card text-center p-5 shadow-sm">
+            <div class="fs-1 text-muted mb-3"><i class="bi bi-send"></i></div>
+            <h4 class="fw-bold text-dark">No UAVs Registered</h4>
+            <p class="text-muted mb-3">Add your first drone (C0, C1, C2, C3, C4) to start tracking flights and coordinates.</p>
+            <div>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerDroneModal">
+                    <i class="bi bi-plus-lg me-1"></i> Register UAV
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Register Drone Modal -->
+    <div class="modal fade" id="registerDroneModal" tabindex="-1" aria-labelledby="registerDroneModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow">
+                <form th:action="@{/drones}" method="post">
+                    <div class="modal-header bg-dark text-white">
+                        <h5 class="modal-title" id="registerDroneModalLabel"><i class="bi bi-send-fill me-2"></i>Register New UAV</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="droneName" class="form-label fw-semibold">Drone Name *</label>
+                                <input type="text" class="form-control" id="droneName" name="name" placeholder="e.g. DJI Mini 4 Pro" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="droneModel" class="form-label fw-semibold">Model Name</label>
+                                <input type="text" class="form-control" id="droneModel" name="modelName" placeholder="e.g. Mini 4 Pro Fly More">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="droneCategory" class="form-label fw-semibold">EU UAS Class *</label>
+                                <select class="form-select" id="droneCategory" name="category" required>
+                                    <option th:each="c : ${categories}" th:value="${c}" th:text="${c.displayName}">C0</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="weightGrams" class="form-label fw-semibold">Takeoff Weight (grams) *</label>
+                                <input type="number" class="form-control" id="weightGrams" name="weightGrams" placeholder="e.g. 249" required>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="buyDate" class="form-label fw-semibold">Buy Date</label>
+                                <input type="date" class="form-control" id="buyDate" name="buyDate">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="purchasePrice" class="form-label fw-semibold">Purchase Price (€)</label>
+                                <input type="number" step="0.01" class="form-control" id="purchasePrice" name="purchasePrice" placeholder="e.g. 799.00">
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="manufacturerId" class="form-label fw-semibold">Manufacturer</label>
+                                <select class="form-select" id="manufacturerId" name="manufacturerId">
+                                    <option value="">-- None / Select Manufacturer --</option>
+                                    <option th:each="m : ${manufacturers}" th:value="${m.id}" th:text="${m.name}">DJI</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="vendorId" class="form-label fw-semibold">Vendor (Store / Source)</label>
+                                <select class="form-select" id="vendorId" name="vendorId">
+                                    <option value="">-- None / Select Vendor --</option>
+                                    <option th:each="v : ${vendors}" th:value="${v.id}" th:text="${v.name}">Amazon</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="serialNumber" class="form-label fw-semibold">Serial Number</label>
+                                <input type="text" class="form-control" id="serialNumber" name="serialNumber" placeholder="Hardware serial number">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="uasOperatorId" class="form-label fw-semibold">UAS Operator Registration ID (e-ID)</label>
+                                <input type="text" class="form-control" id="uasOperatorId" name="uasOperatorId" placeholder="e.g. DEU87astdfl287-xyz">
+                            </div>
+
+                            <div class="col-12">
+                                <label for="droneNotes" class="form-label fw-semibold">Notes</label>
+                                <textarea class="form-control" id="droneNotes" name="notes" rows="2" placeholder="Insurance info, accessory notes, transmitter frequency..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Register UAV</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Standard Footer Fragment -->
+    <footer th:replace="~{fragments/layout :: footer}"></footer>
+</body>
+
+</html>

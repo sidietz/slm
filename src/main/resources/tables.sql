@@ -435,3 +435,63 @@ CREATE TABLE car_expense (
 CREATE INDEX idx_car_expense_car_date ON car_expense(car_id, expense_date DESC);
 CREATE INDEX idx_car_expense_type ON car_expense(expense_type);
 
+-- Unmanned Aerial Vehicles (Drones / UAVs) & Flight Logs
+CREATE TABLE drone (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    name TEXT NOT NULL,
+    model_name TEXT,
+    category drone_category NOT NULL,
+    weight_grams INTEGER NOT NULL,
+    buy_date DATE,
+    serial_number TEXT,
+    uas_operator_id TEXT,
+    purchase_price NUMERIC(10, 2),
+    manufacturer_id BIGINT REFERENCES manufacturer(id),
+    vendor_id BIGINT REFERENCES vendor(id),
+    notes TEXT,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_drone_category ON drone(category);
+CREATE INDEX idx_drone_manufacturer ON drone(manufacturer_id);
+CREATE INDEX idx_drone_vendor ON drone(vendor_id);
+
+CREATE TABLE drone_flight (
+    id UUID PRIMARY KEY DEFAULT uuidv7(),
+    drone_id UUID NOT NULL REFERENCES drone(id) ON DELETE CASCADE,
+    starttime TIMESTAMPTZ NOT NULL,
+    endtime TIMESTAMPTZ NOT NULL,
+    duration INTERVAL GENERATED ALWAYS AS (endtime - starttime) STORED,
+    start_latitude DOUBLE PRECISION,
+    start_longitude DOUBLE PRECISION,
+    landing_latitude DOUBLE PRECISION,
+    landing_longitude DOUBLE PRECISION,
+    start_geom geography(Point, 4326) GENERATED ALWAYS AS (
+        CASE WHEN start_latitude IS NOT NULL AND start_longitude IS NOT NULL 
+             THEN ST_SetSRID(ST_MakePoint(start_longitude, start_latitude), 4326)::geography 
+             ELSE NULL END
+    ) STORED,
+    landing_geom geography(Point, 4326) GENERATED ALWAYS AS (
+        CASE WHEN landing_latitude IS NOT NULL AND landing_longitude IS NOT NULL 
+             THEN ST_SetSRID(ST_MakePoint(landing_longitude, landing_latitude), 4326)::geography 
+             ELSE NULL END
+    ) STORED,
+    air_distance DOUBLE PRECISION GENERATED ALWAYS AS (
+        CASE WHEN start_latitude IS NOT NULL AND landing_latitude IS NOT NULL 
+             THEN ST_Distance(
+                 ST_SetSRID(ST_MakePoint(start_longitude, start_latitude), 4326)::geography, 
+                 ST_SetSRID(ST_MakePoint(landing_longitude, landing_latitude), 4326)::geography
+             )
+             ELSE NULL END
+    ) STORED,
+    max_altitude_meters DOUBLE PRECISION,
+    notes TEXT,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_drone_flight_drone ON drone_flight(drone_id);
+CREATE INDEX idx_drone_flight_start ON drone_flight(starttime DESC);
+CREATE INDEX idx_drone_flight_start_geom ON drone_flight USING GIST (start_geom);
+CREATE INDEX idx_drone_flight_landing_geom ON drone_flight USING GIST (landing_geom);
+
