@@ -1286,6 +1286,52 @@ SLM tracks mobility and transit assets including cars, refuelings, train journey
 - **Constraints**:
   - PostGIS spatial extension must be active (guaranteed by standard SLM baseline).
 
+---
+
+## ADR 032: Global JPA AttributeConverter for PostgreSQL TIMESTAMPTZ to Local OffsetDateTime Projection
+
+### Status
+Accepted (v0.0.3-rc16)
+
+### Context
+Following the full domain migration to `java.time.OffsetDateTime` (ADR 030) and the seasonal Daylight Saving Time (DST) transition in Europe/Berlin on Sunday, October 25, 2026 (03:00 CEST -> 02:00 CET), timestamps displayed across read-only UI views (sessions, activities, appointments, car trips) appeared off by exactly 1 hour (showing `13:00` instead of `14:00`).
+
+The root cause stemmed from how PostgreSQL and PostgreSQL JDBC handle `TIMESTAMPTZ`:
+1. **PostgreSQL UTC Normalization**: Unlike Oracle, PostgreSQL does not store the original timezone offset or region name in `TIMESTAMPTZ` columns; it normalizes all timestamps to UTC microseconds on write (`14:00+01:00` -> `13:00:00 UTC`).
+2. **PostgreSQL JDBC & Hibernate Retrieval**: When Hibernate loads an entity with an `OffsetDateTime` field mapped to `TIMESTAMPTZ`, `pgjdbc` (`ResultSet.getObject(col, OffsetDateTime.class)`) returns an `OffsetDateTime` representing the UTC instant with offset `Z` (`+00:00`) (e.g. `2026-10-26T13:00Z`).
+3. **Thymeleaf & View Formatting**: Read-only views, table cells, and cards use `${#temporals.format(s.start, 'HH:mm')}`, which formats the raw `OffsetDateTime` without timezone conversion. In winter (CET = UTC+1), raw UTC is 1 hour behind local wall-clock time (`14:00 CET = 13:00 UTC`), resulting in an apparent 1-hour time lag.
+4. While HTML form inputs were already protected by [`OffsetDateTimeToStringConverter.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/converter/OffsetDateTimeToStringConverter.java), entity getters, Thymeleaf `#temporals.format`, and [`Utils.OffsetDateTimeToString`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/utils/Utils.java) operated directly on raw UTC entity fields.
+
+### Decision
+We implement a **Global JPA AttributeConverter paired with defensive utility formatting**:
+
+1. **Global JPA Attribute Converter (`autoApply = true`)**:
+   - Created [`OffsetDateTimeAttributeConverter.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/converter/OffsetDateTimeAttributeConverter.java) implementing `jakarta.persistence.AttributeConverter<OffsetDateTime, OffsetDateTime>` marked with `@Converter(autoApply = true)`.
+   - **`convertToDatabaseColumn`**: Passes the `OffsetDateTime` to JDBC for storage as PostgreSQL UTC `TIMESTAMPTZ`.
+   - **`convertToEntityAttribute`**: Automatically projects the database's UTC `OffsetDateTime` to the configured application timezone using:
+     ```java
+     dbData.atZoneSameInstant(TimeZoneConfig.getZoneId()).toOffsetDateTime()
+     ```
+   - Automatically applies to all `OffsetDateTime` entity attributes across all 16 domain entities without modifying database schemas or template files.
+   - Because `ZoneId.of("Europe/Berlin")` incorporates complete historical and future DST transitions, timestamps recorded in summer receive `+02:00` with the summer hour, and timestamps in winter receive `+01:00` with the winter hour.
+
+2. **Defensive Utility Formatting**:
+   - Updated [`Utils.OffsetDateTimeToString(OffsetDateTime odt)`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/utils/Utils.java) to apply `odt.atZoneSameInstant(TimeZoneConfig.getZoneId())` defensively before formatting, ensuring unmanaged UTC instances are projected to local time.
+
+3. **Integration Test Verification**:
+   - Enhanced [`DateTimePrecisionIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DateTimePrecisionIT.java) with explicit assertions verifying that wall-clock local hours (23:00, 07:00, 14:00) and seasonal offsets (`+01:00` CET vs `+02:00` CEST) are preserved across PostgreSQL round-trips for both spring and fall DST transitions.
+   - Added unit test coverage in [`UtilsTest.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/utils/UtilsTest.java) verifying UTC instant projection.
+
+### Consequences & Trade-offs
+- **Benefits**:
+  - **Zero Template Modifications**: Fixes all 50+ Thymeleaf templates and UI views instantly without editing HTML files.
+  - **Entity Model Purity**: Entity getters (`s.getStart()`) in Java memory always carry the correct local seasonal offset (`+01:00` in winter, `+02:00` in summer).
+  - **Database & Trigger Invariant**: Preserves standard PostgreSQL `TIMESTAMPTZ` UTC storage and native database duration interval triggers `(endtime - starttime)`.
+  - **Dynamic Configuration**: Fully respects `TimeZoneConfig.getZoneId()` dynamically bound to `spring.jpa.properties.hibernate.jdbc.time_zone` with zero hardcoded literals.
+- **Constraints**:
+  - Direct native SQL queries bypassing JPA entity mapping (e.g. raw `Object[]` results) must continue to use explicit constructor conversion (as in `LastDoneHabitEntry`).
+
+
 
 
 

@@ -22,6 +22,11 @@ class UtilsTest {
         OffsetDateTime odt = OffsetDateTime.of(2026, 8, 26, 17, 45, 0, 0, ZoneOffset.ofHours(2));
         String result = Utils.OffsetDateTimeToString(odt);
         assertEquals("26.08.2026 17:45", result);
+
+        // A UTC instant during summer (CEST = UTC+2) should format in local time
+        OffsetDateTime utcInstant = OffsetDateTime.of(2026, 8, 26, 15, 45, 0, 0, ZoneOffset.UTC);
+        String utcResult = Utils.OffsetDateTimeToString(utcInstant);
+        assertEquals("26.08.2026 17:45", utcResult);
     }
 
     @Test

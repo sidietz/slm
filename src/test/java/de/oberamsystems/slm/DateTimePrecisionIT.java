@@ -75,6 +75,10 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
                 "PostgreSQL TIMESTAMPTZ interval subtraction across spring DST jump (+1h) must yield 7 hours");
         assertEquals(Duration.ofHours(7), session.getNetDuration(),
                 "Net duration must equal gross duration when break is zero");
+        assertEquals(start.getOffset(), session.getStart().getOffset(), "Spring start must retain CET (+01:00)");
+        assertEquals(end.getOffset(), session.getEnd().getOffset(), "Spring end must retain CEST (+02:00)");
+        assertEquals(23, session.getStart().getHour(), "Spring start wall-clock hour must be 23");
+        assertEquals(7, session.getEnd().getHour(), "Spring end wall-clock hour must be 7");
     }
 
     @Test
@@ -99,6 +103,10 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
                 "PostgreSQL TIMESTAMPTZ interval subtraction across fall DST jump (-1h) must yield 9 hours");
         assertEquals(Duration.ofHours(9), session.getNetDuration(),
                 "Net duration must equal gross duration when break is zero");
+        assertEquals(start.getOffset(), session.getStart().getOffset(), "Fall start must retain CEST (+02:00)");
+        assertEquals(end.getOffset(), session.getEnd().getOffset(), "Fall end must retain CET (+01:00)");
+        assertEquals(23, session.getStart().getHour(), "Fall start wall-clock hour must be 23");
+        assertEquals(7, session.getEnd().getHour(), "Fall end wall-clock hour must be 7");
     }
 
     @Test
@@ -177,6 +185,8 @@ public class DateTimePrecisionIT extends AbstractIntegrationTest {
         entityManager.clear();
 
         CalendarEvent reloaded = calendarEventRepository.findById(id).orElseThrow();
+        assertEquals(start.getOffset(), reloaded.getStart().getOffset(), "Reloaded offset must match the seasonal zone offset");
+        assertEquals(14, reloaded.getStart().getHour(), "Reloaded wall-clock hour must match the original 14:00 local time");
         assertTrue(start.isEqual(reloaded.getStart()), "Start time must preserve exact instant");
         assertTrue(end.isEqual(reloaded.getEnd()), "End time must preserve exact instant");
         assertEquals(Duration.ofMinutes(150), reloaded.getDuration(), "Duration must be 2h 30m");
