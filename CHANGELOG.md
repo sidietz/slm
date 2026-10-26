@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.3-rc16] - 2026-10-26
+
+### Fixed
+- **PostgreSQL TIMESTAMPTZ to Local OffsetDateTime Projection (Daylight Saving Time 1-Hour Shift Fix)** ([ADR 032](file:///home/simon/code/eclipse/slm/DECISIONS.md#adr-032-global-jpa-attributeconverter-for-postgresql-timestamptz-to-local-offsetdatetime-projection)):
+  - **Global JPA AttributeConverter (`autoApply = true`)**: Authored [`OffsetDateTimeAttributeConverter.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/slm/converter/OffsetDateTimeAttributeConverter.java) automatically projecting UTC `OffsetDateTime` instances returned by `pgjdbc` and Hibernate 7 from PostgreSQL `TIMESTAMPTZ` columns into the active seasonal application timezone (`TimeZoneConfig.getZoneId()`).
+  - **Seasonal Offset & Wall-Clock Hour Preservation**: Eliminates the 1-hour time lag observed after the October 25, 2026 European DST transition (03:00 CEST -> 02:00 CET), ensuring all entity getters, Thymeleaf `#temporals.format(...)` expressions, and MCP tools render exact local wall-clock hours with correct seasonal offsets (`+01:00` in winter, `+02:00` in summer) without template modifications.
+  - **Defensive Utility Formatting**: Updated `Utils.OffsetDateTimeToString(OffsetDateTime odt)` in [`Utils.java`](file:///home/simon/code/eclipse/slm/src/main/java/de/oberamsystems/utils/Utils.java) to project to `TimeZoneConfig.getZoneId()` defensively prior to formatting.
+  - **Verification Testing**: Extended [`DateTimePrecisionIT.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/slm/DateTimePrecisionIT.java) asserting offset and wall-clock hour preservation across PostgreSQL round-trips for both spring (+1h) and fall (-1h) transitions, and added unit coverage in [`UtilsTest.java`](file:///home/simon/code/eclipse/slm/src/test/java/de/oberamsystems/utils/UtilsTest.java).
+
 ## [0.0.3-rc15] - 2026-10-25
 
 ### Added

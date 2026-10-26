@@ -10,6 +10,8 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Date;
 
+import de.oberamsystems.slm.config.TimeZoneConfig;
+
 public class Utils {
 
 	private static String PATTERN = "dd.MM.yyyy HH:mm";
@@ -26,7 +28,7 @@ public class Utils {
 		if (odt == null) {
 			return "";
 		}
-		return odt.format(DateTimeFormatter.ofPattern(PATTERN));
+		return odt.atZoneSameInstant(TimeZoneConfig.getZoneId()).format(DateTimeFormatter.ofPattern(PATTERN));
 	}
 
 	public static String LocalDateTimeToString(OffsetDateTime odt) {
